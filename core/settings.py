@@ -27,15 +27,15 @@ SECRET_KEY = 'django-insecure-hs4-enkh%4#0gohnkp0drm#+5%jlnjag1s(d+$clwl)!#w3s(4
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-# 'elithouse.uz', 'www.elitehouse.uz',
-ALLOWED_HOSTS = ["*"]
+
+ALLOWED_HOSTS = ["31.97.117.12", "consulting.ardentsoft.uz", "127.0.0.1:8000", "localhost:8000"]
 
 # SECURE_SSL_REDIRECT = True
 # CSRF_COOKIE_SECURE = True
 # SESSION_COOKIE_SECURE = True
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://website.uz",
+    "https://consulting.ardentsoft.uz",
 ]
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 5000
 
