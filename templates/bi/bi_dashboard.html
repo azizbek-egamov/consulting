@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}BI Dashboard{% endblock %}
+
+{% block item %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">BI Dashboard</h2>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filtrlar
+        </div>
+        <div class="card-body">
+            <form id="filterForm" method="GET">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">Boshlanish sanasi:</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">Tugash sanasi:</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="city" class="form-label">Shahar:</label>
+                        <select class="form-select" id="city" name="city">
+                            <option value="">Barcha Shaharlar</option>
+                            {% for city in all_cities %}
+                                <option value="{{ city.id }}" {% if city.id == selected_city_id %}selected{% endif %}>{{ city.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="building" class="form-label">Bino:</label>
+                        <select class="form-select" id="building" name="building">
+                            <option value="">Barcha Binolar</option>
+                            {% for building in all_buildings %}
+                                <option value="{{ building.id }}" {% if building.id == selected_building_id %}selected{% endif %}>{{ building.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Shartnoma holati:</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Barcha holatlar</option>
+                            {% for status_val, status_label in all_contract_statuses %}
+                                <option value="{{ status_val }}" {% if status_val == selected_contract_status %}selected{% endif %}>{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="lead_stage" class="form-label">Lead bosqichi:</label>
+                        <select class="form-select" id="lead_stage" name="lead_stage">
+                            <option value="">Barcha bosqichlar</option>
+                            {% for stage in all_lead_stages %}
+                                <option value="{{ stage.id }}" {% if stage.id == selected_lead_stage_id %}selected{% endif %}>{{ stage.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="expense_type" class="form-label">Xarajat turi:</label>
+                        <select class="form-select" id="expense_type" name="expense_type">
+                            <option value="">Barcha turlar</option>
+                            {% for type in all_expense_types %}
+                                <option value="{{ type.id }}" {% if type.id == selected_expense_type_id %}selected{% endif %}>{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-primary" onclick="applyFiltersAndNavigate('{% url 'bi_contracts_payments' %}')">Shartnomalar & To'lovlar</button>
+                        <button type="button" class="btn btn-info" onclick="applyFiltersAndNavigate('{% url 'bi_expenses' %}')">Xarajatlar</button>
+                        <button type="button" class="btn btn-success" onclick="applyFiltersAndNavigate('{% url 'bi_leads' %}')">Leadlar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function getFilterParams() {
+        const form = document.getElementById('filterForm');
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+        for (const [key, value] of formData.entries()) {
+            if (value) { // Only add non-empty values
+                params.append(key, value);
+            }
+        }
+        return params.toString();
+    }
+
+    function applyFiltersAndNavigate(baseUrl) {
+        const params = getFilterParams();
+        window.location.href = `${baseUrl}?${params}`;
+    }
+</script>
+{% endblock %}

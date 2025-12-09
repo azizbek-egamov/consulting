@@ -1,0 +1,22 @@
+<div class="lead-card" draggable="true" data-lead-id="{{ lead.id }}" onclick="openLeadDetail({{ lead.id }})">
+    <div class="lead-name">
+        {{ lead.client_name|default:"Noma'lum mijoz" }}
+    </div>
+    <div class="lead-phone">
+        <i class="ri-phone-line"></i> {{ lead.phone_number }}
+    </div>
+    <div class="lead-meta">
+        <span class="lead-status status-{{ lead.call_status }}">
+            {% if lead.call_status == 'answered' %}Javob berdi
+            {% elif lead.call_status == 'not_answered' %}Javob bermadi
+            {% elif lead.call_status == 'busy' %}Band edi
+            {% else %}Qo'ng'iroq qilinmagan{% endif %}
+        </span>
+        <span>{{ lead.created_at|date:"d.m H:i" }}</span>
+    </div>
+    {% if lead.notes %}
+    <div class="lead-notes" style="font-size: 11px; color: #6c757d; margin-top: 6px;">
+        {{ lead.notes|truncatechars:50 }}
+    </div>
+    {% endif %}
+</div>

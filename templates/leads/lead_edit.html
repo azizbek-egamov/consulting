@@ -1,0 +1,441 @@
+<form method="post" enctype="multipart/form-data" id="leadEditForm" data-lead-id="{{ lead.id }}">
+{% csrf_token %}
+<input type="hidden" name="from_kanban" value="1">
+<input type="hidden" name="lead_pk" id="leadPkInput" value="{{lead.pk}}">
+<input type="hidden" name="type" id="typeInput" value="lead_edit">
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Mijoz ismi</label>
+            <input type="text" class="form-control" name="client_name" id="clientNameInput" 
+                   value="{{ lead.client_name|default:'' }}" placeholder="Mijoz ismini kiriting">
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Telefon raqami *</label>
+            <input type="text" class="form-control" name="phone_number" id="phoneNumberInput" 
+                   value="{{ lead.phone_number }}" required>
+            <div class="invalid-feedback">
+                Telefon raqam +998XXXXXXXXX formatida bo'lishi kerak.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Operator</label>
+            <input type="text" class="form-control" value="{{ lead.operator.full_name }}" readonly style="background-color: #f8f9fa;">
+            <small class="text-muted">Operatorni o'zgartirib bo'lmaydi</small>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Qo'ng'iroq holati</label>
+            <select class="form-control" name="call_status" id="callStatusSelect">
+                <option value="">Qo'ng'iroq qilinmagan</option>
+                {% for status_code, status_name in status_choices %}
+                <option value="{{ status_code }}" {% if status_code == lead.call_status %}selected{% endif %}>
+                    {{ status_name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="mb-3">
+            <label class="form-label">Qo'ng'iroq davomiyligi</label>
+            {% if lead.call_duration %}
+            <div class="alert alert-info">
+                <i class="ri-time-line"></i> Joriy davomiylik: {{ lead.get_duration_display }}
+                <br><small class="text-muted">Qo'ng'iroq davomiyligini o'zgartirib bo'lmaydi</small>
+            </div>
+            {% else %}
+            <div class="row">
+                <div class="col-md-4">
+                    <input type="number" class="form-control" name="hours" value="{{ hours }}" min="0" max="23" placeholder="Soat">
+                    <small class="text-muted">Soat</small>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" class="form-control" name="minutes" value="{{ minutes }}" min="0" max="59" placeholder="Daqiqa">
+                    <small class="text-muted">Daqiqa</small>
+                </div>
+                <div class="col-md-4">
+                    <input type="number" class="form-control" name="seconds" value="{{ seconds }}" min="0" max="59" placeholder="Soniya">
+                    <small class="text-muted">Soniya</small>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Keyingi qo'ng'iroq sanasi</label>
+            <input type="date" class="form-control" name="follow_up_date" id="followUpDate"
+                   value="{% if lead.follow_up_date %}{{ lead.follow_up_date|date:'Y-m-d' }}{% endif %}">
+            <div class="invalid-feedback" id="dateValidationMessage">
+                Sana kiritilganda vaqt ham kiritish shart!
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label class="form-label">Keyingi qo'ng'iroq vaqti</label>
+            <input type="time" class="form-control" name="follow_up_time" id="followUpTime"
+                   value="{% if lead.follow_up_date %}{{ lead.follow_up_date|date:'H:i' }}{% endif %}">
+            <div class="invalid-feedback" id="timeValidationMessage">
+                Vaqt kiritilganda sana ham kiritish shart!
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Audio yozuv</label>
+    {% if lead.audio_recording %}
+    <div class="alert alert-warning">
+        <i class="ri-volume-up-line"></i> Joriy audio fayl: {{ lead.audio_recording.name }}
+        <br><small class="text-muted">Audio yozuvni o'chirib yoki almashtirib bo'lmaydi. Faqat yangi fayl qo'shish mumkin.</small>
+        <div class="mt-2">
+            <audio controls style="width: 100%;" controlsList="nodownload noremoteplayback">
+                <source src="{{ lead.audio_recording.url }}" type="audio/mpeg">
+                <source src="{{ lead.audio_recording.url }}" type="audio/wav">
+                <source src="{{ lead.audio_recording.url }}" type="audio/ogg">
+                Brauzeringiz audio faylni qo'llab-quvvatlamaydi.
+            </audio>
+        </div>
+    </div>
+    {% else %}
+    <input type="file" class="form-control" name="audio_recording" accept="audio/*">
+    <small class="text-muted">Audio fayl yuklash (MP3, WAV, OGG formatlarida)</small>
+    {% endif %}
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Izohlar</label>
+    <textarea class="form-control" name="notes" rows="4" placeholder="Qo'shimcha ma'lumotlar...">{{ lead.notes|default:'' }}</textarea>
+</div>
+
+<div class="d-flex justify-content-end">
+    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Bekor qilish</button>
+    <button type="submit" class="btn btn-primary" id="saveBtn" name="saveBtn"> 
+        <i class="ri-save-line"></i> Saqlash
+    </button>
+</div>
+</form>
+
+<script>
+console.log("lead_edit.html script loaded and executing.");
+
+// Sana va vaqt validatsiya funksiyasi
+function validateFollowUpDateTime() {
+    const dateInput = document.getElementById('followUpDate');
+    const timeInput = document.getElementById('followUpTime');
+
+    const hasDate = dateInput.value.trim() !== '';
+    const hasTime = timeInput.value.trim() !== '';
+
+    // Validatsiya xabarlarini tozalash
+    dateInput.classList.remove('is-invalid');
+    timeInput.classList.remove('is-invalid');
+
+    let isValid = true;
+
+    // Agar sana kiritilgan bo'lsa, vaqt ham kiritilishi kerak
+    if (hasDate && !hasTime) {
+        timeInput.classList.add('is-invalid');
+        isValid = false;
+    }
+
+    // Agar vaqt kiritilgan bo'lsa, sana ham kiritilishi kerak
+    if (hasTime && !hasDate) {
+        dateInput.classList.add('is-invalid');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+
+// Vaqt o'zgarganda validatsiya
+document.getElementById('followUpTime').addEventListener('change', function() {
+    validateFollowUpDateTime();
+});
+document.getElementById('followUpDate').addEventListener('change', function() {
+    validateFollowUpDateTime();
+});
+
+
+document.getElementById('leadEditForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    // Sana va vaqt validatsiyasini tekshirish
+    if (!validateFollowUpDateTime()) {
+        // showToast funksiyasi global scope'da bo'lishi kerak
+        if (typeof showToast === 'function') {
+            showToast('Keyingi qo\'ng\'iroq uchun sana va vaqt ikkalasini ham kiriting!', 'error');
+        } else {
+            alert('Keyingi qo\'ng\'iroq uchun sana va vaqt ikkalasini ham kiriting!');
+        }
+        return;
+    }
+
+    const saveBtn = document.getElementById('saveBtn');
+    const originalText = saveBtn.innerHTML;
+
+    // Loading holatini ko'rsatish
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="ri-loader-4-line"></i> Saqlanmoqda...';
+
+    const formData = new FormData(this);
+
+    // Debug: Form ma'lumotlarini console ga chiqarish
+    console.log('Form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+
+    // Davomiylikni hisoblash (faqat agar mavjud bo'lmasa)
+    {% if not lead.call_duration %}
+    const hours = parseInt(formData.get('hours') || 0);
+    const minutes = parseInt(formData.get('minutes') || 0);
+    const seconds = parseInt(formData.get('seconds') || 0);
+
+    if (hours > 0 || minutes > 0 || seconds > 0) {
+        // Davomiylikni HH:MM:SS formatida yuborish
+        const duration = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        formData.set('duration_input', duration);
+        console.log('Duration set to:', duration);
+    }
+    {% endif %}
+
+    // Keyingi qo'ng'iroq sanasi va vaqti tekshirish
+    const followUpDate = formData.get('follow_up_date');
+    const followUpTime = formData.get('follow_up_time');
+    const hasFollowUp = followUpDate && followUpTime;
+
+    console.log('Follow up info:', { followUpDate, followUpTime, hasFollowUp });
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    function getCSRFToken() {
+        const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return csrfInput ? csrfInput.value : '';
+    }
+
+    fetch(`/leads/${lead_id}/edit/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',  // ✅ BU BO‘LSIN!
+            'X-CSRFToken': getCSRFToken(),         // ✅ inputdan olinsin
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        const contentType = response.headers.get("content-type");
+
+        // Check if the response is JSON
+        if (contentType && contentType.includes("application/json")) {
+            return response.json().then(data => {
+                if (!response.ok) {
+                    // If it's JSON but not OK (e.g., 400, 500 with JSON error body)
+                    throw new Error(data.message || 'Server xatosi');
+                }
+                return data; // Return the parsed JSON data
+            });
+        } else {
+            // If it's not JSON (e.g., HTML for redirect or error page)
+            return response.text().then(text => {
+                console.error("Serverdan JSON bo'lmagan javob keldi:", text);
+                if (response.status === 302 || response.status === 403 || response.status === 401) {
+                    // Specific handling for redirects/auth issues
+                    if (typeof showToast === 'function') {
+                        showToast('Sizning sessiyangiz tugagan yoki ruxsat yo\'q. Iltimos, qayta kiring.', 'error');
+                    } else {
+                        alert('Sizning sessiyangiz tugagan yoki ruxsat yo\'q. Iltimos, qayta kiring.');
+                    }
+                    // Optionally redirect to login page
+                    // window.location.href = '/login/';
+                }
+                // Throw an error to be caught by the .catch block
+                throw new Error(`Server xatosi: ${response.status} ${response.statusText}. Kutilmagan javob formati.`);
+            });
+        }
+    })
+    .then(data => {
+        // This block will only receive valid JSON data or a custom success object from the else branch above
+        console.log('Response data:', data);
+        
+        if (data.success) {
+            // Modaldan foydalanilayotgan bo'lsa, uni yopish
+            const leadEditModal = document.getElementById('leadEditModal');
+            if (leadEditModal) {
+                bootstrap.Modal.getInstance(leadEditModal)?.hide();
+            }
+            
+            // Agar sahifa yangilanishi kerak bo'lsa (bosqich o'zgargan bo'lsa)
+            if (data.reload_page) { 
+                console.log('Lead stage changed, reloading page.');
+                if (typeof showToast === 'function') {
+                    showToast('Saqlandi va bosqich o\'zgardi, sahifa yangilanadi!', 'success');
+                }
+                location.reload(); // Sahifani yangilash
+            } else {
+                // Aks holda, lead kartasini joyida yangilash
+                console.log('Updating lead card in place.');
+                if (typeof updateLeadCardAppearance === 'function') { 
+                    updateLeadCardAppearance(document.querySelector(`.lead-card[data-lead-id="${data.lead_id}"]`), data.new_call_status, data);
+                    if (typeof showToast === 'function') {
+                        showToast(data.message, 'success');
+                    }
+                } else {
+                    console.error("updateLeadCardAppearance funksiyasi topilmadi. Sahifa yangilanadi.");
+                    location.reload();
+                }
+            }
+        } else {
+            console.error('Server returned error:', data.message);
+            if (typeof showToast === 'function') {
+                showToast(data.message || 'Xatolik yuz berdi', 'error');
+            } else {
+                alert(data.message || 'Xatolik yuz berdi');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        if (typeof showToast === 'function') {
+            showToast('Xatolik yuz berdi: ' + error.message, 'error');
+        } else {
+            alert('Xatolik yuz berdi: ' + error.message);
+        }
+    })
+    .finally(() => {
+        // Loading holatini qaytarish
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    });
+});
+
+// Telefon raqami formatlash va validatsiya
+const phoneNumberInput = document.getElementById('phoneNumberInput');
+
+function updateLeadCardAppearance(leadElement, stage, data) {
+        const statusElement = leadElement.querySelector('.lead-status');
+        const nameElement = leadElement.querySelector('.lead-name');
+        const phoneElement = leadElement.querySelector('.lead-phone');
+        const followUpDateElement = leadElement.querySelector('.follow-up-date');
+        const notesElement = leadElement.querySelector('.lead-notes');
+        const operatorElement = leadElement.querySelector('.lead-operator');
+        const durationElement = leadElement.querySelector('.lead-card .follow-up-date i.ri-time-line')?.parentElement;
+        const audioButton = leadElement.querySelector('.btn-audio');
+
+        if (nameElement && data.client_name !== undefined) {
+            nameElement.textContent = data.client_name || "Noma'lum mijoz";
+            leadElement.dataset.clientName = data.client_name || '';
+        }
+        if (phoneElement && data.phone_number !== undefined) {
+            phoneElement.innerHTML = `<i class="ri-phone-line"></i> ${data.phone_number}`;
+            leadElement.dataset.phoneNumber = data.phone_number;
+        }
+        if (operatorElement && data.operator_name !== undefined) {
+            operatorElement.innerHTML = `<i class="ri-user-line"></i> ${data.operator_name}`;
+            leadElement.dataset.operatorName = data.operator_name;
+        }
+        if (notesElement && data.notes !== undefined) {
+            notesElement.textContent = data.notes ? data.notes.substring(0, 50) + (data.notes.length > 50 ? '...' : '') : '';
+            notesElement.style.display = data.notes ? 'block' : 'none';
+            leadElement.dataset.notes = data.notes;
+        }
+        if (data.created_at !== undefined) {
+            leadElement.querySelector('.lead-meta span:last-child').textContent = data.created_at;
+        }
+        if (data.duration_display !== undefined) {
+            if (durationElement) {
+                durationElement.innerHTML = `<i class="ri-time-line"></i> Davomiylik: ${data.duration_display}`;
+                durationElement.style.display = data.duration_display === '-' ? 'none' : 'block';
+            } else if (data.duration_display !== '-') {
+                const newDurationDiv = document.createElement('div');
+                newDurationDiv.className = 'follow-up-date';
+                newDurationDiv.innerHTML = `<i class="ri-time-line"></i> Davomiylik: ${data.duration_display}`;
+                // follow-up-date dan oldin qo'shish
+                if (followUpDateElement) {
+                    leadElement.insertBefore(newDurationDiv, followUpDateElement);
+                } else {
+                    // Agar follow-up-date bo'lmasa, notes dan oldin yoki oxiriga
+                    const existingNotes = leadElement.querySelector('.lead-notes');
+                    if (existingNotes) {
+                        leadElement.insertBefore(newDurationDiv, existingNotes);
+                    } else {
+                        leadElement.appendChild(newDurationDiv);
+                    }
+                }
+            }
+            leadElement.dataset.durationDisplay = data.duration_display;
+        }
+        if (data.audio_recording_url !== undefined) {
+            if (audioButton) {
+                audioButton.style.display = data.audio_recording_url ? 'flex' : 'none';
+            } else if (data.audio_recording_url) {
+                const newAudioButton = document.createElement('button');
+                newAudioButton.className = 'btn-audio';
+                newAudioButton.setAttribute('onclick', `event.stopPropagation(); playAudio(${data.lead_id})`);
+                newAudioButton.setAttribute('title', 'Audio eshitish');
+                newAudioButton.innerHTML = '<i class="ri-volume-up-line"></i>';
+                leadElement.querySelector('.lead-actions').prepend(newAudioButton);
+            }
+            leadElement.dataset.audioUrl = data.audio_recording_url || '';
+        }
+
+
+function formatAndValidatePhoneNumber() {
+    let value = phoneNumberInput.value.replace(/\D/g, ''); // Raqamlardan boshqa barcha belgilarni olib tashlash
+
+    // Agar 998 bilan boshlansa, 998 ni olib tashlash (faqat raqam qismini olish uchun)
+    if (value.length > 0 && !value.startsWith('998')) {
+        if (value.startsWith('8')) {
+            value = '998' + value.substring(1);
+        } else {
+            value = '998' + value;
+        }
+    }
+
+    // Faqat 9 ta raqamni olish
+    if (value.length > 9) {
+        value = value.substring(0, 9);
+    }
+
+    phoneNumberInput.value = value.length > 0 ? '+' + value : ''; // `e.target.value` o'rniga `phoneNumberInput.value` ishlatildi
+
+    // Validatsiyani tekshirish
+    const isValidPhone = phoneNumberInput.value.length === 13 && phoneNumberInput.value.startsWith('+998');
+
+    if (!isValidPhone) {
+        phoneNumberInput.classList.add('is-invalid');
+    } else {
+        phoneNumberInput.classList.remove('is-invalid');
+    }
+
+    return isValidPhone;
+}
+
+// Input o'zgarganda formatlash va validatsiyani ishga tushirish
+phoneNumberInput.addEventListener('input', formatAndValidatePhoneNumber);
+
+// Modal yuklanganda initial validatsiyani ishga tushirish
+formatAndValidatePhoneNumber();
+
+// Mijoz ismi o'zgarganda real-time yangilanish (faqat konsolga chiqarish)
+document.getElementById('clientNameInput').addEventListener('input', function() {
+    console.log('Client name changed to:', this.value);
+});
+</script>

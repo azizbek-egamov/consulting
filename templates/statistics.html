@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Umumiy Statistika - Ardent Soft{% endblock title %}
+{% block item %}
+<div class="app-container">
+
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center">
+
+    <!-- Breadcrumb starts -->
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+        <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+        <a href="/">Asosiy</a>
+        </li>
+        <li class="breadcrumb-item text-primary" aria-current="page">
+        Umumiy statistika
+        </li>
+    </ol>
+    <!-- Breadcrumb ends -->
+
+    </div>
+    <!-- App Hero header ends -->
+
+    <!-- App body starts -->
+    <div class="app-body">
+
+    <!-- Row starts -->
+    <div class="row gx-3">
+        <div class="col-sm-12">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title">Oylik mijozlar ro'yxati</h5>
+            {% if request.user.username == "ceoadmin" or request.user.username == "devadmin" %}
+                <a href="/statistics/download/" class="btn btn-primary ms-auto">Barchasini yuklab olish</a>
+            {% endif %}
+            </div>
+            <div class="card-body">
+
+            <!-- Table starts -->
+            <div class="table-responsive table-container">
+                <table id="basicExample" class="table table-hover truncate m-0 align-middle">
+                <thead>
+                    <tr>
+                    <th>№</th>
+                    <th>Oy kesimi</th>
+                    <th>Harakat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for i in month_list %}
+                    <tr>
+                        <td>#{{i.number}}</td>
+                        <td>
+                            {{i.month}}
+                        </td>
+                        <td>
+                            <div class="d-inline-flex gap-1">
+                            <a href="{{i.url}}" class="btn btn-outline-success btn-sm"
+                                data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Yuklab olish">
+                                <i class="ri-download-fill"></i>
+                            </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+            <!-- Table ends -->
+
+            </div>
+        </div>
+        </div>
+    </div>
+    <!-- Row ends -->
+
+    </div>
+    <!-- App body ends -->
+
+</div>
+{% endblock item %}

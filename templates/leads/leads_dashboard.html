@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leadlar Dashboard{% endblock title %}
+
+{% block item %}
+<div class="app-body">
+    
+    <div class="row gx-3">
+        <!-- Statistika kartlari -->
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Jami Leadlar</h6>
+                            <h2 class="mb-0">{{ total_leads }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="ri-phone-line fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Bugungi Leadlar</h6>
+                            <h2 class="mb-0">{{ today_leads }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="ri-calendar-line fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Javob Berilgan</h6>
+                            <h2 class="mb-0">{{ answered_leads }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="ri-check-line fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title mb-0">Mijozga Aylangan</h6>
+                            <h2 class="mb-0">{{ converted_leads }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="ri-user-add-line fs-1"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Holatlar statistikasi -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Holatlar Bo'yicha Statistika</h5>
+                </div>
+                <div class="card-body">
+                    {% for stat in status_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-0">{{ stat.name }}</h6>
+                            <small class="text-muted">{{ stat.percentage }}%</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary">{{ stat.count }}</span>
+                        </div>
+                    </div>
+                    <div class="progress mb-3" style="height: 6px;">
+                        <div class="progress-bar" style="width: {{ stat.percentage }}%"></div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Keyingi qo'ng'iroqlar -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Keyingi Qo'ng'iroqlar</h5>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_calls %}
+                        {% for call in upcoming_calls %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                            <div>
+                                <h6 class="mb-1">{{ call.phone_number }}</h6>
+                                <small class="text-muted">{{ call.client_name|default:"Noma'lum" }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="{% if call.follow_up_date <= now %}text-danger{% else %}text-success{% endif %}">
+                                    {{ call.follow_up_date|date:"d.m H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">Keyingi qo'ng'iroqlar yo'q</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Oxirgi leadlar -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Oxirgi Leadlar</h5>
+                    <a href="{% url 'leads_list' %}" class="btn btn-outline-primary btn-sm">
+                        Barchasini ko'rish
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Telefon</th>
+                                    <th>Mijoz</th>
+                                    <th>Holat</th>
+                                    <th>Vaqt</th>
+                                    <th>Amallar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead in recent_leads %}
+                                <tr>
+                                    <td>{{ lead.phone_number }}</td>
+                                    <td>{{ lead.client_name|default:"Noma'lum" }}</td>
+                                    <td>
+                                        {% if lead.call_status == 'answered' %}
+                                            <span class="badge bg-success">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'not_answered' %}
+                                            <span class="badge bg-danger">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'hung_up' %}
+                                            <span class="badge bg-warning">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'busy' %}
+                                            <span class="badge bg-secondary">{{ lead.get_call_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ lead.get_call_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ lead.created_at|date:"d.m H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'lead_detail' lead.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="ri-eye-line"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock item %}

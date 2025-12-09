@@ -1,0 +1,1003 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mijozlar ro'yxati - Ardent Soft{% endblock title %}
+
+{% block item %}
+<style>
+    /* Table styles */
+    .table-container {
+        overflow-y: auto;
+        max-height: 80vh;
+        position: relative;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        padding: 8px 12px;
+        text-align: left;
+    }
+    
+    thead th {
+        position: sticky;
+        top: 0;
+        background: #f1f1f1;
+        z-index: 2;
+    }
+    
+    /* Card styles */
+    .client-card {
+        transition: all 0.2s ease;
+    }
+    
+    .client-card .card {
+        height: 100%;
+    }
+    
+    .client-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    /* Badge styles */
+    .source-badge {
+        font-size: 0.8rem;
+        padding: 0.35em 0.65em;
+    }
+    
+    /* Pagination styles */
+    .pagination .page-link {
+        color: #0d6efd;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+    }
+    
+    /* Animation */
+    .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Source icon colors */
+    .source-icon-telegram { color: #0088cc; }
+    .source-icon-instagram { color: #e1306c; }
+    .source-icon-youtube { color: #ff0000; }
+    .source-icon-people { color: #28a745; }
+    .source-icon-none { color: #6c757d; }
+</style>
+
+<div class="app-container">
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center">
+        <!-- Breadcrumb starts -->
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                Mijozlar
+            </li>
+        </ol>
+        <!-- Breadcrumb ends -->
+    </div>
+    <!-- App Hero header ends -->
+
+    <!-- App body starts -->
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <!-- Stats cards row -->
+        <div class="row g-3 mb-3">
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="ri-user-3-line text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Jami mijozlar</h6>
+                            <h4 class="mb-0">{{ client|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="ri-user-follow-line text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Faol mijozlar</h6>
+                            <h4 class="mb-0">{{ active_clients|default:client|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="ri-phone-line text-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Bugun qo'shilgan</h6>
+                            <h4 class="mb-0">{{ today_clients|default:"0" }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content row -->
+        <div class="row gx-3">
+            <div class="col-sm-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="ri-user-3-line me-2 text-primary"></i>
+                            Mijozlar ro'yxati
+                        </h5>
+
+                        <div class="d-flex gap-2">
+                            <!-- Search form -->
+                            <form method="POST" action="{% url 'client' %}" class="me-2">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="search" value="{{search_value}}" id="searchInput" placeholder="Qidirish...">
+                                    <button type="submit" class="btn btn-primary" name="action" value="search">
+                                        <i class="ri-search-line"></i>
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <!-- Filter button -->
+                            <button class="btn btn-outline-primary d-flex align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
+                                <i class="ri-filter-3-line me-1"></i> Filter
+                            </button>
+                            
+                            <!-- SMS button -->
+                            <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <i class="ri-message-2-line me-1"></i> SMS
+                            </button>
+                            
+                            <!-- Export dropdown button -->
+                            <div class="btn-group">
+                              <button type="button" class="btn btn-outline-primary d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-download-2-line me-1"></i> Yuklab olish
+                              </button>
+                              <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/client/export/">PDF</a></li>
+                                <li><a class="dropdown-item" href="/client/export/excel/">Excel</a></li>
+                              </ul>
+                            </div>
+                            
+                            <!-- Add client button -->
+                            <a href="{% url 'client-create' %}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-primary d-flex align-items-center">
+                                <i class="ri-user-add-line me-1"></i> Mijoz qo'shish
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <!-- View toggle buttons -->
+                        <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary active" id="tableViewBtn">
+                                    <i class="ri-table-line me-1"></i> Jadval ko'rinish
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="cardViewBtn">
+                                    <i class="ri-layout-grid-line me-1"></i> Karta ko'rinish
+                                </button>
+                            </div>
+                            
+                            <div class="text-muted small">
+                                <span id="displayedItemsCount">0</span> / <span id="totalItemsCount">{{ client|length }}</span> ta mijoz
+                            </div>
+                        </div>
+
+                        <!-- Table view -->
+                        <div id="tableView" class="table-responsive table-container">
+                            <table id="clientsTable" class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">ID</th>
+                                        <th>To'liq ismi</th>
+                                        <th>Telefon raqam</th>
+                                        <th>Qayerda eshitgan</th>
+                                        <th>Qo'shilgan sana</th>
+                                        <th class="text-end pe-3">Harakat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in client %}
+                                    <tr class="client-item" data-id="{{i.pk}}">
+                                        <td class="ps-3">#00{{i.pk}}</td>
+                                        <td>
+                                            <span class="fw-medium">{{i.full_name}}</span>
+                                        </td>
+                                        <td>
+                                            <a href="tel:{{i.phone}}" class="text-decoration-none">
+                                                {{i.phone}}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {% if i.heard == "Telegramda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-telegram-line source-icon-telegram me-1"></i> Telegram
+                                            </span>
+                                            {% elif i.heard == "Instagramda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-instagram-line source-icon-instagram me-1"></i> Instagram
+                                            </span>
+                                            {% elif i.heard == "YouTubeda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-youtube-line source-icon-youtube me-1"></i> YouTube
+                                            </span>
+                                            {% elif i.heard == "Odamlar orasida" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-group-line source-icon-people me-1"></i> Odamlar orasida
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-question-line source-icon-none me-1"></i> {{i.heard}}
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{i.created|date:"d.m.Y"}}</td>
+                                        <td class="text-end pe-3">
+                                            <div class="d-inline-flex gap-1">
+                                                <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tez SMS" onclick="quickSms('{{i.phone}}')">
+                                                    <i class="ri-message-line"></i>
+                                                </button>
+                                                <a href="/client/edit/{{i.pk}}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tahrirlash">
+                                                    <i class="ri-edit-line"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#delRow" data-id="{{ i.pk }}">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Card view -->
+                        <div id="cardView" class="p-3" style="display: none;">
+                            <div id="cardContainer" class="row g-3">
+                                {% for i in client %}
+                                <div class="col-xl-3 col-lg-4 col-md-6 client-card client-item" data-id="{{i.pk}}">
+                                    <div class="card h-100 border shadow-sm">
+                                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center py-2">
+                                            <span class="badge bg-primary rounded-pill">
+                                                Mijoz
+                                            </span>
+                                            <span class="text-muted small">ID: #00{{i.pk}}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="text-center mb-3">
+                                                <div class="avatar-circle mx-auto mb-2">
+                                                    <span class="avatar-initials">{{i.full_name|slice:":1"}}</span>
+                                                </div>
+                                                <h5 class="card-title mb-0">{{i.full_name}}</h5>
+                                                <p class="text-muted small mb-0">
+                                                    <a href="tel:{{i.phone}}" class="text-decoration-none">
+                                                        {{i.phone}}
+                                                    </a>
+                                                </p>
+                                            </div>
+                                            
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="text-muted small">Qayerda eshitgan:</span>
+                                                {% if i.heard == "Telegramda" %}
+                                                <span class="badge bg-light text-dark source-badge">
+                                                    <i class="ri-telegram-line source-icon-telegram me-1"></i> Telegram
+                                                </span>
+                                                {% elif i.heard == "Instagramda" %}
+                                                <span class="badge bg-light text-dark source-badge">
+                                                    <i class="ri-instagram-line source-icon-instagram me-1"></i> Instagram
+                                                </span>
+                                                {% elif i.heard == "YouTubeda" %}
+                                                <span class="badge bg-light text-dark source-badge">
+                                                    <i class="ri-youtube-line source-icon-youtube me-1"></i> YouTube
+                                                </span>
+                                                {% elif i.heard == "Odamlar orasida" %}
+                                                <span class="badge bg-light text-dark source-badge">
+                                                    <i class="ri-group-line source-icon-people me-1"></i> Odamlar orasida
+                                                </span>
+                                                {% else %}
+                                                <span class="badge bg-light text-dark source-badge">
+                                                    <i class="ri-question-line source-icon-none me-1"></i> {{i.heard}}
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted small">Qo'shilgan sana:</span>
+                                                <span class="small">{{i.created|date:"d.m.Y"}}</span>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer bg-transparent d-flex justify-content-between py-2">
+                                            <button class="btn btn-sm btn-outline-info" onclick="quickSms('{{i.phone}}')">
+                                                <i class="ri-message-line me-1"></i> SMS
+                                            </button>
+                                            <div class="d-flex gap-1">
+                                                <a href="/client/edit/{{i.pk}}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary">
+                                                    <i class="ri-edit-line"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#delRow" data-id="{{ i.pk }}">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                            <div>
+                                <select id="itemsPerPage" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="15" selected>15 ta</option>
+                                    <option value="30">30 ta</option>
+                                    <option value="50">50 ta</option>
+                                    <option value="100">100 ta</option>
+                                </select>
+                            </div>
+                            <nav aria-label="Page navigation">
+                                <ul class="pagination pagination-sm mb-0" id="pagination">
+                                    <!-- Pagination will be generated by JavaScript -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Delete Row -->
+        <div class="modal fade" id="delRow" tabindex="-1" aria-labelledby="delRowLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="delRowLabel">
+                            <i class="ri-error-warning-line text-danger me-2"></i> O'chirish
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Mijozni o'chirishga ishonchingiz komilmi?</p>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Yo'q</button>
+                        <button class="btn btn-danger confirm-delete" data-bs-dismiss="modal">
+                            <i class="ri-delete-bin-line me-1"></i> Xa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <form method="POST" action="{% url 'client' %}">
+                {% csrf_token %}
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">
+                                <i class="ri-message-2-line text-primary me-2"></i> Mijozlarga xabar yuborish
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="recipient-type" class="form-label fw-medium">Qabul qiluvchilar</label>
+                                <select class="form-select" id="recipient-type" name="recipient_type">
+                                    <option value="all" selected>Barcha mijozlar</option>
+                                    <option value="telegram">Telegramda eshitganlar</option>
+                                    <option value="instagram">Instagramda eshitganlar</option>
+                                    <option value="youtube">YouTubeda eshitganlar</option>
+                                    <option value="people">Odamlar orasida eshitganlar</option>
+                                    <option value="custom">Tanlangan mijozlar</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3" id="customRecipientsContainer" style="display: none;">
+                                <label for="custom-recipients" class="form-label fw-medium">Telefon raqamlar</label>
+                                <input type="text" class="form-control" id="custom-recipients" name="custom_recipients" placeholder="Telefon raqamlarni vergul bilan ajrating">
+                                <div class="form-text">Misol: 998901234567, 998912345678</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message-text" class="form-label fw-medium">Xabar matni</label>
+                                <textarea class="form-control" name="sms-text" id="message-text" rows="4" placeholder="Xabar matnini kiriting..." required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <div class="form-text">Maksimal 160 ta belgi</div>
+                                    <div class="form-text"><span id="charCount">0</span>/160</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Tez xabarlar</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizning buyurtmangiz tasdiqlandi.">
+                                        Buyurtma tasdiqlandi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizning to'lovingiz qabul qilindi.">
+                                        To'lov qabul qilindi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizni ofisimizga taklif qilamiz.">
+                                        Ofisga taklif
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                            <button type="submit" class="btn btn-primary" name="action" value="sms">
+                                <i class="ri-send-plane-line me-1"></i> Yuborish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Quick SMS Modal -->
+        <div class="modal fade" id="quickSmsModal" tabindex="-1" aria-labelledby="quickSmsModalLabel" aria-hidden="true">
+            <form method="POST" action="{% url 'client' %}">
+                {% csrf_token %}
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="quickSmsModalLabel">
+                                <i class="ri-message-2-line text-primary me-2"></i> Tez SMS yuborish
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="quick-recipient" class="form-label fw-medium">Qabul qiluvchi</label>
+                                <input type="text" class="form-control" id="quick-recipient" name="custom_recipients" readonly>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="quick-message-text" class="form-label fw-medium">Xabar matni</label>
+                                <textarea class="form-control" name="sms-text" id="quick-message-text" rows="4" placeholder="Xabar matnini kiriting..." required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <div class="form-text">Maksimal 160 ta belgi</div>
+                                    <div class="form-text"><span id="quickCharCount">0</span>/160</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Tez xabarlar</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizning buyurtmangiz tasdiqlandi.">
+                                        Buyurtma tasdiqlandi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizning to'lovingiz qabul qilindi.">
+                                        To'lov qabul qilindi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizni ofisimizga taklif qilamiz.">
+                                        Ofisga taklif
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                            <button type="submit" class="btn btn-primary" name="action" value="sms-one">
+                                <i class="ri-send-plane-line me-1"></i> Yuborish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filter Offcanvas -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title" id="offcanvasRightLabel">
+                    <i class="ri-filter-3-line me-2"></i> Filterlash
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <form id="filterForm" method="GET">
+                <div class="offcanvas-body">
+                    <div class="mb-4">
+                        <label for="filter" class="form-label fw-medium">Qayerda eshitgan bo'yicha</label>
+                        <select class="form-select" id="filter" name="filter">
+                            <option value="" selected disabled>Qiymatni tanlang</option>
+                            <option value="0" {% if request.GET.filter == '0' %}selected{% endif %}>Telegramda</option>
+                            <option value="1" {% if request.GET.filter == '1' %}selected{% endif %}>Instagramda</option>
+                            <option value="2" {% if request.GET.filter == '2' %}selected{% endif %}>YouTubeda</option>
+                            <option value="3" {% if request.GET.filter == '3' %}selected{% endif %}>Odamlar orasida</option>
+                            <option value="4" {% if request.GET.filter == '4' %}selected{% endif %}>Xech qayerda</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="dateFilter" class="form-label fw-medium">Qo'shilgan sana bo'yicha</label>
+                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.GET.date }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="phoneFilter" class="form-label fw-medium">Telefon raqami bo'yicha</label>
+                        <input type="text" class="form-control" id="phoneFilter" name="phone" placeholder="Telefon raqamini kiriting" value="{{ request.GET.phone }}">
+                    </div>
+                </div>
+                
+                <div class="offcanvas-footer border-top p-3">
+                    <div class="d-flex gap-2">
+                        <button type="reset" class="btn btn-outline-secondary flex-grow-1">
+                            <i class="ri-refresh-line me-1"></i> Tozalash
+                        </button>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="ri-filter-3-line me-1"></i> Filterlash
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- App body ends -->
+</div>
+
+<style>
+    /* Avatar styles */
+    .avatar-circle {
+        width: 60px;
+        height: 60px;
+        background-color: #0d6efd;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .avatar-initials {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Pagination variables
+        let currentPage = 1;
+        let itemsPerPage = 15;
+        let filteredItems = [];
+        let currentView = 'table'; // Track current view (table or card)
+        
+        // Get all client items
+        const allClientItems = document.querySelectorAll('.client-item');
+        const totalItems = allClientItems.length;
+        document.getElementById('totalItemsCount').textContent = totalItems;
+        
+        // Initialize pagination
+        initPagination();
+        
+        // Delete functionality
+        let clientId; // ID of the client to be deleted
+
+        // Listen to all delete buttons
+        document.querySelectorAll(".delete-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                clientId = this.getAttribute("data-id");
+            });
+        });
+
+        // Handle confirmation in modal
+        document.querySelector(".confirm-delete").addEventListener("click", function () {
+            if (clientId) {
+                // AJAX request to delete
+                fetch(`/client/delete/${clientId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        // Remove the items with matching data-id
+                        document.querySelectorAll(`.client-item[data-id="${clientId}"]`).forEach(item => {
+                            item.remove();
+                        });
+                        
+                        // Re-initialize pagination after deletion
+                        initPagination();
+                        showPage(currentPage);
+                        
+                        // Show success message
+                        const alertHtml = `
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="ri-checkbox-circle-line me-2"></i> Mijoz muvaffaqiyatli o'chirildi
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                    } else {
+                        // Show error message
+                        const alertHtml = `
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="ri-error-warning-line me-2"></i> ${data.message || "O'chirishda xatolik yuz berdi"}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                    }
+                })
+                .catch(error => {
+                    console.error("O'chirishda xatolik:", error);
+                    // Show error message
+                    const alertHtml = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="ri-error-warning-line me-2"></i> O'chirishda xatolik yuz berdi
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                });
+            }
+        });
+        
+        // View toggle functionality
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const cardViewBtn = document.getElementById('cardViewBtn');
+        const tableView = document.getElementById('tableView');
+        const cardView = document.getElementById('cardView');
+        
+        if (tableViewBtn && cardViewBtn && tableView && cardView) {
+            tableViewBtn.addEventListener('click', function() {
+                tableView.style.display = 'block';
+                cardView.style.display = 'none';
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+                currentView = 'table';
+                localStorage.setItem('clientViewPreference', 'table');
+                
+                // Re-apply pagination for current view
+                showPage(currentPage);
+            });
+            
+            cardViewBtn.addEventListener('click', function() {
+                tableView.style.display = 'none';
+                cardView.style.display = 'block';
+                cardViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+                currentView = 'card';
+                localStorage.setItem('clientViewPreference', 'card');
+                
+                // Re-apply pagination for current view
+                showPage(currentPage);
+            });
+            
+            // Load user preference if exists
+            const viewPreference = localStorage.getItem('clientViewPreference');
+            if (viewPreference === 'card') {
+                cardViewBtn.click();
+            } else {
+                tableViewBtn.click();
+            }
+        }
+        
+        // Search functionality
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function(e) {
+                // Only filter on keyup if not submitting the form
+                if (e.key !== 'Enter') {
+                    const searchTerm = this.value.toLowerCase();
+                    
+                    // Filter items based on search term
+                    filteredItems = Array.from(allClientItems).filter(item => {
+                        const textContent = item.textContent.toLowerCase();
+                        return textContent.includes(searchTerm);
+                    });
+                    
+                    // Re-initialize pagination with filtered items
+                    initPagination();
+                    showPage(1); // Reset to first page after search
+                }
+            });
+        }
+        
+        // Items per page change handler
+        const itemsPerPageSelect = document.getElementById('itemsPerPage');
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', function() {
+                itemsPerPage = parseInt(this.value);
+                localStorage.setItem('clientItemsPerPage', itemsPerPage);
+                initPagination();
+                showPage(1); // Reset to first page after changing items per page
+            });
+            
+            // Load user preference for items per page if exists
+            const savedItemsPerPage = localStorage.getItem('clientItemsPerPage');
+            if (savedItemsPerPage) {
+                itemsPerPage = parseInt(savedItemsPerPage);
+                itemsPerPageSelect.value = itemsPerPage;
+            }
+        }
+        
+        // SMS character counter
+        const messageText = document.getElementById('message-text');
+        const charCount = document.getElementById('charCount');
+        
+        if (messageText && charCount) {
+            messageText.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+                
+                if (count > 160) {
+                    charCount.classList.add('text-danger');
+                } else {
+                    charCount.classList.remove('text-danger');
+                }
+            });
+        }
+        
+        // Quick SMS character counter
+        const quickMessageText = document.getElementById('quick-message-text');
+        const quickCharCount = document.getElementById('quickCharCount');
+        
+        if (quickMessageText && quickCharCount) {
+            quickMessageText.addEventListener('input', function() {
+                const count = this.value.length;
+                quickCharCount.textContent = count;
+                
+                if (count > 160) {
+                    quickCharCount.classList.add('text-danger');
+                } else {
+                    quickCharCount.classList.remove('text-danger');
+                }
+            });
+        }
+        
+        // Quick message buttons
+        const quickMessageButtons = document.querySelectorAll('.quick-message');
+        
+        if (quickMessageButtons.length > 0 && messageText) {
+            quickMessageButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    messageText.value = message;
+                    messageText.dispatchEvent(new Event('input'));
+                });
+            });
+        }
+        
+        // Quick message buttons for single SMS
+        const quickMessageSingleButtons = document.querySelectorAll('.quick-message-single');
+        
+        if (quickMessageSingleButtons.length > 0 && quickMessageText) {
+            quickMessageSingleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    quickMessageText.value = message;
+                    quickMessageText.dispatchEvent(new Event('input'));
+                });
+            });
+        }
+        
+        // Recipient type change handler
+        const recipientType = document.getElementById('recipient-type');
+        const customRecipientsContainer = document.getElementById('customRecipientsContainer');
+        
+        if (recipientType && customRecipientsContainer) {
+            recipientType.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customRecipientsContainer.style.display = 'block';
+                } else {
+                    customRecipientsContainer.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Reset form button
+        const resetBtn = document.querySelector('button[type="reset"]');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                setTimeout(() => {
+                    window.location.href = window.location.pathname;
+                }, 100);
+            });
+        }
+        
+        // Pagination functions
+        function initPagination() {
+            // If search is active, use filtered items, otherwise use all items
+            const items = filteredItems.length > 0 ? filteredItems : Array.from(allClientItems);
+            const totalPages = Math.ceil(items.length / itemsPerPage);
+            
+            // Generate pagination links
+            const paginationElement = document.getElementById('pagination');
+            paginationElement.innerHTML = '';
+            
+            // Don't show pagination if there's only one page
+            if (totalPages <= 1) {
+                showPage(1);
+                return;
+            }
+            
+            // Previous button
+            const prevLi = document.createElement('li');
+            prevLi.className = 'page-item' + (currentPage === 1 ? ' disabled' : '');
+            prevLi.innerHTML = '<a class="page-link" href="#" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a>';
+            prevLi.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    showPage(currentPage - 1);
+                }
+            });
+            paginationElement.appendChild(prevLi);
+            
+            // Simplified page number generation - show max 5 pages
+            const maxVisiblePages = 5;
+            let startPage, endPage;
+            
+            if (totalPages <= maxVisiblePages) {
+                // If we have 5 or fewer pages, show all
+                startPage = 1;
+                endPage = totalPages;
+            } else {
+                // More than 5 pages, calculate which to show
+                if (currentPage <= 3) {
+                    startPage = 1;
+                    endPage = 5;
+                } else if (currentPage + 1 >= totalPages) {
+                    startPage = totalPages - 4;
+                    endPage = totalPages;
+                } else {
+                    startPage = currentPage - 2;
+                    endPage = currentPage + 2;
+                }
+            }
+            
+            // Generate page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = 'page-item' + (i === currentPage ? ' active' : '');
+                pageLi.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                pageLi.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    showPage(i);
+                });
+                paginationElement.appendChild(pageLi);
+            }
+            
+            // Next button
+            const nextLi = document.createElement('li');
+            nextLi.className = 'page-item' + (currentPage === totalPages ? ' disabled' : '');
+            nextLi.innerHTML = '<a class="page-link" href="#" aria-label="Next"><span aria-hidden="true">&raquo;</span></a>';
+            nextLi.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (currentPage < totalPages) {
+                    showPage(currentPage + 1);
+                }
+            });
+            paginationElement.appendChild(nextLi);
+            
+            // Show current page
+            showPage(currentPage);
+        }
+        
+        function showPage(page) {
+            // If search is active, use filtered items, otherwise use all items
+            const items = filteredItems.length > 0 ? filteredItems : Array.from(allClientItems);
+            const totalPages = Math.ceil(items.length / itemsPerPage);
+            
+            // Validate page number
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            
+            currentPage = page;
+            
+            // Calculate start and end indices
+            const startIndex = (page - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, items.length);
+            
+            // Hide all items first
+            allClientItems.forEach(item => {
+                item.style.display = 'none';
+            });
+            
+            // Show only items for current page
+            for (let i = startIndex; i < endIndex; i++) {
+                // For card view, we need to make sure the parent column is visible
+                if (currentView === 'card') {
+                    items[i].style.display = 'block';
+                } else {
+                    items[i].style.display = '';
+                }
+                
+                // Add fade-in animation
+                items[i].classList.add('fade-in');
+                setTimeout(() => {
+                    items[i].classList.remove('fade-in');
+                }, 300);
+            }
+            
+            // Update displayed items count
+            document.getElementById('displayedItemsCount').textContent = items.length > 0 ? 
+                `${startIndex + 1}-${endIndex}` : '0';
+            
+            // Update active page in pagination
+            const paginationLinks = document.querySelectorAll('#pagination .page-item');
+            paginationLinks.forEach(link => {
+                link.classList.remove('active');
+                const pageLink = link.querySelector('.page-link');
+                if (pageLink && pageLink.textContent == page) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Update previous/next buttons
+            const prevButton = document.querySelector('#pagination .page-item:first-child');
+            const nextButton = document.querySelector('#pagination .page-item:last-child');
+            
+            if (prevButton) {
+                if (page === 1) {
+                    prevButton.classList.add('disabled');
+                } else {
+                    prevButton.classList.remove('disabled');
+                }
+            }
+            
+            if (nextButton) {
+                if (page === totalPages || totalPages === 0) {
+                    nextButton.classList.add('disabled');
+                } else {
+                    nextButton.classList.remove('disabled');
+                }
+            }
+        }
+    });
+    
+    // Quick SMS function
+    function quickSms(phone) {
+        const quickRecipient = document.getElementById('quick-recipient');
+        const quickSmsModal = new bootstrap.Modal(document.getElementById('quickSmsModal'));
+        
+        if (quickRecipient) {
+            quickRecipient.value = phone;
+            quickSmsModal.show();
+        }
+    }
+</script>
+{% endblock item %}

@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load static %}
+{% block title %}Bildirishnomalar - Konsalting{% endblock title %}
+
+{% block item %}
+<style>
+  .notification-card { transition: all 0.2s ease; border-left: 4px solid transparent; }
+  .notification-card.overdue { border-left-color: #dc3545; background: rgba(220,53,69,0.05); }
+  .notification-card.upcoming { border-left-color: #ffc107; background: rgba(255,193,7,0.08); }
+  .notification-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  .notification-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .overdue-icon { background: rgba(220,53,69,0.12); color: #dc3545; }
+  .upcoming-icon { background: rgba(255,193,7,0.15); color: #d69b00; }
+  .stats-card { border: none; border-radius: 12px; }
+  .badge-soft { padding: 4px 8px; border-radius: 10px; font-size: 0.8rem; }
+</style>
+
+<div class="app-container">
+  <div class="app-hero-header d-flex align-items-center justify-content-between">
+    <ol class="breadcrumb mb-0">
+      <li class="breadcrumb-item">
+        <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+        <a href="/">Asosiy</a>
+      </li>
+      <li class="breadcrumb-item text-primary" aria-current="page">Bildirishnomalar</li>
+    </ol>
+    <div class="d-flex gap-2">
+      <span class="badge bg-danger-subtle text-danger">Overdue: {{ overdue_count }}</span>
+      <span class="badge bg-warning-subtle text-warning">Upcoming: {{ upcoming_count }}</span>
+      <span class="badge bg-primary-subtle text-primary">Jami: {{ total_notifications }}</span>
+    </div>
+  </div>
+
+  <div class="app-body">
+    {% include 'messages.html' %}
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card stats-card shadow-sm bg-danger bg-opacity-10">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1">Overdue</p>
+              <h4 class="mb-0 text-danger">{{ overdue_count }}</h4>
+            </div>
+            <div class="notification-icon overdue-icon"><i class="ri-error-warning-line"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stats-card shadow-sm bg-warning bg-opacity-10">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1">Upcoming</p>
+              <h4 class="mb-0 text-warning">{{ upcoming_count }}</h4>
+            </div>
+            <div class="notification-icon upcoming-icon"><i class="ri-time-line"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card stats-card shadow-sm bg-primary bg-opacity-10">
+          <div class="card-body d-flex align-items-center justify-content-between">
+            <div>
+              <p class="text-muted mb-1">Jami</p>
+              <h4 class="mb-0 text-primary">{{ total_notifications }}</h4>
+            </div>
+            <div class="notification-icon" style="background: rgba(74,108,247,0.12); color: #4a6cf7;">
+              <i class="ri-notification-3-line"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if overdue_contracts %}
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-danger bg-opacity-10 border-0">
+        <h5 class="card-title mb-0 text-danger">
+          <i class="ri-error-warning-line me-2"></i>Muddati o'tgan shartnomalar ({{ overdue_count }})
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        {% for contract in overdue_contracts %}
+        <div class="notification-card overdue p-3 border-bottom">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div class="d-flex gap-3">
+              <div class="notification-icon overdue-icon">
+                <i class="ri-error-warning-line"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">
+                  <span class="text-danger">#{{ contract.contract_number }}</span> - {{ contract.client.full_name|default:contract.client_full_name|default:"Mijoz" }}
+                </h6>
+                <p class="text-muted mb-1 small">
+                  <i class="ri-phone-line me-1"></i>{{ contract.client.phone|default:contract.phone_primary|default:"-" }}
+                  <span class="mx-2">|</span>
+                  <i class="ri-mail-line me-1"></i>{{ contract.client.email|default:"-" }}
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge-soft bg-light text-muted">Status: {{ contract.get_status_display }}</span>
+                  <span class="badge-soft bg-light text-muted">Heard: {{ contract.client.heard|default:"-" }}</span>
+                  <span class="badge-soft bg-light text-muted">Sana: {{ contract.created_at|date:"d.m.Y" }}</span>
+                  <span class="badge-soft bg-light text-muted">Joy: {{ contract.contract_location }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-end">
+              <p class="mb-1"><strong>Qoldiq:</strong> {{ contract.remaining_amount|intcomma }} so'm</p>
+              <p class="mb-1 text-success"><strong>To'langan:</strong> {{ contract.amount_paid|intcomma }} so'm</p>
+              <p class="mb-0 text-muted"><strong>Umumiy:</strong> {{ contract.total_service_fee|intcomma }} so'm</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if upcoming_contracts %}
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-warning bg-opacity-10 border-0">
+        <h5 class="card-title mb-0 text-warning">
+          <i class="ri-time-line me-2"></i>Yaqin muddatdagi shartnomalar ({{ upcoming_count }})
+        </h5>
+      </div>
+      <div class="card-body p-0">
+        {% for contract in upcoming_contracts %}
+        <div class="notification-card upcoming p-3 border-bottom">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div class="d-flex gap-3">
+              <div class="notification-icon upcoming-icon">
+                <i class="ri-time-line"></i>
+              </div>
+              <div>
+                <h6 class="mb-1">
+                  <span class="text-warning">#{{ contract.contract_number }}</span> - {{ contract.client.full_name|default:contract.client_full_name|default:"Mijoz" }}
+                </h6>
+                <p class="text-muted mb-1 small">
+                  <i class="ri-phone-line me-1"></i>{{ contract.client.phone|default:contract.phone_primary|default:"-" }}
+                  <span class="mx-2">|</span>
+                  <i class="ri-mail-line me-1"></i>{{ contract.client.email|default:"-" }}
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                  <span class="badge-soft bg-light text-muted">Status: {{ contract.get_status_display }}</span>
+                  <span class="badge-soft bg-light text-muted">Heard: {{ contract.client.heard|default:"-" }}</span>
+                  <span class="badge-soft bg-light text-muted">Sana: {{ contract.created_at|date:"d.m.Y" }}</span>
+                  <span class="badge-soft bg-light text-muted">Joy: {{ contract.contract_location }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="text-end">
+              <p class="mb-1"><strong>Qoldiq:</strong> {{ contract.remaining_amount|intcomma }} so'm</p>
+              <p class="mb-1 text-success"><strong>To'langan:</strong> {{ contract.amount_paid|intcomma }} so'm</p>
+              <p class="mb-0 text-muted"><strong>Umumiy:</strong> {{ contract.total_service_fee|intcomma }} so'm</p>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if not overdue_contracts and not upcoming_contracts %}
+    <div class="card shadow-sm border-0">
+      <div class="card-body text-center py-5">
+        <div class="notification-icon" style="background: rgba(0,0,0,0.05); color: #6c757d;">
+          <i class="ri-notification-off-line"></i>
+        </div>
+        <h5 class="mt-3 mb-1">Bildirishnomalar yo'q</h5>
+        <p class="text-muted mb-0">Hozircha qarzdor yoki yaqin muddatdagi konsalting shartnomalari mavjud emas.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock item %}
+

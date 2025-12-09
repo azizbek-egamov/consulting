@@ -1,0 +1,370 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Leadlar{% endblock title %}
+
+{% block item %}
+<div class="app-body">
+    {% include 'messages.html' %}
+    <div class="row gx-3">
+        {% csrf_token %}
+        <div class="col-sm-12">
+            <!-- Statistika kartlari -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Jami Leadlar</h6>
+                                    <h3 class="mb-0">{{ total_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-phone-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0">Bugungi Leadlar</h6>
+                                    <h3 class="mb-0">{{ today_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-calendar-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Javob Berilgan</b></h6>
+                                    <h3 class="mb-0">{{ answered_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-check-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Javob Berilmagan</b></h6>
+                                    <h3 class="mb-0">{{ answered_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-close-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info bg-gradient text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Qo'yib qo'yilgan</b></h6>
+                                    <h3 class="mb-0">{{ answered_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-arrow-go-back-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!--  <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Band</b></h6>
+                                    <h3 class="mb-0">{{ answered_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-plane-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success bg-gradient text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Qayta qo'ng'iroq so'ralgan</b></h6>
+                                    <h3 class="mb-0">{{ converted_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-user-add-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> -->
+                <div class="col-md-2">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title mb-0"><b>Mijozga Aylangan</b></h6>
+                                    <h3 class="mb-0">{{ converted_leads }}</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="ri-shield-user-line fs-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Filterlar -->
+            <div class="card mb-3">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Qidiruv</label>
+                            <input type="text" name="search" class="form-control" 
+                                   placeholder="Telefon, ism yoki izoh..." 
+                                   value="{{ current_filters.search|default:'' }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Holat</label>
+                            <select name="status" class="form-select">
+                                <option value="">Barchasi</option>
+                                {% for status_code, status_name in status_choices %}
+                                    <option value="{{ status_code }}" 
+                                            {% if current_filters.status == status_code %}selected{% endif %}>
+                                        {{ status_name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Sana</label>
+                            <select name="date" class="form-select">
+                                <option value="">Barchasi</option>
+                                <option value="today" {% if current_filters.date == 'today' %}selected{% endif %}>Bugun</option>
+                                <option value="yesterday" {% if current_filters.date == 'yesterday' %}selected{% endif %}>Kecha</option>
+                                <option value="week" {% if current_filters.date == 'week' %}selected{% endif %}>Bu hafta</option>
+                                <option value="month" {% if current_filters.date == 'month' %}selected{% endif %}>Bu oy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Konvertatsiya</label>
+                            <select name="converted" class="form-select">
+                                <option value="">Barchasi</option>
+                                <option value="converted" {% if current_filters.converted == 'converted' %}selected{% endif %}>Aylantirilgan</option>
+                                <option value="not_converted" {% if current_filters.converted == 'not_converted' %}selected{% endif %}>Aylantirilmagan</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-search-line me-1"></i>Qidirish
+                                </button>
+                                <a href="{% url 'leads_list' %}" class="btn btn-outline-secondary">
+                                    <i class="ri-refresh-line me-1"></i>Tozalash
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Leadlar jadvali -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Leadlar Ro'yxati</h5>
+                    <a href="{% url 'lead_create' %}" class="btn btn-primary">
+                        <i class="ri-add-line me-1"></i>Yangi Lead
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if leads %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Telefon</th>
+                                    <th>Mijoz</th>
+                                    <th>Holat</th>
+                                    <th>Davomiylik</th>
+                                    <th>Audio</th>
+                                    <th>Yaratilgan</th>
+                                    <th>Keyingi qo'ng'iroq</th>
+                                    <th>Konvertatsiya</th>
+                                    <th>Amallar</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lead in leads %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ lead.phone_number }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if lead.client_name %}
+                                            {{ lead.client_name }}
+                                        {% else %}
+                                            <span class="text-muted">Noma'lum</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lead.call_status == 'answered' %}
+                                            <span class="badge bg-success">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'not_answered' %}
+                                            <span class="badge bg-danger">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'hung_up' %}
+                                            <span class="badge bg-warning">{{ lead.get_call_status_display }}</span>
+                                        {% elif lead.call_status == 'busy' %}
+                                            <span class="badge bg-secondary">{{ lead.get_call_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-info">{{ lead.get_call_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lead.call_duration %}
+                                            {{ lead.get_duration_display }}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lead.audio_recording %}
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="playAudio('{{ lead.audio_recording.url }}')">
+                                                <i class="ri-play-line"></i>
+                                            </button>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ lead.created_at|date:"d.m.Y H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        {% if lead.follow_up_date %}
+                                            <small class="{% if lead.follow_up_date <= now %}text-danger{% else %}text-muted{% endif %}">
+                                                {{ lead.follow_up_date|date:"d.m.Y H:i" }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if lead.is_converted %}
+                                            <span class="badge bg-success">
+                                                <i class="ri-check-line me-1"></i>Aylangan
+                                            </span>
+                                        {% else %}
+                                            <a href="{% url 'lead_convert_to_client' lead.id %}" 
+                                               class="btn btn-sm btn-outline-success">
+                                                <i class="ri-user-add-line"></i>
+                                            </a>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'lead_detail' lead.id %}" 
+                                               class="btn btn-sm btn-outline-info">
+                                                <i class="ri-eye-line"></i>
+                                            </a>
+                                            <a href="{% url 'lead_edit' lead.id %}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="deleteLead({{ lead.pk }})">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                
+                            </tbody>
+                            
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="ri-phone-line fs-1 text-muted"></i>
+                        <h5 class="mt-3 text-muted">Leadlar topilmadi</h5>
+                        <p class="text-muted">Yangi lead qo'shish uchun yuqoridagi tugmani bosing</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio modal -->
+<div class="modal fade" id="audioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Audio Yozuv</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <audio id="audioPlayer" controls class="w-100">
+                    Brauzeringiz audio elementini qo'llab-quvvatlamaydi.
+                </audio>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Audio o'ynatish
+function playAudio(audioUrl) {
+    const audioPlayer = document.getElementById('audioPlayer');
+    audioPlayer.src = audioUrl;
+    
+    const audioModal = new bootstrap.Modal(document.getElementById('audioModal'));
+    audioModal.show();
+}
+
+// Lead o'chirish
+function deleteLead(leadId) {
+    if (confirm('Haqiqatan ham bu leadni o\'chirmoqchimisiz?')) {
+        fetch(`/leads/delete/${leadId}/`, {
+            method: 'GET',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Xatolik: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Xatolik yuz berdi');
+        });
+    }
+}
+</script>
+{% endblock item %}
