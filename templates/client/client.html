@@ -81,6 +81,19 @@
     .source-icon-youtube { color: #ff0000; }
     .source-icon-people { color: #28a745; }
     .source-icon-none { color: #6c757d; }
+
+    /* Search bar sizing */
+    .search-actions .input-group > .form-control,
+    .search-actions .input-group > .btn,
+    .search-actions > .btn {
+        height: 38px;
+    }
+    .search-actions .btn-clear {
+        min-width: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 
 <div class="app-container">
@@ -159,14 +172,18 @@
 
                         <div class="d-flex gap-2">
                             <!-- Search form -->
-                            <form method="POST" action="{% url 'client' %}" class="me-2">
-                                {% csrf_token %}
+                            <form method="GET" action="{% url 'client' %}" class="me-2 d-flex align-items-center gap-2 search-actions">
                                 <div class="input-group">
                                     <input type="text" class="form-control" name="search" value="{{search_value}}" id="searchInput" placeholder="Qidirish...">
-                                    <button type="submit" class="btn btn-primary" name="action" value="search">
+                                    <button type="submit" class="btn btn-primary">
                                         <i class="ri-search-line"></i>
                                     </button>
                                 </div>
+                                {% if search_value %}
+                                <a href="{% url 'client' %}" class="btn btn-outline-secondary px-3 btn-clear">
+                                    <i class="ri-close-line me-1"></i> Tozalash
+                                </a>
+                                {% endif %}
                             </form>
                             
                             <!-- Filter button -->
@@ -532,12 +549,10 @@
                     <div class="mb-4">
                         <label for="filter" class="form-label fw-medium">Qayerda eshitgan bo'yicha</label>
                         <select class="form-select" id="filter" name="filter">
-                            <option value="" selected disabled>Qiymatni tanlang</option>
-                            <option value="0" {% if request.GET.filter == '0' %}selected{% endif %}>Telegramda</option>
-                            <option value="1" {% if request.GET.filter == '1' %}selected{% endif %}>Instagramda</option>
-                            <option value="2" {% if request.GET.filter == '2' %}selected{% endif %}>YouTubeda</option>
-                            <option value="3" {% if request.GET.filter == '3' %}selected{% endif %}>Odamlar orasida</option>
-                            <option value="4" {% if request.GET.filter == '4' %}selected{% endif %}>Xech qayerda</option>
+                            <option value="" {% if not request.GET.filter %}selected{% endif %}>Hammasi</option>
+                            {% for heard in heard_choices %}
+                                <option value="{{ heard }}" {% if request.GET.filter == heard %}selected{% endif %}>{{ heard }}</option>
+                            {% endfor %}
                         </select>
                     </div>
                     
@@ -554,9 +569,9 @@
                 
                 <div class="offcanvas-footer border-top p-3">
                     <div class="d-flex gap-2">
-                        <button type="reset" class="btn btn-outline-secondary flex-grow-1">
+                        <a href="{% url 'client' %}" class="btn btn-outline-secondary flex-grow-1">
                             <i class="ri-refresh-line me-1"></i> Tozalash
-                        </button>
+                        </a>
                         <button type="submit" class="btn btn-primary flex-grow-1">
                             <i class="ri-filter-3-line me-1"></i> Filterlash
                         </button>
@@ -708,27 +723,6 @@
             } else {
                 tableViewBtn.click();
             }
-        }
-        
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function(e) {
-                // Only filter on keyup if not submitting the form
-                if (e.key !== 'Enter') {
-                    const searchTerm = this.value.toLowerCase();
-                    
-                    // Filter items based on search term
-                    filteredItems = Array.from(allClientItems).filter(item => {
-                        const textContent = item.textContent.toLowerCase();
-                        return textContent.includes(searchTerm);
-                    });
-                    
-                    // Re-initialize pagination with filtered items
-                    initPagination();
-                    showPage(1); // Reset to first page after search
-                }
-            });
         }
         
         // Items per page change handler

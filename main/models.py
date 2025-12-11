@@ -5,6 +5,7 @@ from decimal import Decimal
 from django.db.models import Sum, Max
 from datetime import datetime, time
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 # Create your model
 
@@ -206,6 +207,9 @@ class ConsultingContract(models.Model):
     
     # Ish yakunlanganidan keyin shartnoma rasmlari (max 3 ta)
     completed_contract_images = models.JSONField(default=list, blank=True, verbose_name="Yakunlangan shartnoma rasmlari", help_text="Maksimal 3 ta rasm")
+
+    # Shartnomani yaratgan foydalanuvchi
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Yaratgan foydalanuvchi", related_name="created_contracts")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

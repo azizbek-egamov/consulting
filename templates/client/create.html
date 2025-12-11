@@ -145,7 +145,7 @@
                             class="form-control phone-input" 
                             name="phone" 
                             id="phone-input" 
-                            placeholder="97 212 21 21" 
+                            placeholder="+998 90 123 45 67" 
                             required
                           >
                         </div>
@@ -169,7 +169,7 @@
                             class="form-control phone-input" 
                             name="phone2" 
                             id="phone2-input" 
-                            placeholder="97 212 21 21"
+                            placeholder="+998 90 123 45 67"
                           >
                         </div>
                       </div>
@@ -299,22 +299,34 @@
 <script>
   // Phone number formatting
   function formatPhone(input) {
-    if (input) {
-      input.addEventListener('input', function(e) {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length > 0) {
-          if (value.length <= 2) {
-            this.value = value;
-          } else if (value.length <= 5) {
-            this.value = value.slice(0, 2) + ' ' + value.slice(2);
-          } else if (value.length <= 7) {
-            this.value = value.slice(0, 2) + ' ' + value.slice(2, 5) + ' ' + value.slice(5);
-          } else {
-            this.value = value.slice(0, 2) + ' ' + value.slice(2, 5) + ' ' + value.slice(5, 7) + ' ' + value.slice(7, 9);
-          }
-        }
-      });
-    }
+    if (!input) return;
+    input.addEventListener('input', function() {
+      let digits = this.value.replace(/\D/g, '').slice(0, 12);
+
+      // Prefer Uzbekistan format if prefix 998
+      if (digits.startsWith('998')) {
+        let rest = digits.slice(3);
+        let formatted = '+998';
+        if (rest.length > 0) formatted += ' ' + rest.slice(0, 2);
+        if (rest.length > 2) formatted += ' ' + rest.slice(2, 5);
+        if (rest.length > 5) formatted += ' ' + rest.slice(5, 7);
+        if (rest.length > 7) formatted += ' ' + rest.slice(7, 9);
+        if (rest.length > 9) formatted += ' ' + rest.slice(9, 11);
+        this.value = formatted;
+        return;
+      }
+
+      // Fallback generic grouping (2-3-2-2)
+      if (digits.length <= 2) {
+        this.value = digits;
+      } else if (digits.length <= 5) {
+        this.value = digits.slice(0, 2) + ' ' + digits.slice(2);
+      } else if (digits.length <= 7) {
+        this.value = digits.slice(0, 2) + ' ' + digits.slice(2, 5) + ' ' + digits.slice(5);
+      } else {
+        this.value = digits.slice(0, 2) + ' ' + digits.slice(2, 5) + ' ' + digits.slice(5, 7) + ' ' + digits.slice(7, 9);
+      }
+    });
   }
   
   formatPhone(document.getElementById('phone-input'));

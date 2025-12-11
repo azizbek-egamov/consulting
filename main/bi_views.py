@@ -1,27 +1,15 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from main.models import Client, Rasrochka, City, Building, Expense, ExpenseType, Lead, LeadStage, Home, ConsultingContract, ConsultingContract
-from django.db.models import Sum, Count, Q, F
-from django.db.models.functions import TruncDate
-from datetime import datetime, timedelta
-from django.utils import timezone
-import json
-import logging
-
-logger = logging.getLogger(__name__)
-
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.utils import timezone
-from django.db.models import Q, Count, Avg
+from django.db.models import Sum, Count, Q, F, Avg
 from django.db.models.functions import TruncDate, TruncMonth
 from datetime import datetime, timedelta, date
-from main.models import Lead, ClientInformation, CallOperator, LeadStage
-import logging
+from main.models import Client, Rasrochka, City, Building, Expense, ExpenseType, Lead, LeadStage, Home, ConsultingContract, ClientInformation, CallOperator
+from django.contrib.auth.models import User
 import json
+import logging
 
 # Logger sozlamalari
 logger = logging.getLogger(__name__)
@@ -211,7 +199,7 @@ def leads_dashboard_view(request):
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
     except ValueError:
-        messages.error(request, "Noto'g'ri sana formati kiritildi.")
+        messages.warning(request, "Noto'g'ri sana formati kiritildi.")
         start_date = (date.today() - timedelta(days=30)).date()
         end_date = date.today().date()
         start_date_str = start_date.strftime('%Y-%m-%d')
@@ -415,4 +403,167 @@ def leads_dashboard_view(request):
         'all_call_statuses': all_call_statuses,
     }
     return render(request, 'bi/leads_dashboard.html', context)
+
+
+@login_required(login_url='login')
+@user_passes_test
+def users_dashboard_view(request):
+    """Foydalanuvchilar bo'yicha statistikalar sahifasi"""
+    
+    # Default sana filtrlari
+    end_date_str = request.GET.get('end_date', date.today().strftime('%Y-%m-%d'))
+    start_date_str = request.GET.get('start_date', (date.today() - timedelta(days=30)).strftime('%Y-%m-%d'))
+    
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        messages.warning(request, "Noto'g'ri sana formati kiritildi.")
+        start_date = (date.today() - timedelta(days=30)).date()
+        end_date = date.today().date()
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+    
+    # Foydalanuvchilar bo'yicha shartnomalar
+    contracts_queryset = ConsultingContract.objects.filter(
+        created_at__date__range=(start_date, end_date),
+        created_by__isnull=False
+    )
+    
+    # 1. Har bir foydalanuvchi bo'yicha shartnomalar soni (Bar Chart)
+    user_contracts_data = contracts_queryset.values(
+        'created_by__username',
+        'created_by__first_name',
+        'created_by__last_name'
+    ).annotate(
+        count=Count('id'),
+        total_amount=Sum('total_service_fee'),
+        paid_amount=Sum('amount_paid')
+    ).order_by('-count')
+    
+    user_names = []
+    user_contracts_counts = []
+    user_total_amounts = []
+    user_paid_amounts = []
+    
+    for item in user_contracts_data:
+        full_name = f"{item['created_by__last_name'] or ''} {item['created_by__first_name'] or ''}".strip()
+        if not full_name:
+            full_name = item['created_by__username']
+        user_names.append(full_name)
+        user_contracts_counts.append(item['count'])
+        user_total_amounts.append(item['total_amount'] or 0)
+        user_paid_amounts.append(item['paid_amount'] or 0)
+    
+    # 2. Kunlik shartnomalar yaratilishi foydalanuvchilar bo'yicha (Line Chart)
+    daily_user_contracts = contracts_queryset.annotate(
+        date=TruncDate('created_at')
+    ).values('date', 'created_by__username').annotate(
+        count=Count('id')
+    ).order_by('date', 'created_by__username')
+    
+    # Barcha foydalanuvchilar ro'yxati
+    all_users = User.objects.filter(created_contracts__isnull=False).distinct()
+    dates_range = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+    
+    # Har bir foydalanuvchi uchun kunlik ma'lumotlar
+    user_daily_data = {}
+    for user in all_users:
+        user_daily_data[user.username] = {}
+        for d in dates_range:
+            user_daily_data[user.username][d.strftime('%Y-%m-%d')] = 0
+    
+    for item in daily_user_contracts:
+        date_str = item['date'].strftime('%Y-%m-%d')
+        username = item['created_by__username']
+        if username in user_daily_data:
+            user_daily_data[username][date_str] = item['count']
+    
+    # Multi-line chart uchun ma'lumotlar
+    daily_dates = [d.strftime('%Y-%m-%d') for d in dates_range]
+    multi_line_series = []
+    for user in all_users:
+        full_name = f"{user.last_name or ''} {user.first_name or ''}".strip()
+        if not full_name:
+            full_name = user.username
+        multi_line_series.append({
+            'name': full_name,
+            'data': [user_daily_data[user.username][d] for d in daily_dates]
+        })
+    
+    # 3. Foydalanuvchilar bo'yicha shartnomalar holati (Stacked Bar Chart)
+    user_status_data = contracts_queryset.values(
+        'created_by__username',
+        'status'
+    ).annotate(
+        count=Count('id')
+    ).order_by('created_by__username', 'status')
+    
+    # Status bo'yicha guruhlash
+    status_map = {}
+    for item in user_status_data:
+        username = item['created_by__username']
+        if username not in status_map:
+            status_map[username] = {}
+        status_map[username][item['status']] = item['count']
+    
+    # 4. Foydalanuvchilar bo'yicha to'lovlar (Bar Chart)
+    user_payments_data = contracts_queryset.values(
+        'created_by__username',
+        'created_by__first_name',
+        'created_by__last_name'
+    ).aggregate(
+        total_contracts=Count('id'),
+        total_service_fee=Sum('total_service_fee'),
+        total_paid=Sum('amount_paid')
+    )
+    
+    # 5. Foydalanuvchilar bo'yicha o'rtacha shartnoma summasi
+    user_avg_data = contracts_queryset.values(
+        'created_by__username',
+        'created_by__first_name',
+        'created_by__last_name'
+    ).annotate(
+        avg_amount=Avg('total_service_fee'),
+        count=Count('id')
+    ).order_by('-avg_amount')
+    
+    user_avg_names = []
+    user_avg_amounts = []
+    for item in user_avg_data:
+        full_name = f"{item['created_by__last_name'] or ''} {item['created_by__first_name'] or ''}".strip()
+        if not full_name:
+            full_name = item['created_by__username']
+        user_avg_names.append(full_name)
+        user_avg_amounts.append(float(item['avg_amount'] or 0))
+    
+    context = {
+        'start_date': start_date_str,
+        'end_date': end_date_str,
+        
+        # Chart 1: Foydalanuvchilar bo'yicha shartnomalar soni
+        'user_names': json.dumps(user_names),
+        'user_contracts_counts': json.dumps(user_contracts_counts),
+        'user_total_amounts': json.dumps(user_total_amounts),
+        'user_paid_amounts': json.dumps(user_paid_amounts),
+        
+        # Chart 2: Kunlik shartnomalar (multi-line)
+        'daily_dates': json.dumps(daily_dates),
+        'multi_line_series': json.dumps(multi_line_series),
+        
+        # Chart 3: Status bo'yicha
+        'status_map': json.dumps(status_map),
+        
+        # Chart 4: O'rtacha summa
+        'user_avg_names': json.dumps(user_avg_names),
+        'user_avg_amounts': json.dumps(user_avg_amounts),
+        
+        # Umumiy statistika
+        'total_users': all_users.count(),
+        'total_contracts': contracts_queryset.count(),
+        'total_amount': contracts_queryset.aggregate(Sum('total_service_fee'))['total_service_fee__sum'] or 0,
+        'total_paid': contracts_queryset.aggregate(Sum('amount_paid'))['amount_paid__sum'] or 0,
+    }
+    
+    return render(request, 'bi/users_dashboard.html', context)
 

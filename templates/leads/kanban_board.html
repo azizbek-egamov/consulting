@@ -630,6 +630,7 @@
 </style>
 
 <div class="container-fluid">
+    {% include 'messages.html' %}
     <!-- Statistikalar -->
     <div class="stats-row">
         <div class="row g-3 mb-4 align-items-center">
@@ -740,11 +741,7 @@
                                 </a></li>
                         </ul>
                     </div>
-                    {% if is_admin %}
-                    <button class="btn btn-outline-success" onclick="openStageManagementModal()" title="Bosqichlarni boshqarish">
-                        <i class="ri-settings-3-line me-2"></i>Bosqichlar
-                    </button>
-                    {% endif %}
+                    {# Bosqichlar tugmasi vaqtincha yashirildi #}
                 </div>
             </div>
         </div>

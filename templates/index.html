@@ -3,7 +3,6 @@
 {% block item %}
 {% load static %}
 {% load humanize %}
-{% if request.user.username == "ceoadmin" %}
 <div class="app-container">
   <!-- App hero header starts -->
   <div class="app-hero-header d-flex align-items-center">
@@ -440,77 +439,4 @@
     });
   });
 </script>
-{% else %}
-<style>
-  .app-container {
-    background-image: url("{% static "images/building.jpg" %}") !important;
-    background-size: cover;
-    background-position: center;
-    width: 100%;
-    height: 100vh;
-    position: relative;
-  }
-  
-  .app-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6));
-    z-index: 1;
-  }
-  
-  .welcome-message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    color: white;
-    z-index: 2;
-    width: 80%;
-    max-width: 600px;
-  }
-  
-  .welcome-message h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-  }
-  
-  .welcome-message p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-  }
-  
-  .welcome-message .btn {
-    padding: 0.75rem 2rem;
-    font-weight: 500;
-    border-radius: 50px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-  }
-  
-  .welcome-message .btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-  }
-</style>
-
-<div class="app-container">
-  <div class="welcome-message">
-    <h1>Ardent Soft</h1>
-    <p>Boshqaruv tizimiga xush kelibsiz</p>
-    {% if request.user.is_authenticated %}
-    {% else %}
-      <a href="/login" class="btn btn-primary">
-        <i class="ri-login-circle-line me-2"></i> Tizimga kirish
-      </a>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
 {% endblock item %}

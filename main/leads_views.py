@@ -626,7 +626,7 @@ def lead_create(request):
 
         except Exception as e:
             logger.error(f"Error creating lead: {e}", exc_info=True)
-            messages.error(request, f"Xatolik: {str(e)}")
+            messages.warning(request, f"Xatolik: {str(e)}")
 
     # Operatorlar ro'yxati
     operators = CallOperator.objects.all()
@@ -654,7 +654,7 @@ def lead_edit(request, lead_id):
             if not phone_number:
                 if is_ajax:
                     return JsonResponse({"success": False, "message": "Telefon raqami kiritilishi shart"}, status=400)
-                messages.error(request, "Telefon raqami kiritilishi shart")
+                messages.warning(request, "Telefon raqami kiritilishi shart")
                 return redirect("leads_kanban")
 
             temp_lead_call_status = call_status if call_status else None
@@ -733,7 +733,7 @@ def lead_edit(request, lead_id):
             logger.error(f"Lead edit error for lead {lead_id}: {str(e)}", exc_info=True)
             if is_ajax:
                 return JsonResponse({"success": False, "message": str(e)}, status=500)
-            messages.error(request, f"Xatolik: {str(e)}")
+            messages.warning(request, f"Xatolik: {str(e)}")
             return redirect("leads_kanban")
 
     # GET so‘rov uchun forma rendering
@@ -814,7 +814,7 @@ def lead_convert_to_client(request, lead_id):
             logger.error(
                 f"Error converting lead {lead_id} to client: {e}", exc_info=True
             )
-            messages.error(request, f"Xatolik: {str(e)}")
+            messages.warning(request, f"Xatolik: {str(e)}")
 
     context = {"lead": lead, "from_kanban": request.GET.get("from_kanban", False)}
     return render(request, "leads/lead_convert.html", context)
@@ -989,7 +989,7 @@ def leads_statistics_view(request):
         start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date()
         end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date()
     except ValueError:
-        messages.error(request, "Noto'g'ri sana formati kiritildi.")
+        messages.warning(request, "Noto'g'ri sana formati kiritildi.")
         start_date = (date.today() - timedelta(days=30)).date()
         end_date = date.today().date()
         start_date_str = start_date.strftime('%Y-%m-%d')

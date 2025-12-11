@@ -143,122 +143,99 @@ def tushum_view(request):
 
 @login_required(login_url='login')
 def HomePage(request):
-    # numbers = [
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3,
-    #     1, 1, 2, 2, 2, 3
-    # ]
+    logger.info("HomePage view is running")
+    today = timezone.now().date()
+    one_week_ago = today - timedelta(days=7)
+    one_month_ago = today - timedelta(days=30)
 
+    try:
+        # Daily expenses for the last 7 days
+        daily_expenses = Expense.objects.filter(
+            created__date__gte=one_week_ago
+        ).annotate(
+            date=TruncDate('created')
+        ).values('date').annotate(
+            total=Sum('amount')
+        ).order_by('date')
 
-    # homes = Home.objects.filter(building__id=39).order_by('created')
-    # for i, home in enumerate(homes):
-    #     if i < len(numbers):
-    #         home.home.xona = numbers[i]
-    #         home.home.save()
-    #     else:
-    #         break  # Agar numbers ro'yxati tugasa, to'xtatamiz
-        
-    if request.user.username == "ceoadmin":
-        # Get expense data
-        logger.info("HomePage view is running")
-        today = timezone.now().date()
-        one_week_ago = today - timedelta(days=7)
-        one_month_ago = today - timedelta(days=30)
+        # Monthly expenses by type
+        expense_by_type = Expense.objects.filter(
+            created__date__gte=one_month_ago
+        ).values(
+            'expense_type__name'
+        ).annotate(
+            total=Sum('amount')
+        ).order_by('-total')
 
-        try:
-            # Daily expenses for the last 7 days
-            daily_expenses = Expense.objects.filter(
-                created__date__gte=one_week_ago
-            ).annotate(
-                date=TruncDate('created')
-            ).values('date').annotate(
-                total=Sum('amount')
-            ).order_by('date')
+        # Building expenses
+        building_expenses = Expense.objects.filter(
+            created__date__gte=one_month_ago,
+            building__isnull=False
+        ).values(
+            'building__name'
+        ).annotate(
+            total=Sum('amount')
+        ).order_by('-total')
 
-            # Monthly expenses by type
-            expense_by_type = Expense.objects.filter(
-                created__date__gte=one_month_ago
-            ).values(
-                'expense_type__name'
-            ).annotate(
-                total=Sum('amount')
-            ).order_by('-total')
-
-            # Building expenses
-            building_expenses = Expense.objects.filter(
-                created__date__gte=one_month_ago,
-                building__isnull=False
-            ).values(
-                'building__name'
-            ).annotate(
-                total=Sum('amount')
-            ).order_by('-total')
-
-            # Format expense data for charts
-            expense_data = {
-                'daily': {
-                    'dates': [expense['date'].strftime('%Y-%m-%d') for expense in daily_expenses],
-                    'amounts': [float(expense['total']) for expense in daily_expenses]
-                },
-                'by_type': {
-                        'types': [expense['expense_type__name'] or 'Nomalum' for expense in expense_by_type],
-                    'amounts': [float(expense['total']) for expense in expense_by_type]
-                },
-                'by_building': {
-                        'buildings': [expense['building__name'] or 'Nomalum' for expense in building_expenses],
-                    'amounts': [float(expense['total']) for expense in building_expenses]
-                }
-            }
-        except Exception as e:
-            logger.info(f"Error processing expense data: {e}")
-            expense_data = {
-                'daily': {'dates': [], 'amounts': []},
-                'by_type': {'types': [], 'amounts': []},
-                'by_building': {'buildings': [], 'amounts': []}
-            }
-
-        # Get other data for the template
-        # Dinamik eshitilgan manbalar
-        heard_qs = ClientInformation.objects.values('heard').annotate(total=Count('id')).order_by('-total')
-        heard_labels = []
-        heard_counts = []
-        for item in heard_qs:
-            label = item['heard'] or "Noma'lum"
-            heard_labels.append(label)
-            heard_counts.append(item['total'])
-
-        active_contracts = ConsultingContract.objects.exclude(
-            status__in=[ConsultingContract.StatusChoices.COMPLETED, ConsultingContract.StatusChoices.CANCELLED]
-        ).count()
-        completed_contracts = ConsultingContract.objects.filter(status=ConsultingContract.StatusChoices.COMPLETED).count()
-
-        context = {
-            'tushum': tushum_view(request),
-            'client_count': ClientInformation.objects.count(),
-            'building_count': Building.objects.count(),
-            'month_client': ClientInformation.objects.filter(created__month=timezone.now().month).count(),
-            'contract': active_contracts,
-            'contract_f': completed_contracts,
-            # Qarzdorlar - yangi ConsultingContract modelidan
-            'qarz': sum([contract.remaining_amount for contract in ConsultingContract.objects.all() if contract.remaining_amount > 0]),
-            'debtors': {
-                'debtor': ConsultingContract.objects.filter(amount_paid__lt=F('total_service_fee')).count(),
-                'nodebtor': ConsultingContract.objects.filter(amount_paid__gte=F('total_service_fee')).count()
+        # Format expense data for charts
+        expense_data = {
+            'daily': {
+                'dates': [expense['date'].strftime('%Y-%m-%d') for expense in daily_expenses],
+                'amounts': [float(expense['total']) for expense in daily_expenses]
             },
-            'heard_labels': json.dumps(heard_labels, ensure_ascii=False),
-            'heard_counts': json.dumps(heard_counts),
-            'week_list': [d.strftime('%Y-%m-%d') for d in [(today - timedelta(days=x)) for x in range(6, -1, -1)]],
-            'week_client': [ClientInformation.objects.filter(created__date=d).count() for d in [(today - timedelta(days=x)) for x in range(6, -1, -1)]],
-            'expense_data': json.dumps(expense_data)
+            'by_type': {
+                    'types': [expense['expense_type__name'] or 'Nomalum' for expense in expense_by_type],
+                'amounts': [float(expense['total']) for expense in expense_by_type]
+            },
+            'by_building': {
+                    'buildings': [expense['building__name'] or 'Nomalum' for expense in building_expenses],
+                'amounts': [float(expense['total']) for expense in building_expenses]
+            }
+        }
+    except Exception as e:
+        logger.info(f"Error processing expense data: {e}")
+        expense_data = {
+            'daily': {'dates': [], 'amounts': []},
+            'by_type': {'types': [], 'amounts': []},
+            'by_building': {'buildings': [], 'amounts': []}
         }
 
-        return render(request, 'index.html', context)
-    else:
-        return render(request, 'index.html')
+    # Get other data for the template
+    # Dinamik eshitilgan manbalar
+    heard_qs = ClientInformation.objects.values('heard').annotate(total=Count('id')).order_by('-total')
+    heard_labels = []
+    heard_counts = []
+    for item in heard_qs:
+        label = item['heard'] or "Noma'lum"
+        heard_labels.append(label)
+        heard_counts.append(item['total'])
+
+    active_contracts = ConsultingContract.objects.exclude(
+        status__in=[ConsultingContract.StatusChoices.COMPLETED, ConsultingContract.StatusChoices.CANCELLED]
+    ).count()
+    completed_contracts = ConsultingContract.objects.filter(status=ConsultingContract.StatusChoices.COMPLETED).count()
+
+    context = {
+        'tushum': tushum_view(request),
+        'client_count': ClientInformation.objects.count(),
+        'building_count': Building.objects.count(),
+        'month_client': ClientInformation.objects.filter(created__month=timezone.now().month).count(),
+        'contract': active_contracts,
+        'contract_f': completed_contracts,
+        # Qarzdorlar - yangi ConsultingContract modelidan
+        'qarz': sum([contract.remaining_amount for contract in ConsultingContract.objects.all() if contract.remaining_amount > 0]),
+        'debtors': {
+            'debtor': ConsultingContract.objects.filter(amount_paid__lt=F('total_service_fee')).count(),
+            'nodebtor': ConsultingContract.objects.filter(amount_paid__gte=F('total_service_fee')).count()
+        },
+        'heard_labels': json.dumps(heard_labels, ensure_ascii=False),
+        'heard_counts': json.dumps(heard_counts),
+        'week_list': [d.strftime('%Y-%m-%d') for d in [(today - timedelta(days=x)) for x in range(6, -1, -1)]],
+        'week_client': [ClientInformation.objects.filter(created__date=d).count() for d in [(today - timedelta(days=x)) for x in range(6, -1, -1)]],
+        'expense_data': json.dumps(expense_data)
+    }
+
+    return render(request, 'index.html', context)
 
 def build_filter_params(request):
     """Build filter parameters from request"""
@@ -393,9 +370,9 @@ def ClientPage(request):
                     # Hozircha faqat success message ko'rsatamiz
                     messages.success(request, f"{len(phone_numbers)} ta mijozga SMS yuborildi.")
                 else:
-                    messages.error(request, "SMS yuborish uchun telefon raqamlar topilmadi.")
+                    messages.warning(request, "SMS yuborish uchun telefon raqamlar topilmadi.")
             else:
-                messages.error(request, "SMS matni kiritilmadi.")
+                messages.warning(request, "SMS matni kiritilmadi.")
         
         elif action == "sms-one":
             # Bitta mijozga SMS yuborish
@@ -406,13 +383,18 @@ def ClientPage(request):
                 # SMS yuborish logikasi bu yerda bo'ladi
                 messages.success(request, f"{custom_recipients} raqamiga SMS yuborildi.")
             else:
-                messages.error(request, "SMS matni yoki telefon raqam kiritilmadi.")
+                messages.warning(request, "SMS matni yoki telefon raqam kiritilmadi.")
 
     # GET parametrlari orqali filterlash
-    filter_param = request.GET.get("filter")
-    date_param = request.GET.get("date")
-    phone_param = request.GET.get("phone")
-    search_param = request.GET.get("search")
+    filter_param = (request.GET.get("filter") or "").strip()
+    date_param = (request.GET.get("date") or "").strip()
+    phone_param = (request.GET.get("phone") or "").strip()
+    search_param = (request.GET.get("search") or request.GET.get("q") or "").strip()
+    search_value = search_param
+
+    # Unique heard choices (trimmed) for filters/selects
+    heard_raw = ClientInformation.objects.values_list("heard", flat=True).distinct()
+    heard_choices = sorted({(h or "").strip() or "Noma'lum" for h in heard_raw})
     
     if filter_param:
         heard_options = {
@@ -422,8 +404,8 @@ def ClientPage(request):
             "3": "Odamlar orasida",
             "4": "Xech qayerda"
         }
-        if filter_param in heard_options:
-            clients = clients.filter(heard=heard_options[filter_param])
+        heard_value = heard_options.get(filter_param, filter_param)
+        clients = clients.filter(heard=heard_value)
     
     if date_param:
         try:
@@ -433,10 +415,14 @@ def ClientPage(request):
             pass
     
     if phone_param:
-        clients = clients.filter(phone__icontains=phone_param)
+        cleaned_phone = re.sub(r"\D", "", phone_param)
+        if cleaned_phone:
+            clients = clients.filter(
+                Q(phone__icontains=phone_param) |
+                Q(phone__icontains=cleaned_phone)
+            )
     
     if search_param:
-        search_value = search_param
         clients = clients.filter(
             Q(full_name__icontains=search_param) |
             Q(phone__icontains=search_param)
@@ -460,6 +446,7 @@ def ClientPage(request):
         "selected_filter": filter_param,
         "selected_date": date_param,
         "selected_phone": phone_param,
+        "heard_choices": heard_choices,
     }
 
     return render(request, "client/client.html", context)
@@ -467,8 +454,6 @@ def ClientPage(request):
 
 @login_required(login_url='login')
 def ClientCreate(request):
-    if request.user.username == "financeadmin":
-        return redirect("login")
         
     if request.method == "POST":
         first_name = request.POST.get("first_name", "").strip()
@@ -479,19 +464,19 @@ def ClientCreate(request):
         heard = request.POST.get("heard")
 
         if not first_name:
-            messages.error(request, "Ism kiritilmadi.")
+            messages.warning(request, "Ism kiritilmadi.")
             return render(request=request, template_name="client/create.html")
         
         if not last_name:
-            messages.error(request, "Familiya kiritilmadi.")
+            messages.warning(request, "Familiya kiritilmadi.")
             return render(request=request, template_name="client/create.html")
             
         if not phone:
-            messages.error(request, "Telefon raqami kiritilmadi.")
+            messages.warning(request, "Telefon raqami kiritilmadi.")
             return render(request=request, template_name="client/create.html")
             
         if not heard:
-            messages.error(request, "Qayerda eshitgani kiritilmadi.")
+            messages.warning(request, "Qayerda eshitgani kiritilmadi.")
             return render(request=request, template_name="client/create.html")
 
         # Normalize phone numbers
@@ -499,7 +484,7 @@ def ClientCreate(request):
         phone2_clean = normalize_phone(phone2) if phone2 else None
         
         if not phone_clean:
-            messages.error(request, "Telefon raqami noto'g'ri formatda.")
+            messages.warning(request, "Telefon raqami noto'g'ri formatda.")
             return render(request=request, template_name="client/create.html")
 
         # Build full_name for checking
@@ -547,8 +532,6 @@ def ClientCreate(request):
 
 @login_required(login_url='login')
 def ClientDelete(request, id):
-    if request.user.username == "financeadmin":
-        return redirect("login")
         
     client_instance = get_object_or_404(ClientInformation, pk=id)
     
@@ -567,7 +550,6 @@ def ClientDelete(request, id):
     return JsonResponse({"ok": True, "message": "Mijoz muvaffaqiyatli o'chirildi."})
 
 @login_required(login_url='login')
-@user_passes_test
 def ClientEdit(request, id):
     client = get_object_or_404(ClientInformation, pk=id)
     
@@ -589,25 +571,25 @@ def ClientEdit(request, id):
         address = request.POST.get("address", "").strip() or None
         
         if not first_name:
-            messages.error(request, "Ism kiritilmadi.")
+            messages.warning(request, "Ism kiritilmadi.")
         elif not last_name:
-            messages.error(request, "Familiya kiritilmadi.")
+            messages.warning(request, "Familiya kiritilmadi.")
         elif not phone:
-            messages.error(request, "Telefon raqam kiritilmadi.")
+            messages.warning(request, "Telefon raqam kiritilmadi.")
         elif not heard:
-            messages.error(request, "Qayerda eshitgani tanlanmadi.")
+            messages.warning(request, "Qayerda eshitgani tanlanmadi.")
         else:
             # Telefon raqam formatini tekshirish
             phone_clean = normalize_phone(phone)
             phone2_clean = normalize_phone(phone2) if phone2 else None
             
             if not phone_clean:
-                messages.error(request, "Telefon raqam noto'g'ri formatda.")
+                messages.warning(request, "Telefon raqam noto'g'ri formatda.")
             else:
                 # Boshqa mijozda bu telefon raqam mavjudligini tekshirish
                 existing_client = ClientInformation.objects.filter(phone=phone_clean).exclude(pk=id).first()
                 if existing_client:
-                    messages.error(request, "Bu telefon raqam bilan boshqa mijoz mavjud.")
+                    messages.warning(request, "Bu telefon raqam bilan boshqa mijoz mavjud.")
                 else:
                     # Mijozni yangilash
                     client.first_name = first_name
@@ -857,8 +839,6 @@ def _extract_consulting_contract_payload(form, min_contract_number=None, existin
 
 @login_required(login_url='login')
 def ContractPage(request):
-    if request.user.username == "financeadmin":
-        return redirect("login")
 
     contract_queryset = ConsultingContract.objects.all()
     status_filter = request.GET.get("status") or ""
@@ -1487,8 +1467,6 @@ def qisqartirish(full_name):
 
 @login_required(login_url='login')
 def ContractCreate(request):
-    if request.user.username == "financeadmin":
-        return redirect("login")
 
     status_choices = ConsultingContract.StatusChoices.choices
     suggestion = (ConsultingContract.objects.aggregate(max_num=Max("contract_number"))["max_num"] or 0) + 1
@@ -1497,7 +1475,7 @@ def ContractCreate(request):
         payload, errors, client_data = _extract_consulting_contract_payload(request.POST, min_contract_number=suggestion)
         if errors:
             for error in errors:
-                messages.error(request, error)
+                messages.warning(request, error)
             return redirect("contract-create")
 
         # Avtomatik shartnoma raqami va sanasi
@@ -1507,7 +1485,7 @@ def ContractCreate(request):
 
         # Yagona shartnoma raqami tekshiruvi
         if payload.get("contract_number") is not None and ConsultingContract.objects.filter(contract_number=payload["contract_number"]).exists():
-            messages.error(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
+            messages.warning(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
             return redirect("contract-create")
 
         try:
@@ -1568,6 +1546,7 @@ def ContractCreate(request):
                 client=client_info,
                 passport_images=passport_images,
                 completed_contract_images=completed_contract_images,
+                created_by=request.user,
                 **payload
             )
             
@@ -1618,13 +1597,13 @@ def ContractCreate(request):
             if payload.get("contract_number") is not None:
                 existing = ConsultingContract.objects.filter(contract_number=payload["contract_number"]).first()
             if existing:
-                messages.error(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
+                messages.warning(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
             else:
-                messages.error(request, "Shartnoma saqlashda xatolik yuz berdi.")
+                messages.warning(request, "Shartnoma saqlashda xatolik yuz berdi.")
             return redirect("contract-create")
         except Exception as e:
             print(e)
-            messages.error(request, "Shartnoma saqlashda xatolik yuz berdi.")
+            messages.warning(request, "Shartnoma saqlashda xatolik yuz berdi.")
             return redirect("contract-create")
 
         messages.success(request, "Konsalting shartnomasi muvaffaqiyatli yaratildi.")
@@ -1641,8 +1620,6 @@ def ContractCreate(request):
 
 @login_required(login_url='login')
 def ContractEdit(request, id):
-    if request.user.username == "financeadmin":
-        return redirect("login")
 
     contract = get_object_or_404(ConsultingContract, pk=id)
     status_choices = ConsultingContract.StatusChoices.choices
@@ -1652,12 +1629,12 @@ def ContractEdit(request, id):
         payload, errors, client_data = _extract_consulting_contract_payload(request.POST, min_contract_number=min_contract_number, existing_id=id, auto_generate=False)
         if errors:
             for error in errors:
-                messages.error(request, error)
+                messages.warning(request, error)
             return redirect("contract-edit", id=id)
 
         # Yagona shartnoma raqami tekshiruvi
         if payload.get("contract_number") is not None and ConsultingContract.objects.exclude(pk=id).filter(contract_number=payload["contract_number"]).exists():
-            messages.error(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
+            messages.warning(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
             return redirect("contract-edit", id=id)
 
         try:
@@ -1823,13 +1800,13 @@ def ContractEdit(request, id):
             if payload.get("contract_number") is not None:
                 existing = ConsultingContract.objects.exclude(pk=id).filter(contract_number=payload["contract_number"]).first()
             if existing:
-                messages.error(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
+                messages.warning(request, f"Bu shartnoma raqami ({payload['contract_number']}) allaqachon mavjud.")
             else:
-                messages.error(request, "Shartnoma saqlashda xatolik yuz berdi.")
+                messages.warning(request, "Shartnoma saqlashda xatolik yuz berdi.")
             return redirect("contract-edit", id=id)
         except Exception as e:
             print(e)
-            messages.error(request, "Shartnoma saqlashda xatolik yuz berdi.")
+            messages.warning(request, "Shartnoma saqlashda xatolik yuz berdi.")
             return redirect("contract-edit", id=id)
 
         messages.success(request, "Shartnoma ma'lumotlari yangilandi.")
@@ -1975,14 +1952,13 @@ def LogoutPage(request):
     logout(request)
     return redirect("login")
 
+@login_required(login_url='login')
 def NotificationsPage(request):
     """
     Konsalting shartnomalari bo'yicha bildirishnomalar:
     - Overdue: status completed/cancelled emas va remaining_amount > 0
     - Upcoming: status draft va remaining_amount > 0
     """
-    if request.user.username == "financeadmin":
-        return redirect("login")
 
     overdue_contracts = ConsultingContract.objects.filter(
         amount_paid__lt=F("total_service_fee"),

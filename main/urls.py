@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from main.views import *
-from main import leads_views, bi_views
+from main import leads_views, bi_views, user_views
 
 urlpatterns = [
     path("", HomePage, name="home"),
@@ -61,4 +61,12 @@ urlpatterns = [
     # path('bi/', bi_views.bi_dashboard_view, name='bi_dashboard'),
     path('bi/contracts-payments/', bi_views.contracts_payments_dashboard_view, name='bi_contracts_payments'),
     path('bi/leads/', bi_views.leads_dashboard_view, name='bi_leads'),
+    path('bi/users/', bi_views.users_dashboard_view, name='bi_users'),
+    
+    # User management (ceoadmin only)
+    path('users/', user_views.UserManagementPage, name='user-management'),
+    path('users/create/', user_views.UserCreate, name='user-create'),
+    path('users/edit/<int:id>/', user_views.UserEdit, name='user-edit'),
+    path('users/change-password/<int:id>/', user_views.UserChangePassword, name='user-change-password'),
+    path('users/delete/<int:id>/', user_views.UserDelete, name='user-delete'),
 ]

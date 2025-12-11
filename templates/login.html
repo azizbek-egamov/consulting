@@ -38,12 +38,17 @@
         <form method="POST">
             {% csrf_token %}
           <div class="auth-box">
-            <a href="/" class="auth-logo mb-4">
-              <img src="{% static 'images/logo-uzun.png' %}" alt="">
+            <a href="/" class="auth-logo mb-4 d-inline-block text-center" style="width: 100%;">
+              <img src="{% static 'images/logo-uzun.png' %}" alt="" style="width: 340px; max-width: 100%; height: auto; object-fit: contain; display: inline-block;">
             </a>
 
             <h4 class="mb-4">Hisobga kirish</h4>
-            <span>{{error}}</span>
+            {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 rounded-3 shadow-sm border-0">
+              <i class="ri-error-warning-line fs-5"></i>
+              <span class="m-0 small">{{ error }}</span>
+            </div>
+            {% endif %}
 
             <div class="mb-3">
               <label class="form-label" for="user">Foydalanuvchi nomi <span class="text-danger">*</span></label>

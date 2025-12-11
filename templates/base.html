@@ -53,7 +53,7 @@
       left: 0;
       width: 100%;
     }
-    
+     
     .main-container {
       margin-left: 0;
       width: 100%;
@@ -220,7 +220,7 @@
         <div class="dropdown-menu dropdown-menu-end shadow-lg">
           <div class="px-3 py-2">
             <span class="small">Admin</span>
-            <h6 class="m-0">{{request.user.last_name}} {{request.user.first_name}}</h6>
+            <h6 class="m-0">{{request.user.first_name}} {{request.user.last_name}} </h6>
           </div>
           <div class="mx-3 my-2 d-grid">
             <a href="/logout" class="btn btn-danger">Chiqish</a>
@@ -244,9 +244,9 @@
 
       <!-- Sidebar profile starts -->
       <div class="sidebar-profile">
-        <img src="{% static 'images/d3d4f348-51c3-41d0-9722-a6428f4bee20_removalai_preview.png' %}" class="img-shadow img-3x me-3 rounded-5">
+        <img src="{% static 'images/1077114.png' %}" class="img-shadow img-3x me-3 rounded-5">
         <div class="m-0">
-          <h5 class="mb-1 profile-name text-nowrap text-truncate">{{request.user.last_name}} {{request.user.first_name}}</h5>
+          <h5 class="mb-1 profile-name text-nowrap text-truncate">{{request.user.first_name}} {{request.user.last_name}}</h5>
           <p class="m-0 small profile-name text-nowrap text-truncate">Boshqaruvchi</p>
         </div>
       </div>
@@ -255,7 +255,6 @@
       <!-- Sidebar menu starts -->
       <div class="sidebarMenuScroll">
         <ul class="sidebar-menu">
-          {% if request.user.username == "ceoadmin" or request.user.username == "devadmin" %}
           <li class="">
             <a href="/">
               <i class="ri-home-6-line"></i>
@@ -302,80 +301,23 @@
               </li>
             </ul>
           </li>
-          {% elif request.user.username == "financeadmin" %}
-          <li class="">
-            <a href="/">
-              <i class="ri-home-6-line"></i>
-              <span class="menu-text">Asosiy</span>
-            </a>
-          </li>
+          {% if request.user.username == "ceoadmin" %}
           <li class="treeview">
             <a href="javascript:void(0);">
-              <i class="ri-money-dollar-circle-line"></i>
-              <span class="menu-text">Chiqimlar</span>
+              <i class="ri-user-settings-line"></i>
+              <span class="menu-text">Foydalanuvchilar</span>
             </a>
             <ul class="treeview-menu">
               <li>
-                <a href="{% url 'expenses' %}">Chiqimlar ro'yxati</a>
+                <a href="{% url 'user-management' %}">Foydalanuvchilar ro'yxati</a>
               </li>
               <li>
-                <a href="{% url 'add_expense' %}">Chiqim qo'shish</a>
-              </li>
-              <li>
-                <a href="{% url 'expense_types' %}">Chiqim turlari</a>
-              </li>
-            </ul>
-          </li>
-          {% elif request.user.username == "receptionadmin" %}
-          <li class="">
-            <a href="/">
-              <i class="ri-home-6-line"></i>
-              <span class="menu-text">Asosiy</span>
-            </a>
-          </li>
-
-        
-          <li class="treeview">
-            <a href="javascript:void(0);">
-              <i class="ri-user-3-fill"></i>
-              <span class="menu-text">Mijozlar</span>
-            </a>
-            <ul class="treeview-menu">
-              <li>
-                <a href="/client/">Mijozlar ro'yxati</a>
-              </li>
-              <li>
-                <a href="/client/create/">Mijoz qo'shish</a>
-              </li>
-            </ul>
-          </li>
-          <li class="treeview">
-            <a href="javascript:void(0);">
-              <i class="ri-contract-line"></i>
-              <span class="menu-text">Shartnoma</span>
-            </a>
-            <ul class="treeview-menu">
-              <li>
-                <a href="/contract/">Shartnomalar ro'yxati</a>
-              </li>
-              <li>
-                <a href="/contract/create/">Shartnoma qo'shish</a>
-              </li>
-            </ul>
-          </li>
-         <li class="treeview">
-            <a href="javascript:void(0);">
-              <i class="ri-phone-line"></i>
-              <span class="menu-text">Leadlar</span>
-            </a>
-            <ul class="treeview-menu">
-              <li>
-                <a href="{% url 'leads_kanban' %}">Leadlar jadvali</a>
+                <a href="{% url 'user-create' %}">Yangi foydalanuvchi</a>
               </li>
             </ul>
           </li>
           {% endif %}
-          {% if request.user.username == "ceoadmin" %}
+          
                     <li class="treeview">
             <a href="javascript:void(0);">
                 <i class="ri-bar-chart-box-line"></i>
@@ -388,8 +330,13 @@
                                                 <li>
                     <a href="{% url 'bi_leads' %}">Leadlar Statistikasi</a>
                 </li>
+                {% if request.user.username == "ceoadmin" %}
+                  <li>
+                    <a href="{% url 'bi_users' %}">Foydalanuvchilar Statistikasi</a>
+                  </li>
+                {% endif %}
             </ul>
-          </li>{% endif %}
+          </li>
           
         </ul>
       </div>

@@ -1,0 +1,817 @@
+COMPLETE PREMIUM DARK MODE TRANSFORMATION - MAJOR CONSULTING INSPIRED
+I need to transform my Django CRM dashboard to match the premium dark mode design shown in the reference image. This is a complete redesign with sophisticated black/gold aesthetic, smooth animations, and professional appearance.
+CORE COLOR PALETTE
+Black & Dark Tones:
+
+Pure Black Background: #000000 (main background)
+Elevated Black: #0a0a0a (cards, sidebar)
+Deep Black: #141414 (navbar, secondary cards)
+Charcoal: #1a1a1a (hover states)
+Dark Grey: #262626 (borders, dividers)
+
+Gold Accent System:
+
+Primary Gold: #f7b731 (buttons, active states)
+Rich Gold: #ffa502 (hover, highlights)
+Dark Gold: #e8a317 (pressed states)
+Gold Shadow: rgba(247, 183, 49, 0.3) (glows)
+Subtle Gold: rgba(247, 183, 49, 0.1) (backgrounds)
+
+Text Hierarchy:
+
+Primary Text: #ffffff (headings, important text)
+Secondary Text: #e5e5e5 (body text)
+Tertiary Text: #b3b3b3 (descriptions)
+Muted Text: #808080 (labels, hints)
+Disabled Text: #4d4d4d (inactive elements)
+
+Semantic Colors:
+
+Success: #27ae60 (green indicators)
+Warning: #f39c12 (orange alerts)
+Error: #e74c3c (red errors)
+Info: #3498db (blue information)
+
+SIDEBAR COMPLETE DESIGN
+Sidebar Container:
+
+Background: #0a0a0a
+Width: 280px (expanded), 70px (collapsed)
+Height: 100vh
+Position: fixed left
+Border-right: 1px solid #262626
+Box-shadow: 4px 0 24px rgba(0, 0, 0, 0.8)
+Z-index: 1000
+Transition: width 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)
+
+Logo Section (Top):
+
+Padding: 28px 24px
+Background: linear-gradient(180deg, #141414 0%, #0a0a0a 100%)
+Border-bottom: 1px solid rgba(247, 183, 49, 0.15)
+Logo container:
+
+Size: 48px circle
+Background: #f7b731
+Display company initials or icon
+Box-shadow: 0 4px 16px rgba(247, 183, 49, 0.4)
+
+
+Company name:
+
+Color: #ffffff
+Font-size: 20px
+Font-weight: 700
+Margin-left: 16px
+Show only when expanded
+Opacity animation when toggling
+
+
+
+Toggle Button (Hamburger Menu):
+
+Position: absolute top-right of sidebar or in navbar
+Size: 40px × 40px
+Background: #141414
+Border: 1px solid #262626
+Border-radius: 8px
+Icon color: #f7b731
+Icon size: 20px
+Hover:
+
+Background: #1a1a1a
+Border-color: #f7b731
+Icon color: #ffa502
+Transform: scale(1.05)
+
+
+Click animation: rotate 180deg transition 0.3s
+Always visible and functional
+When clicked:
+
+Sidebar width changes to 70px (collapsed)
+All text labels fade out (opacity 0)
+Icons center-align
+Tooltips appear on hover for collapsed state
+Logo shows only icon
+
+
+
+Menu Items - Default State:
+
+Display: flex, align-items: center
+Padding: 14px 20px
+Margin: 6px 12px
+Border-radius: 10px
+Background: transparent
+Icon:
+
+Size: 22px
+Color: #b3b3b3
+Margin-right: 16px (expanded), margin-right: 0 (collapsed, centered)
+
+
+Text:
+
+Color: #e5e5e5
+Font-size: 15px
+Font-weight: 500
+Opacity: 1 (expanded), 0 (collapsed)
+White-space: nowrap
+
+
+Transition: all 0.3s ease
+
+Menu Items - Hover State:
+
+Background: rgba(247, 183, 49, 0.08)
+Border-left: 3px solid #f7b731
+Transform: translateX(4px)
+Icon color: #f7b731
+Text color: #ffffff
+Box-shadow: 0 0 20px rgba(247, 183, 49, 0.1)
+Cursor: pointer
+
+Menu Items - Active State (Current Page):
+
+Background: linear-gradient(90deg, rgba(247, 183, 49, 0.18) 0%, rgba(247, 183, 49, 0.06) 100%)
+Border-left: 4px solid #f7b731
+Icon color: #ffa502
+Text color: #ffffff
+Font-weight: 600
+Box-shadow: inset 0 0 30px rgba(247, 183, 49, 0.15), 0 4px 16px rgba(0, 0, 0, 0.3)
+
+Menu Items - Pressed State:
+
+Transform: scale(0.96)
+Background: rgba(247, 183, 49, 0.15)
+Transition: transform 0.1s
+
+Collapsed Sidebar Tooltips:
+
+Show on hover when sidebar is collapsed
+Position: absolute right: -180px
+Background: #141414
+Border: 1px solid #f7b731
+Padding: 8px 12px
+Border-radius: 6px
+Color: #ffffff
+Font-size: 13px
+Box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5)
+Arrow pointing left
+Z-index: 10000
+Transition: opacity 0.2s, transform 0.2s
+Transform: translateX(0) on show
+
+Menu Section Dividers:
+
+Height: 1px
+Background: linear-gradient(90deg, transparent 0%, #262626 50%, transparent 100%)
+Margin: 20px 16px
+
+Bottom User Section:
+
+Position: absolute bottom: 0
+Width: 100%
+Padding: 20px
+Border-top: 1px solid #262626
+Background: linear-gradient(0deg, #0a0a0a 0%, transparent 100%)
+User avatar: 40px circle, border: 2px solid #f7b731
+Username: color #ffffff, font-weight: 600
+Role: color #808080, font-size: 12px
+Hide text when collapsed, show only avatar centered
+
+NAVBAR DESIGN
+Navbar Container:
+
+Background: #141414
+Height: 72px
+Border-bottom: 1px solid rgba(247, 183, 49, 0.2)
+Box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5)
+Backdrop-filter: blur(20px)
+Position: sticky top: 0
+Z-index: 999
+Display: flex, align-items: center, justify-content: space-between
+Padding: 0 32px
+
+Breadcrumb Section (Left Side):
+
+Display: flex, align-items: center
+Home icon:
+
+Size: 20px
+Color: #f7b731
+Margin-right: 12px
+Hover: color #ffa502, transform scale(1.1)
+
+
+Separator (">"):
+
+Color: #4d4d4d
+Margin: 0 12px
+Font-size: 16px
+
+
+"Asosiy" link:
+
+Color: #b3b3b3
+Font-size: 14px
+Hover: color #f7b731
+Transition: color 0.3s
+
+
+Current page ("Boshqaruv paneli"):
+
+Color: #ffffff
+Font-size: 14px
+Font-weight: 600
+Background: rgba(247, 183, 49, 0.1)
+Padding: 6px 12px
+Border-radius: 6px
+Border: 1px solid rgba(247, 183, 49, 0.3)
+
+
+
+Right Side Actions:
+
+Display: flex, gap: 16px, align-items: center
+Toggle button (if not in sidebar)
+Notification bell:
+
+Icon size: 22px
+Color: #b3b3b3
+Hover: color #f7b731
+Badge: background #e74c3c, size 18px, position absolute top-right
+
+
+User dropdown:
+
+Background: rgba(26, 26, 26, 0.8)
+Border: 1px solid #262626
+Border-radius: 10px
+Padding: 8px 16px
+Hover: border-color #f7b731, background #1a1a1a
+Avatar + name + dropdown arrow
+
+
+
+WELCOME BANNER ("Assalomu alaykum, Ceo")
+Banner Container:
+
+Background: radial-gradient(ellipse at top left, rgba(247, 183, 49, 0.12) 0%, transparent 50%),
+linear-gradient(135deg, #141414 0%, #0a0a0a 100%)
+Border: 2px solid rgba(247, 183, 49, 0.25)
+Border-radius: 20px
+Padding: 40px
+Position: relative
+Overflow: hidden
+Box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6),
+inset 0 0 60px rgba(247, 183, 49, 0.05)
+Margin-bottom: 32px
+
+Decorative Elements:
+
+Add geometric shapes or patterns as pseudo-elements
+Subtle animated gradient overlay
+Background pattern with opacity 0.03
+
+Icon Circle (Left):
+
+Size: 64px
+Background: rgba(247, 183, 49, 0.15)
+Border: 2px solid #f7b731
+Border-radius: 50%
+Display: flex, center icon
+Icon color: #ffa502
+Icon size: 32px
+Box-shadow: 0 0 40px rgba(247, 183, 49, 0.3)
+Animation: pulse 2s infinite
+
+Welcome Text:
+
+"Assalomu alaykum" part:
+
+Color: #ffffff
+Font-size: 32px
+Font-weight: 700
+Line-height: 1.2
+Margin-bottom: 8px
+
+
+"Ceo" part:
+
+Color: #f7b731
+Font-weight: 800
+Display: inline
+Text-shadow: 0 0 30px rgba(247, 183, 49, 0.5)
+
+
+Wave emoji: font-size 32px, animation: wave 2s infinite
+Subtitle:
+
+Color: #b3b3b3
+Font-size: 16px
+Margin-top: 12px
+Max-width: 600px
+
+
+
+STATISTICS CARDS
+Card Layout:
+
+Display: grid
+Grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))
+Gap: 20px
+Margin-bottom: 32px
+
+Individual Card:
+
+Background: linear-gradient(135deg, #141414 0%, #0a0a0a 100%)
+Border: 1px solid #262626
+Border-radius: 16px
+Padding: 28px
+Position: relative
+Overflow: hidden
+Box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4)
+Transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)
+
+Card Hover Effect:
+
+Transform: translateY(-8px) scale(1.02)
+Border-color: rgba(247, 183, 49, 0.6)
+Box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6),
+0 0 50px rgba(247, 183, 49, 0.2)
+Z-index: 10
+
+Card Icon Container:
+
+Size: 60px circle
+Position: top-right or top-left
+Background variations:
+
+Green card: radial-gradient(circle, rgba(39, 174, 96, 0.25) 0%, transparent 70%)
+Red card: radial-gradient(circle, rgba(231, 76, 60, 0.25) 0%, transparent 70%)
+Orange card: radial-gradient(circle, rgba(243, 156, 18, 0.25) 0%, transparent 70%)
+Blue card: radial-gradient(circle, rgba(52, 152, 219, 0.25) 0%, transparent 70%)
+Gold card: radial-gradient(circle, rgba(247, 183, 49, 0.3) 0%, transparent 70%)
+
+
+Icon size: 30px
+Icon colors: match gradient color at full saturation
+Box-shadow: 0 0 30px rgba(icon-color, 0.5)
+Animation: float 3s ease-in-out infinite
+
+Card Label:
+
+Color: #808080
+Font-size: 13px
+Font-weight: 500
+Text-transform: uppercase
+Letter-spacing: 0.5px
+Margin-bottom: 12px
+
+Card Value:
+
+Color: #ffffff
+Font-size: 32px
+Font-weight: 800
+Line-height: 1
+Text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5)
+Animation: countUp on page load
+
+Background Accent:
+
+Add subtle gradient overlay
+Position: absolute, bottom-right
+Opacity: 0.03
+Large decorative number or pattern
+
+METRIC CARDS (Müştərilər: 6, etc.)
+Metric Card:
+
+Background: #0a0a0a
+Border: 1px solid #262626
+Border-radius: 14px
+Padding: 32px 24px
+Text-align: center
+Transition: all 0.3s ease
+Hover: transform translateY(-4px), border-color #f7b731
+
+Metric Icon:
+
+Size: 72px circle
+Background: radial-gradient(circle, rgba(247, 183, 49, 0.2) 0%, transparent 70%)
+Border: 2px solid rgba(247, 183, 49, 0.4)
+Icon size: 36px
+Icon color: #f7b731
+Box-shadow: 0 0 40px rgba(247, 183, 49, 0.3),
+0 8px 24px rgba(0, 0, 0, 0.4)
+Margin: 0 auto 20px
+Animation: rotate 20s linear infinite (subtle)
+
+Metric Label:
+
+Color: #b3b3b3
+Font-size: 14px
+Font-weight: 500
+Margin-bottom: 12px
+
+Metric Number:
+
+Color: #f7b731
+Font-size: 42px
+Font-weight: 900
+Text-shadow: 0 0 30px rgba(247, 183, 49, 0.4)
+Animation: glow 2s ease-in-out infinite alternate
+
+CHART SECTIONS
+Chart Container Card:
+
+Background: #0a0a0a
+Border: 1px solid #262626
+Border-radius: 16px
+Padding: 32px
+Box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5)
+Margin-bottom: 24px
+
+Chart Title Section:
+
+Display: flex, align-items: center
+Margin-bottom: 28px
+Icon before title:
+
+Size: 24px
+Color: #f7b731
+Margin-right: 12px
+
+
+Title text:
+
+Color: #ffffff
+Font-size: 20px
+Font-weight: 600
+
+
+Gold accent bar:
+
+Width: 4px
+Height: 24px
+Background: linear-gradient(180deg, #f7b731 0%, #ffa502 100%)
+Margin-right: 12px
+Border-radius: 2px
+
+
+
+Bar Chart Styling:
+
+Chart background: transparent
+Grid lines: rgba(247, 183, 49, 0.08)
+Axis labels:
+
+Color: #808080
+Font-size: 12px
+Font-family: system-ui
+
+
+Bars:
+
+Fill: linear-gradient(180deg, #ffa502 0%, #f7b731 100%)
+Border-radius: 6px 6px 0 0
+Width: responsive
+Hover:
+
+Fill: #f7b731
+Transform: scaleY(1.05)
+Box-shadow: 0 0 30px rgba(247, 183, 49, 0.6)
+
+
+
+
+Value labels on top of bars:
+
+Color: #ffffff
+Font-size: 14px
+Font-weight: 600
+
+
+Tooltip:
+
+Background: #000000
+Border: 2px solid #f7b731
+Color: #ffffff
+Padding: 12px 16px
+Border-radius: 8px
+Box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8)
+
+
+
+Pie Chart Styling:
+
+Background: transparent
+Segments:
+
+Kerin operendi (Blue): #3498db
+Instagram (Green): #27ae60
+TD (Orange): #f39c12
+
+
+Segment border: 4px solid #0a0a0a
+Segment hover:
+
+Scale: 1.1
+Brightness: 1.2
+Box-shadow: 0 0 30px rgba(segment-color, 0.8)
+Cursor: pointer
+
+
+Labels:
+
+Inside segments
+Color: #ffffff
+Font-size: 14px
+Font-weight: 700
+Text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9)
+
+
+Percentage text:
+
+Font-size: 16px
+Font-weight: 800
+
+
+Legend:
+
+Position: bottom or right
+Background: rgba(20, 20, 20, 0.9)
+Border: 1px solid #262626
+Border-radius: 8px
+Padding: 16px
+Item spacing: 12px
+Color indicator: 14px circle
+Text color: #e5e5e5
+Text size: 13px
+
+
+
+Donut Chart Styling:
+
+Same as pie chart but with center cutout
+Center circle: background #000000
+Center content:
+
+Total label: color #808080, size 12px
+Total value: color #f7b731, size 24px, font-weight 800
+
+
+Segments:
+
+Qarzname (Red): #e74c3c
+Qo'simcha (Blue): #3498db
+
+
+Width of donut ring: 40-50px
+Same hover and animation effects as pie chart
+
+Chart Legends (All Charts):
+
+Display: flex, wrap
+Gap: 16px
+Background: rgba(20, 20, 20, 0.6)
+Backdrop-filter: blur(10px)
+Border: 1px solid rgba(247, 183, 49, 0.2)
+Border-radius: 10px
+Padding: 16px 20px
+Each legend item:
+
+Display: flex, align-items: center
+Color indicator: 12px square or circle with segment color
+Text: color #b3b3b3, size 13px
+Value: color #ffffff, font-weight 600
+Hover: text color #f7b731
+
+
+
+ANIMATIONS & MICRO-INTERACTIONS
+Page Load Sequence:
+
+Sidebar slides in from left (0.6s delay)
+Navbar fades in (0.3s delay)
+Welcome banner scales up from 0.95 to 1 (0.4s)
+Cards fade in and slide up staggered (0.1s delay each)
+Numbers count up from 0 to value (1.5s duration)
+
+Keyframe Animations:
+@keyframes fadeInUp {
+  from: opacity 0, transform translateY(30px)
+  to: opacity 1, transform translateY(0)
+}
+
+@keyframes countUp {
+  /* Animate number from 0 to target value */
+}
+
+@keyframes pulse {
+  0%, 100%: transform scale(1)
+  50%: transform scale(1.05)
+}
+
+@keyframes float {
+  0%, 100%: transform translateY(0)
+  50%: transform translateY(-10px)
+}
+
+@keyframes glow {
+  from: text-shadow 0 0 20px rgba(247, 183, 49, 0.4)
+  to: text-shadow 0 0 40px rgba(247, 183, 49, 0.8)
+}
+
+@keyframes wave {
+  0%, 100%: transform rotate(0deg)
+  25%: transform rotate(20deg)
+  75%: transform rotate(-20deg)
+}
+
+@keyframes shimmer {
+  0%: background-position -1000px
+  100%: background-position 1000px
+}
+Hover Transitions:
+
+All buttons: 0.3s cubic-bezier(0.4, 0, 0.2, 1)
+Cards: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)
+Icons: 0.2s ease
+Text colors: 0.3s ease
+Sidebar toggle: 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)
+
+Loading States:
+
+Skeleton loaders:
+
+Background: linear-gradient(90deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)
+Animation: shimmer 1.8s infinite
+Border-radius: match element
+
+
+Spinner:
+
+Color: #f7b731
+Size: 48px
+Border-width: 4px
+Animation: spin 0.8s linear infinite
+
+
+
+Interactive Feedback:
+
+Click ripple effect on buttons
+Scale down on press (0.96)
+Color shift on active state
+Smooth transitions for all state changes
+
+RESPONSIVE BEHAVIOR
+Desktop (> 1200px):
+
+Sidebar: 280px width
+Content: calc(100% - 280px) margin-left
+Cards: 4 columns for statistics
+Charts: side by side
+
+Tablet (768px - 1200px):
+
+Sidebar: 240px width or overlay mode
+Cards: 2-3 columns
+Charts: stack vertically
+Navbar: compact mode
+
+Mobile (< 768px):
+
+Sidebar: overlay drawer (hidden by default)
+Toggle button always visible in navbar
+Cards: single column
+Charts: full width, scrollable
+Font sizes reduce by 15%
+Padding reduces by 30%
+Touch-friendly hit areas (minimum 44px)
+
+SIDEBAR TOGGLE FUNCTIONALITY
+Toggle Button Behavior:
+
+Desktop:
+
+Click: sidebar width 280px ↔ 70px
+Text labels fade out/in
+Icons remain visible, center-aligned when collapsed
+Tooltips show on hover when collapsed
+Smooth width transition 0.4s
+Content area adjusts margin-left accordingly
+Button icon rotates 180deg when toggled
+
+
+Mobile/Tablet:
+
+Click: sidebar overlay shows/hides
+Sidebar slides from left with backdrop
+Backdrop: background rgba(0, 0, 0, 0.7), click to close
+Sidebar: position fixed, z-index 9999
+Body: overflow hidden when sidebar open
+Close button (X) in sidebar top-right
+
+
+
+Implementation Logic:
+
+Use JavaScript/jQuery for toggle state
+Store collapsed state in localStorage
+Apply class to body or sidebar container
+CSS transitions handle animations
+Prevent layout shift with proper calculations
+
+SCROLLBAR CUSTOMIZATION
+::-webkit-scrollbar {
+  width: 12px
+  height: 12px
+}
+
+::-webkit-scrollbar-track {
+  background: #000000
+  border-radius: 10px
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #262626 0%, #1a1a1a 100%)
+  border-radius: 10px
+  border: 2px solid #000000
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f7b731 0%, #ffa502 100%)
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #f7b731
+}
+
+/* For Firefox */
+scrollbar-width: thin
+scrollbar-color: #262626 #000000
+ACCESSIBILITY REQUIREMENTS
+Contrast Ratios:
+
+Text on dark: minimum 7:1 (AAA)
+Gold on black: ensure readability
+Interactive elements: minimum 4.5:1
+
+Focus States:
+
+Visible focus ring: 2px solid #f7b731
+Focus offset: 4px
+Never remove focus indicators
+Keyboard navigation support
+
+ARIA Labels:
+
+Add proper labels to all interactive elements
+Screen reader friendly structure
+Semantic HTML5 elements
+
+PERFORMANCE OPTIMIZATION
+
+Use CSS transforms for animations (GPU accelerated)
+Lazy load charts until in viewport
+Debounce resize events
+Use will-change for animated elements
+Minimize repaints and reflows
+Optimize image assets
+Use CSS variables for theme colors
+Implement code splitting for large charts
+
+FINAL IMPLEMENTATION CHECKLIST
+
+ Pure black (#000000) background throughout
+ Gold (#f7b731) as primary accent color
+ Sidebar toggle working perfectly (expand/collapse + mobile overlay)
+ All menu items have hover, active, and pressed states
+ Welcome banner with gradient and gold border
+ All cards have proper shadows and hover lift effects
+ Statistics cards with animated icons and counting numbers
+ Metric cards with glowing gold numbers
+ Charts properly styled with gold accents
+ All text properly contrasted and readable
+ Smooth animations on page load (staggered)
+ Breadcrumb navigation styled correctly
+ Custom scrollbar matching theme
+ Responsive design for all breakpoints
+ Toggle button never disappears or breaks
+ Sidebar state persists (localStorage)
+ All transitions smooth (0.3-0.4s)
+ No layout shifts during animations
+ Loading states implemented
+ Hover effects on all interactive elements
+ Focus states for accessibility
+ Touch-friendly on mobile
+ Charts animate on load
+ Number counting animation
+ Icons with subtle animations (pulse, float)
+ Professional, premium appearance throughout
+
+This design creates a sophisticated, modern dashboard with excellent visual hierarchy, smooth interactions, and professional aesthetics matching high-end consulting platforms. Every element is carefully crafted for maximum visual impact while maintaining usability.
