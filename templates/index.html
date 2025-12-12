@@ -1,8 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Boshqaruv paneli - Ardent Soft{% endblock title %}
+{% block title %}Boshqaruv paneli - Major Consulting{% endblock title %}
 {% block item %}
 {% load static %}
 {% load humanize %}
+{% if request.user.username == 'ceoadmin' %}
 <div class="app-container">
   <!-- App hero header starts -->
   <div class="app-hero-header d-flex align-items-center">
@@ -19,7 +20,6 @@
     <!-- Breadcrumb ends -->
   </div>
   <!-- App Hero header ends -->
-
   <!-- App body starts -->
   <div class="app-body">
     {% comment %} {% if pay.date == True %}
@@ -45,7 +45,7 @@
               </div>
               <div class="d-flex flex-column">
                 <h4 class="lh-1 text-white" style="font-size: calc(24px + 8 * ((100vw - 320px) / 1120));">Assalomu alaykum, {{request.user.first_name}} 👋</h4>
-                <p class="text-white opacity-75 mt-2 mb-0">Ardent Soft boshqaruv paneliga xush kelibsiz</p>
+                <p class="text-white opacity-75 mt-2 mb-0">Major Consulting boshqaruv paneliga xush kelibsiz</p>
               </div>
             </div>
           </div>
@@ -257,7 +257,6 @@
   </div>
   <!-- App body ends -->
 </div>
-
 <style>
   .hover-card:hover {
     transform: translateY(-5px);
@@ -439,4 +438,77 @@
     });
   });
 </script>
+{% else %}
+<style>
+  .app-container {
+    background-image: url("{% static "images/big-ben-westminster-bridge-sunset-london-uk.jpg" %}") !important;
+    background-size: cover;
+    background-position: center;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+  
+  .app-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+    z-index: 1;
+  }
+  
+  .welcome-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 2;
+    width: 80%;
+    max-width: 600px;
+  }
+  
+  .welcome-message h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  
+  .welcome-message p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  }
+  
+  .welcome-message .btn {
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .welcome-message .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+</style>
+  <div class="app-container">
+    {% include 'messages.html' %}
+    <div class="welcome-message">
+      <h1>Major Consulting</h1>
+      <p>Boshqaruv tizimiga xush kelibsiz</p>
+      {% if request.user.is_authenticated %}
+      {% else %}
+        <a href="/login" class="btn btn-primary">
+          <i class="ri-login-circle-line me-2"></i> Tizimga kirish
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
 {% endblock item %}

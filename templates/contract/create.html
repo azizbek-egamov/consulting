@@ -54,12 +54,12 @@
             <h6 class="text-uppercase text-muted mb-3">Buyurtmachi ma'lumotlari</h6>
                     <div class="row g-3">
                   <div class="col-md-4">
-                    <label class="form-label">Familiya <span class="text-danger">*</span></label>
-                    <input type="text" name="client_last_name" class="form-control" required>
-                          </div>
-                  <div class="col-md-4">
                     <label class="form-label">Ism <span class="text-danger">*</span></label>
                     <input type="text" name="client_first_name" class="form-control" required>
+                          </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Familiya <span class="text-danger">*</span></label>
+                    <input type="text" name="client_last_name" class="form-control" required>
                           </div>
                   <div class="col-md-4">
                     <label class="form-label">Sharif</label>
@@ -73,6 +73,10 @@
                     <label class="form-label">Passport berilgan sana</label>
                     <input type="text" name="passport_issue_date" class="form-control" placeholder="01.01.2020" data-date-mask="true">
                         </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Passport tugash sanasi</label>
+                    <input type="text" name="passport_expiry_date" class="form-control" placeholder="01.01.2030" data-date-mask="true">
+                  </div>
                   <div class="col-md-6">
                     <label class="form-label">Passport bergan tashkilot</label>
                     <input type="text" name="passport_issue_place" class="form-control" placeholder="MIB, IIB va h.k.">
@@ -102,19 +106,21 @@
                     <input type="text" name="password" class="form-control" placeholder="Mijoz uchun parol">
                   </div>
                   <div class="col-md-12">
-                    <label class="form-label">Passport / ID karta rasmlari (maksimal 2 ta)</label>
-                    <div class="row g-2" id="passport-images-container">
+                    <div class="row g-2 align-items-end">
                       <div class="col-md-6">
+                        <label class="form-label">Zagran passport rasmi (1 ta)</label>
                         <input type="file" name="passport_image_0" class="form-control passport-image-input" accept="image/*">
+                        <small class="text-muted">Faqat bitta asosiy passport / ID kartasi rasmini yuklang.</small>
                       </div>
                       <div class="col-md-6">
-                        <input type="file" name="passport_image_1" class="form-control passport-image-input" accept="image/*">
+                        <label class="form-label">VISA rasmi (1 ta)</label>
+                        <input type="file" name="visa_image_0" class="form-control visa-image-input" accept="image/*">
+                        <small class="text-muted">Faqat bitta VISA rasmini yuklang.</small>
                       </div>
                     </div>
-                    <small class="text-muted">Hohlasa 1 ta yoki 2 ta rasm yuklashingiz mumkin. Keyinchalik ham qo'shishingiz mumkin.</small>
                   </div>
                   <div class="col-12">
-                    <h6 class="text-uppercase text-muted mb-2">Ish yakunlanganidan keyin shartnoma rasmlari</h6>
+                    <h6 class="text-uppercase text-muted mb-2">Ish yakunlanganidan keyingi shartnoma rasmlari</h6>
                     <div class="row g-2" id="completed-contract-images-container">
                       <div class="col-md-4">
                         <input type="file" name="completed_contract_image_0" class="form-control completed-contract-image-input" accept="image/*">
@@ -132,16 +138,19 @@
               </div>
 
           <div class="col-12">
-            <h6 class="text-uppercase text-muted mb-3 d-flex align-items-center justify-content-between">
-              <span>Ota-onasi / Farzandlari</span>
+            <h6 class="text-uppercase text-muted mb-3">Ota-onasi / Farzandlari</h6>
+            <div id="family-members-container">
+              <!-- Family members will be added here dynamically -->
+            </div>
+            <div id="family-empty-placeholder" class="alert alert-light border d-none mt-2 mb-0">
+              Ma'lumot topilmadi. "Qo'shish" tugmasi orqali qo'shing.
+            </div>
+            <div class="d-flex justify-content-end mt-2">
               <button type="button" class="btn btn-sm btn-primary" id="add-family-member">
                 <i class="ri-add-line me-1"></i> Qo'shish
               </button>
-            </h6>
-            <div id="family-members-container">
-              <!-- Family members will be added here dynamically -->
-                </div>
-              </div>
+            </div>
+          </div>
               
           <div class="col-12">
             <h6 class="text-uppercase text-muted mb-3">Xizmat tafsilotlari</h6>
@@ -307,6 +316,13 @@ document.addEventListener("DOMContentLoaded", function() {
   let familyMemberIndex = 0;
   const addFamilyMemberBtn = document.getElementById("add-family-member");
   const familyMembersContainer = document.getElementById("family-members-container");
+  const familyEmptyPlaceholder = document.getElementById("family-empty-placeholder");
+
+  function toggleFamilyPlaceholder() {
+    if (!familyEmptyPlaceholder) return;
+    const hasMembers = familyMembersContainer && familyMembersContainer.children.length > 0;
+    familyEmptyPlaceholder.classList.toggle("d-none", hasMembers);
+  }
 
   function addFamilyMember(data = {}) {
     const index = familyMemberIndex++;
@@ -321,13 +337,13 @@ document.addEventListener("DOMContentLoaded", function() {
           </button>
         </div>
         <div class="row g-3">
-          <div class="col-md-4">
-            <label class="form-label">Familiya <span class="text-danger">*</span></label>
-            <input type="text" name="family_member_${index}_last_name" class="form-control" placeholder="Familiya" value="${data.last_name || ''}" required>
-          </div>
           <div class="col-md-3">
             <label class="form-label">Ism <span class="text-danger">*</span></label>
             <input type="text" name="family_member_${index}_first_name" class="form-control" placeholder="Ism" value="${data.first_name || ''}" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Familiya <span class="text-danger">*</span></label>
+            <input type="text" name="family_member_${index}_last_name" class="form-control" placeholder="Familiya" value="${data.last_name || ''}" required>
           </div>
           <div class="col-md-3">
             <label class="form-label">Sharif</label>
@@ -346,15 +362,19 @@ document.addEventListener("DOMContentLoaded", function() {
               <option value="other" ${data.relationship === 'other' || !data.relationship ? 'selected' : ''}>Boshqa</option>
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Passport raqami</label>
             <input type="text" name="family_member_${index}_passport" class="form-control family-passport-input" placeholder="AA1234567" value="${data.passport_number || ''}">
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Passport berilgan sana</label>
+          <div class="col-md-3">
+            <label class="form-label">Berilgan sana</label>
             <input type="text" name="family_member_${index}_passport_date" class="form-control family-date-input" placeholder="01.01.2020" data-date-mask="true" value="${data.passport_issue_date || ''}">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <label class="form-label">Tugash sanasi</label>
+            <input type="text" name="family_member_${index}_passport_expiry_date" class="form-control family-date-input" placeholder="01.01.2030" data-date-mask="true" value="${data.passport_expiry_date || ''}">
+          </div>
+          <div class="col-md-3">
             <label class="form-label">Passport bergan tashkilot</label>
             <input type="text" name="family_member_${index}_passport_place" class="form-control" placeholder="MIB, IIB va h.k." value="${data.passport_issue_place || ''}">
           </div>
@@ -378,6 +398,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Remove button handler
     memberCard.querySelector(".remove-family-member").addEventListener("click", function() {
       memberCard.remove();
+      toggleFamilyPlaceholder();
     });
 
     // Passport mask for family members
@@ -439,7 +460,44 @@ document.addEventListener("DOMContentLoaded", function() {
   if (addFamilyMemberBtn) {
     addFamilyMemberBtn.addEventListener("click", function() {
       addFamilyMember();
+      toggleFamilyPlaceholder();
     });
+  }
+
+  toggleFamilyPlaceholder();
+
+  // Telefonlar: to'liq kiritilmagan bo'lsa submit to'xtatiladi
+  const formEl = document.querySelector("form");
+  function phoneDigits(val) {
+    return (val || "").replace(/\D/g, "");
+  }
+  function validatePhones(e) {
+    const primary = document.querySelector('input[name="phone_primary"]');
+    const secondary = document.querySelector('input[name="phone_secondary"]');
+    const primaryDigits = primary ? phoneDigits(primary.value) : "";
+    if (primary && (primaryDigits.length !== 9 && primaryDigits.length !== 12)) {
+      e.preventDefault();
+      alert("Asosiy telefon raqamini to'liq kiriting (+998 XX XXX XX XX).");
+      primary.focus();
+      return false;
+    }
+    if (secondary) {
+      let secondaryDigits = phoneDigits(secondary.value);
+      if (secondaryDigits === "998") {
+        secondaryDigits = "";
+        secondary.value = "";
+      }
+      if (secondaryDigits && secondaryDigits.length !== 9 && secondaryDigits.length !== 12) {
+        e.preventDefault();
+        alert("Qo'shimcha telefon raqami to'liq bo'lishi kerak yoki bo'sh qoldiring.");
+        secondary.focus();
+        return false;
+      }
+    }
+    return true;
+  }
+  if (formEl) {
+    formEl.addEventListener("submit", validatePhones);
   }
 });
 </script>

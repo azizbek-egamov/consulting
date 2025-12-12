@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Mijoz tahrirlash - Ardent Soft{% endblock title %}
+{% block title %}Mijoz tahrirlash - Major Consulting{% endblock title %}
 
 {% block item %}
 <style>
@@ -177,28 +177,6 @@
                   <div class="row g-3">
                     <div class="col-md-4">
                       <div class="mb-3">
-                        <label class="form-label fw-medium" for="lastName">
-                          Familiya <span class="text-danger">*</span>
-                        </label>
-                        <div class="input-group">
-                          <span class="input-group-text bg-light">
-                            <i class="ri-user-line text-primary"></i>
-                          </span>
-                          <input 
-                            type="text" 
-                            class="form-control" 
-                            name="last_name" 
-                            id="lastName" 
-                            value="{% if client.last_name %}{{client.last_name}}{% endif %}"
-                            placeholder="Familiya" 
-                            required
-                          >
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                      <div class="mb-3">
                         <label class="form-label fw-medium" for="firstName">
                           Ism <span class="text-danger">*</span>
                         </label>
@@ -213,6 +191,28 @@
                             id="firstName" 
                             value="{% if client.first_name %}{{client.first_name}}{% endif %}"
                             placeholder="Ism" 
+                            required
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="lastName">
+                          Familiya <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-user-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="last_name" 
+                            id="lastName" 
+                            value="{% if client.last_name %}{{client.last_name}}{% endif %}"
+                            placeholder="Familiya" 
                             required
                           >
                         </div>
@@ -307,7 +307,7 @@
                       </div>
                     </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                       <div class="mb-3">
                         <label class="form-label fw-medium" for="passport_issue_date">
                           Passport berilgan sana
@@ -328,8 +328,29 @@
                         </div>
                       </div>
                     </div>
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="passport_expiry_date">
+                          Passport tugash sanasi
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-calendar-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="passport_expiry_date" 
+                            id="passport_expiry_date" 
+                            value="{% if client.passport_expiry_date %}{{ client.passport_expiry_date }}{% endif %}"
+                            placeholder="01.01.2030"
+                            data-date-mask="true"
+                          >
+                        </div>
+                      </div>
+                    </div>
                     
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                       <div class="mb-3">
                         <label class="form-label fw-medium" for="passport_issue_place">
                           Passport bergan tashkilot
@@ -451,8 +472,10 @@
   
   // Date mask
   const dateInput = document.getElementById('passport_issue_date');
-  if (dateInput) {
-    dateInput.addEventListener('input', function(e) {
+  const dateExpiryInput = document.getElementById('passport_expiry_date');
+  function attachDateMask(input) {
+    if (!input) return;
+    input.addEventListener('input', function(e) {
       let value = this.value.replace(/\D/g, '');
       if (value.length >= 2) {
         value = value.slice(0, 2) + '.' + value.slice(2);
@@ -463,6 +486,8 @@
       this.value = value;
     });
   }
+  attachDateMask(dateInput);
+  attachDateMask(dateExpiryInput);
   
   // Remove None values
   document.querySelectorAll('input[type="text"]').forEach(function(field) {

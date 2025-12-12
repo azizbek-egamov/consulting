@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Mijozlar ro'yxati - Ardent Soft{% endblock title %}
+{% block title %}Mijozlar ro'yxati - Major Consulting{% endblock title %}
 
 {% block item %}
 <style>
@@ -208,9 +208,11 @@
                             </div>
                             
                             <!-- Add client button -->
+                            {% if request.user.username == "ceoadmin" %}
                             <a href="{% url 'client-create' %}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-primary d-flex align-items-center">
                                 <i class="ri-user-add-line me-1"></i> Mijoz qo'shish
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                     
@@ -285,12 +287,14 @@
                                                 <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tez SMS" onclick="quickSms('{{i.phone}}')">
                                                     <i class="ri-message-line"></i>
                                                 </button>
+                                                {% if request.user.username == "ceoadmin" %}
                                                 <a href="/client/edit/{{i.pk}}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tahrirlash">
                                                     <i class="ri-edit-line"></i>
                                                 </a>
                                                 <button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#delRow" data-id="{{ i.pk }}">
                                                     <i class="ri-delete-bin-line"></i>
                                                 </button>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>

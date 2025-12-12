@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Sum, Count, Q, F, Avg
@@ -10,17 +10,19 @@ from main.models import Client, Rasrochka, City, Building, Expense, ExpenseType,
 from django.contrib.auth.models import User
 import json
 import logging
+from functools import wraps
 
 # Logger sozlamalari
 logger = logging.getLogger(__name__)
 
-# Custom decorator for user authentication and username check
-def user_passes_test(view_func):
+def ceoadmin_required(view_func):
+    @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect("login")
-        if request.user.username == "financeadmin":
-            return redirect("login")
+        if request.user.username != "ceoadmin":
+            messages.warning(request, "Sizda bu bo'limga kirish huquqi yo'q.")
+            return redirect("home")
         return view_func(request, *args, **kwargs)
     return _wrapped_view
 
@@ -66,8 +68,9 @@ def _get_common_filters(request):
     return filters
 
 @login_required(login_url='login')
-@user_passes_test
+@ceoadmin_required
 def contracts_payments_dashboard_view(request):
+    
     """Dashboard for Contracts and Payments statistics."""
     filters = _get_common_filters(request)
     contract_filters = filters['contract_filters']
@@ -144,7 +147,6 @@ def contracts_payments_dashboard_view(request):
     return render(request, 'bi/contracts_payments_dashboard.html', context)
 
 @login_required(login_url='login')
-@user_passes_test
 def expenses_dashboard_view(request):
     """Dashboard for Expenses statistics."""
     filters = _get_common_filters(request)
@@ -188,6 +190,7 @@ def expenses_dashboard_view(request):
     return render(request, 'bi/expenses_dashboard.html', context)
 
 @login_required
+@ceoadmin_required
 def leads_dashboard_view(request):
     """Leadlar bo'yicha statistikalar sahifasi"""
 
@@ -406,7 +409,7 @@ def leads_dashboard_view(request):
 
 
 @login_required(login_url='login')
-@user_passes_test
+@ceoadmin_required
 def users_dashboard_view(request):
     """Foydalanuvchilar bo'yicha statistikalar sahifasi"""
     

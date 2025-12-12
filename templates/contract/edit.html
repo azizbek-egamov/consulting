@@ -52,12 +52,12 @@
             <h6 class="text-uppercase text-muted mb-3">Buyurtmachi ma'lumotlari</h6>
                     <div class="row g-3">
               <div class="col-md-4">
-                <label class="form-label">Familiya <span class="text-danger">*</span></label>
-                <input type="text" name="client_last_name" class="form-control" value="{% if client_info.last_name %}{{ client_info.last_name }}{% elif contract.client_last_name %}{{ contract.client_last_name }}{% endif %}" required>
-                          </div>
-              <div class="col-md-4">
                 <label class="form-label">Ism <span class="text-danger">*</span></label>
                 <input type="text" name="client_first_name" class="form-control" value="{% if client_info.first_name %}{{ client_info.first_name }}{% elif contract.client_first_name %}{{ contract.client_first_name }}{% endif %}" required>
+                          </div>
+              <div class="col-md-4">
+                <label class="form-label">Familiya <span class="text-danger">*</span></label>
+                <input type="text" name="client_last_name" class="form-control" value="{% if client_info.last_name %}{{ client_info.last_name }}{% elif contract.client_last_name %}{{ contract.client_last_name }}{% endif %}" required>
                           </div>
               <div class="col-md-4">
                 <label class="form-label">Sharif</label>
@@ -71,6 +71,10 @@
                 <label class="form-label">Passport berilgan sana</label>
                 <input type="text" name="passport_issue_date" class="form-control" value="{% if client_info.passport_issue_date and client_info.passport_issue_date != 'None' %}{{ client_info.passport_issue_date }}{% elif contract.passport_issue_date and contract.passport_issue_date != 'None' %}{{ contract.passport_issue_date }}{% endif %}" data-date-mask="true">
                         </div>
+              <div class="col-md-4">
+                <label class="form-label">Passport tugash sanasi</label>
+                <input type="text" name="passport_expiry_date" class="form-control" value="{% if contract.passport_expiry_date and contract.passport_expiry_date != 'None' %}{{ contract.passport_expiry_date }}{% endif %}" data-date-mask="true">
+              </div>
               <div class="col-md-6">
                 <label class="form-label">Passport bergan tashkilot</label>
                 <input type="text" name="passport_issue_place" class="form-control" value="{% if client_info.passport_issue_place and client_info.passport_issue_place != 'None' %}{{ client_info.passport_issue_place }}{% elif contract.passport_issue_place and contract.passport_issue_place != 'None' %}{{ contract.passport_issue_place }}{% endif %}">
@@ -100,55 +104,94 @@
                 <input type="text" name="password" class="form-control" value="{% if client_info.password %}{{ client_info.password }}{% endif %}" placeholder="Mijoz uchun parol">
               </div>
               <div class="col-md-12">
-                <label class="form-label">Passport / ID karta rasmlari (maksimal 2 ta)</label>
-                <div class="row g-2" id="passport-images-container">
-                  {% if contract.passport_images %}
-                    {% for img in contract.passport_images %}
-                      <div class="col-md-6 passport-image-item">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                          {# URL ni to'g'rilash: http(s) bo'lmasa bitta / bilan boshlansin #}
-                          {% if img|slice:"0:4" == "http" or img|slice:"0:5" == "https" %}
-                            {% with img_url=img %}
-                              <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
-                            {% endwith %}
-                          {% elif img|slice:"0:2" == "//" %}
-                            {% with img_url="/"|add:img|slice:"2:" %}
-                              <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
-                            {% endwith %}
-                          {% elif img|slice:"0:1" == "/" %}
-                            {% with img_url=img %}
-                              <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
-                            {% endwith %}
-                          {% else %}
-                            {% with img_url="/"|add:img %}
-                              <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
-                            {% endwith %}
-                          {% endif %}
-                          <div>
-                            <button type="button" class="btn btn-sm btn-danger remove-passport-image" data-index="{{ forloop.counter0 }}">O'chirish</button>
-                            <input type="hidden" name="delete_passport_image" value="{{ forloop.counter0 }}" class="delete-passport-input" disabled>
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-6">
+                    <label class="form-label">Zagran passport rasmi (1 ta)</label>
+                    <div class="row g-2" id="passport-images-container">
+                      {% if contract.passport_images %}
+                        {% for img in contract.passport_images %}
+                          <div class="col-12 passport-image-item">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                              {% if img|slice:"0:4" == "http" or img|slice:"0:5" == "https" %}
+                                {% with img_url=img %}
+                                  <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% elif img|slice:"0:2" == "//" %}
+                                {% with img_url="/"|add:img|slice:"2:" %}
+                                  <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% elif img|slice:"0:1" == "/" %}
+                                {% with img_url=img %}
+                                  <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% else %}
+                                {% with img_url="/"|add:img %}
+                                  <img src="{{ img_url }}" alt="Passport" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% endif %}
+                              <div>
+                                <button type="button" class="btn btn-sm btn-danger remove-passport-image" data-index="{{ forloop.counter0 }}">O'chirish</button>
+                                <input type="hidden" name="delete_passport_image" value="{{ forloop.counter0 }}" class="delete-passport-input" disabled>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    {% endfor %}
-                  {% endif %}
-                  {% if contract.passport_images|length < 2 %}
-                    {% for i in "x"|ljust:2 %}
-                      {% if forloop.counter0 >= contract.passport_images|length %}
-                        <div class="col-md-6">
-                          <input type="file" name="passport_image_{{ forloop.counter0 }}" class="form-control passport-image-input" accept="image/*">
+                        {% endfor %}
+                      {% endif %}
+                      {% if contract.passport_images|length < 1 %}
+                        <div class="col-12">
+                          <input type="file" name="passport_image_0" class="form-control passport-image-input" accept="image/*">
                         </div>
                       {% endif %}
-                    {% endfor %}
-                  {% endif %}
+                    </div>
+                    <small class="text-muted">Faqat bitta passport rasmini yuklang. Yangisini yuklasangiz eski rasmni o'chiring.</small>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">VISA rasmi (1 ta)</label>
+                    <div class="row g-2" id="visa-images-container">
+                      {% if contract.visa_images %}
+                        {% for img in contract.visa_images %}
+                          <div class="col-12 visa-image-item">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                              {% if img|slice:"0:4" == "http" or img|slice:"0:5" == "https" %}
+                                {% with img_url=img %}
+                                  <img src="{{ img_url }}" alt="Visa" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% elif img|slice:"0:2" == "//" %}
+                                {% with img_url="/"|add:img|slice:"2:" %}
+                                  <img src="{{ img_url }}" alt="Visa" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% elif img|slice:"0:1" == "/" %}
+                                {% with img_url=img %}
+                                  <img src="{{ img_url }}" alt="Visa" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% else %}
+                                {% with img_url="/"|add:img %}
+                                  <img src="{{ img_url }}" alt="Visa" style="max-width: 100px; max-height: 100px; object-fit: cover;" class="img-thumbnail">
+                                {% endwith %}
+                              {% endif %}
+                              <div>
+                                <button type="button" class="btn btn-sm btn-danger remove-visa-image" data-index="{{ forloop.counter0 }}">O'chirish</button>
+                                <input type="hidden" name="delete_visa_image" value="{{ forloop.counter0 }}" class="delete-visa-input" disabled>
+                              </div>
+                            </div>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                      {% if contract.visa_images|length < 1 %}
+                        <div class="col-12">
+                          <input type="file" name="visa_image_0" class="form-control visa-image-input" accept="image/*">
+                        </div>
+                      {% endif %}
+                    </div>
+                    <small class="text-muted">Yangi rasm yuklasangiz, mavjud VISA rasmi o'rnini bosadi.</small>
+                  </div>
                 </div>
-                <small class="text-muted">Hohlasa 1 ta yoki 2 ta rasm yuklashingiz mumkin. Keyinchalik ham qo'shishingiz mumkin.</small>
               </div>
                 </div>
               </div>
 
           <div class="col-12">
-            <h6 class="text-uppercase text-muted mb-3">Ish yakunlanganidan keyin shartnoma rasmlari</h6>
+            <h6 class="text-uppercase text-muted mb-3">Ish yakunlanganidan keyingi shartnoma rasmlari</h6>
             <div class="row g-3">
               <div class="col-md-12">
                 <label class="form-label">Shartnoma rasmlari (maksimal 3 ta)</label>
@@ -199,16 +242,19 @@
           </div>
           
           <div class="col-12">
-            <h6 class="text-uppercase text-muted mb-3 d-flex align-items-center justify-content-between">
-              <span>Ota-onasi / Farzandlari</span>
+            <h6 class="text-uppercase text-muted mb-3">Ota-onasi / Farzandlari</h6>
+            <div id="family-members-container">
+              <!-- Family members will be added here dynamically -->
+            </div>
+            <div id="family-empty-placeholder" class="alert alert-light border d-none mt-2 mb-0">
+              Ma'lumot topilmadi. "Qo'shish" tugmasi orqali qo'shing.
+            </div>
+            <div class="d-flex justify-content-end mt-2">
               <button type="button" class="btn btn-sm btn-primary" id="add-family-member">
                 <i class="ri-add-line me-1"></i> Qo'shish
               </button>
-            </h6>
-            <div id="family-members-container">
-              <!-- Family members will be added here dynamically -->
-                </div>
-              </div>
+            </div>
+          </div>
               
           <div class="col-12">
             <h6 class="text-uppercase text-muted mb-3">Xizmat tafsilotlari</h6>
@@ -389,6 +435,13 @@ document.addEventListener("DOMContentLoaded", function() {
   let familyMemberIndex = 0;
   const addFamilyMemberBtn = document.getElementById("add-family-member");
   const familyMembersContainer = document.getElementById("family-members-container");
+  const familyEmptyPlaceholder = document.getElementById("family-empty-placeholder");
+
+  function toggleFamilyPlaceholder() {
+    if (!familyEmptyPlaceholder) return;
+    const hasMembers = familyMembersContainer && familyMembersContainer.children.length > 0;
+    familyEmptyPlaceholder.classList.toggle("d-none", hasMembers);
+  }
 
   function addFamilyMember(data = {}) {
     const index = familyMemberIndex++;
@@ -415,12 +468,12 @@ document.addEventListener("DOMContentLoaded", function() {
         </div>
         <div class="row g-3">
           <div class="col-md-3">
-            <label class="form-label">Familiya <span class="text-danger">*</span></label>
-            <input type="text" name="family_member_${index}_last_name" class="form-control" placeholder="Familiya" value="${data.last_name || ''}" required>
-          </div>
-          <div class="col-md-3">
             <label class="form-label">Ism <span class="text-danger">*</span></label>
             <input type="text" name="family_member_${index}_first_name" class="form-control" placeholder="Ism" value="${data.first_name || ''}" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Familiya <span class="text-danger">*</span></label>
+            <input type="text" name="family_member_${index}_last_name" class="form-control" placeholder="Familiya" value="${data.last_name || ''}" required>
           </div>
           <div class="col-md-3">
             <label class="form-label">Sharif</label>
@@ -439,15 +492,19 @@ document.addEventListener("DOMContentLoaded", function() {
               <option value="other" ${data.relationship === 'other' || !data.relationship ? 'selected' : ''}>Boshqa</option>
             </select>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <label class="form-label">Passport raqami</label>
             <input type="text" name="family_member_${index}_passport" class="form-control family-passport-input" placeholder="AA1234567" value="${data.passport_number || ''}">
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Passport berilgan sana</label>
+          <div class="col-md-3">
+            <label class="form-label">Berilgan sana</label>
             <input type="text" name="family_member_${index}_passport_date" class="form-control family-date-input" placeholder="01.01.2020" data-date-mask="true" value="${data.passport_issue_date || ''}">
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
+            <label class="form-label">Tugash sanasi</label>
+            <input type="text" name="family_member_${index}_passport_expiry_date" class="form-control family-date-input" placeholder="01.01.2030" data-date-mask="true" value="${data.passport_expiry_date || ''}">
+          </div>
+          <div class="col-md-3">
             <label class="form-label">Passport bergan tashkilot</label>
             <input type="text" name="family_member_${index}_passport_place" class="form-control" placeholder="MIB, IIB va h.k." value="${data.passport_issue_place || ''}">
           </div>
@@ -471,6 +528,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Remove button handler
     memberCard.querySelector(".remove-family-member").addEventListener("click", function() {
       memberCard.remove();
+      toggleFamilyPlaceholder();
     });
 
     // Passport mask for family members
@@ -532,6 +590,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (addFamilyMemberBtn) {
     addFamilyMemberBtn.addEventListener("click", function() {
       addFamilyMember();
+      toggleFamilyPlaceholder();
     });
   }
 
@@ -574,6 +633,25 @@ document.addEventListener("DOMContentLoaded", function() {
         btn.classList.add('btn-success');
       }
     }
+
+    if (e.target.classList.contains('remove-visa-image') || e.target.closest('.remove-visa-image')) {
+      const btn = e.target.classList.contains('remove-visa-image') ? e.target : e.target.closest('.remove-visa-image');
+      const item = btn.closest('.visa-image-item');
+      const deleteInput = item.querySelector('.delete-visa-input');
+      if (deleteInput && !deleteInput.disabled) {
+        deleteInput.disabled = true;
+        item.style.opacity = '1';
+        btn.textContent = 'O\'chirish';
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-danger');
+      } else if (deleteInput) {
+        deleteInput.disabled = false;
+        item.style.opacity = '0.5';
+        btn.textContent = 'Qayta tiklash';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-success');
+      }
+    }
   });
 
   // Load existing family members
@@ -586,6 +664,7 @@ document.addEventListener("DOMContentLoaded", function() {
         relationship: "{{ member.relationship|default:'other' }}",
         passport_number: "{% if member.passport_number %}{{ member.passport_number }}{% endif %}",
         passport_issue_date: "{% if member.passport_issue_date %}{{ member.passport_issue_date }}{% endif %}",
+        passport_expiry_date: "{% if member.passport_expiry_date %}{{ member.passport_expiry_date }}{% endif %}",
         passport_issue_place: "{% if member.passport_issue_place %}{{ member.passport_issue_place }}{% endif %}",
         birth_date: "{% if member.birth_date %}{{ member.birth_date|date:'Y-m-d' }}{% endif %}",
         phone: "{% if member.phone %}{{ member.phone }}{% endif %}",
@@ -593,6 +672,43 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     {% endfor %}
   {% endif %}
+
+  // Agar mavjud bo'lmasa placeholder ko'rsatish
+  toggleFamilyPlaceholder();
+
+  // Telefon validatsiyasi
+  const formEl = document.querySelector("form");
+  function phoneDigits(val) {
+    return (val || "").replace(/\D/g, "");
+  }
+  function validatePhones(e) {
+    const primary = document.querySelector('input[name="phone_primary"]');
+    const secondary = document.querySelector('input[name="phone_secondary"]');
+    const primaryDigits = primary ? phoneDigits(primary.value) : "";
+    if (primary && (primaryDigits.length !== 9 && primaryDigits.length !== 12)) {
+      e.preventDefault();
+      alert("Asosiy telefon raqamini to'liq kiriting (+998 XX XXX XX XX).");
+      primary.focus();
+      return false;
+    }
+    if (secondary) {
+      let secondaryDigits = phoneDigits(secondary.value);
+      if (secondaryDigits === "998") {
+        secondaryDigits = "";
+        secondary.value = "";
+      }
+      if (secondaryDigits && secondaryDigits.length !== 9 && secondaryDigits.length !== 12) {
+        e.preventDefault();
+        alert("Qo'shimcha telefon raqami to'liq bo'lishi kerak yoki bo'sh qoldiring.");
+        secondary.focus();
+        return false;
+      }
+    }
+    return true;
+  }
+  if (formEl) {
+    formEl.addEventListener("submit", validatePhones);
+  }
 });
 </script>
 {% endblock item %}

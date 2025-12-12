@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from main.models import *
 from django.contrib import messages
@@ -39,18 +40,19 @@ from decimal import Decimal
 import logging
 logger = logging.getLogger(__name__)
 
-
-# Custom decorator for user authentication and username check
-def user_passes_test(view_func):
+def ceoadmin_required(view_func):
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect("login")
-        if request.user.username == "financeadmin":
-            return redirect("login")
+        if request.user.username != "ceoadmin":
+            messages.warning(request, "Sizda bu bo'limga kirish huquqi yo'q.")
+            return redirect("home")
         return view_func(request, *args, **kwargs)
-    
     return _wrapped_view
+
+
+# Custom decorator for user authentication and username check
 
 def build_contract_filter_params(request):
     """Build filter parameters from request for contracts"""
@@ -453,6 +455,7 @@ def ClientPage(request):
 
 
 @login_required(login_url='login')
+@ceoadmin_required
 def ClientCreate(request):
         
     if request.method == "POST":
@@ -509,6 +512,7 @@ def ClientCreate(request):
         # Get additional fields
         passport_number = request.POST.get("passport_number", "").strip() or None
         passport_issue_date = request.POST.get("passport_issue_date", "").strip() or None
+        passport_expiry_date = request.POST.get("passport_expiry_date", "").strip() or None
         passport_issue_place = request.POST.get("passport_issue_place", "").strip() or None
         address = request.POST.get("address", "").strip() or None
 
@@ -521,6 +525,7 @@ def ClientCreate(request):
             phone2=phone2_clean,
             passport_number=passport_number,
             passport_issue_date=passport_issue_date,
+            passport_expiry_date=passport_expiry_date,
             passport_issue_place=passport_issue_place,
             address=address,
             heard=heard
@@ -531,6 +536,7 @@ def ClientCreate(request):
     return render(request=request, template_name="client/create.html")
 
 @login_required(login_url='login')
+@ceoadmin_required
 def ClientDelete(request, id):
         
     client_instance = get_object_or_404(ClientInformation, pk=id)
@@ -550,6 +556,7 @@ def ClientDelete(request, id):
     return JsonResponse({"ok": True, "message": "Mijoz muvaffaqiyatli o'chirildi."})
 
 @login_required(login_url='login')
+@ceoadmin_required
 def ClientEdit(request, id):
     client = get_object_or_404(ClientInformation, pk=id)
     
@@ -567,6 +574,7 @@ def ClientEdit(request, id):
         heard = request.POST.get("heard")
         passport_number = request.POST.get("passport_number", "").strip() or None
         passport_issue_date = request.POST.get("passport_issue_date", "").strip() or None
+        passport_expiry_date = request.POST.get("passport_expiry_date", "").strip() or None
         passport_issue_place = request.POST.get("passport_issue_place", "").strip() or None
         address = request.POST.get("address", "").strip() or None
         
@@ -599,6 +607,7 @@ def ClientEdit(request, id):
                     client.phone2 = phone2_clean
                     client.passport_number = passport_number
                     client.passport_issue_date = passport_issue_date
+                    client.passport_expiry_date = passport_expiry_date
                     client.passport_issue_place = passport_issue_place
                     client.address = address
                     client.heard = heard
@@ -658,21 +667,16 @@ def _parse_int_safe(val, default=0):
 def _handle_uploaded_images(request, prefix, max_images, contract_number=None, client_name=None):
     """Rasmlarni yuklab, saqlab, JSON formatida qaytaradi"""
     images = []
-    # Filenamelar uchun prefiks
-    name_parts = []
-    if contract_number is not None:
-        name_parts.append(f"contract-{contract_number}")
-    if client_name:
-        name_parts.append(slugify(client_name))
-    base_prefix = "-".join(name_parts) if name_parts else prefix
+    # Filenamelar uchun prefiks: faqat mijoz ismi, kontrakt raqami va uuid ishlatmaymiz
+    base_prefix = slugify(client_name) if client_name else prefix
 
     for i in range(max_images):
         file_key = f"{prefix}_{i}"
         if file_key in request.FILES:
             uploaded_file = request.FILES[file_key]
-            # Fayl nomini yaratish
+            # Fayl nomini yaratish (faqat mijoz nomi + kengaytma)
             file_ext = os.path.splitext(uploaded_file.name)[1]
-            file_name = f"{prefix}/{base_prefix}-{uuid4().hex}{file_ext}"
+            file_name = f"{prefix}/{base_prefix}{file_ext}"
             # Faylni saqlash
             file_path = default_storage.save(file_name, ContentFile(uploaded_file.read()))
             # Media URL bilan to'liq yo'l yaratish
@@ -722,6 +726,7 @@ def _extract_consulting_contract_payload(form, min_contract_number=None, existin
     client_middle_name = (form.get("client_middle_name") or "").strip() or None
     passport_number = (form.get("passport_number") or "").strip()
     passport_issue_date = (form.get("passport_issue_date") or "").strip() or None
+    passport_expiry_date = (form.get("passport_expiry_date") or "").strip() or None
     passport_issue_place = (form.get("passport_issue_place") or "").strip() or None
     client_address = (form.get("client_address") or "").strip()
     visa_type = (form.get("visa_type") or "Ishchi viza").strip()
@@ -749,9 +754,19 @@ def _extract_consulting_contract_payload(form, min_contract_number=None, existin
         errors.append("Xizmat nomi kiritilishi shart.")
 
     heard = (form.get("heard") or "").strip()
-    phone_primary = normalize_phone(form.get("phone_primary"))
-    phone_secondary_raw = form.get("phone_secondary")
-    phone_secondary = normalize_phone(phone_secondary_raw) if phone_secondary_raw else None
+
+    def _clean_phone(raw):
+        if not raw:
+            return None
+        val = str(raw).strip()
+        # Agar faqat kod bo'lsa yoki juda qisqa bo'lsa, bo'sh deb qaraymiz
+        if val in {"+998", "998", "+998 ", "998 "}:
+            return None
+        normalized = normalize_phone(val)
+        return normalized
+
+    phone_primary = _clean_phone(form.get("phone_primary"))
+    phone_secondary = _clean_phone(form.get("phone_secondary"))
 
     if not phone_primary:
         errors.append("Asosiy telefon raqami noto'g'ri kiritildi.")
@@ -795,6 +810,7 @@ def _extract_consulting_contract_payload(form, min_contract_number=None, existin
         "passport_number": passport_number,
         "passport_issue_date": passport_issue_date,
         "passport_issue_place": passport_issue_place,
+        "passport_expiry_date": passport_expiry_date,
         "address": client_address,
         "email": email,
         "password": password,
@@ -815,6 +831,7 @@ def _extract_consulting_contract_payload(form, min_contract_number=None, existin
         "passport_number": passport_number,
         "passport_issue_date": passport_issue_date,
         "passport_issue_place": passport_issue_place,
+        "passport_expiry_date": passport_expiry_date,
         "client_address": client_address,
         "phone_primary": phone_primary,
         "phone_secondary": phone_secondary,
@@ -843,6 +860,7 @@ def ContractPage(request):
     contract_queryset = ConsultingContract.objects.all()
     status_filter = request.GET.get("status") or ""
     search_value = request.GET.get("q", "").strip()
+    created_by_filter = request.GET.get("created_by") or ""
 
     if status_filter in dict(ConsultingContract.StatusChoices.choices):
         contract_queryset = contract_queryset.filter(status=status_filter)
@@ -858,6 +876,8 @@ def ContractPage(request):
             Q(client__phone__icontains=search_value) |
             Q(client__passport_number__icontains=search_value)
         )
+    if created_by_filter and created_by_filter.isdigit():
+        contract_queryset = contract_queryset.filter(created_by_id=int(created_by_filter))
 
     contracts = contract_queryset.order_by("-created_at")
     aggregates = contracts.aggregate(
@@ -871,6 +891,7 @@ def ContractPage(request):
     completed_contracts = ConsultingContract.objects.filter(
         status=ConsultingContract.StatusChoices.COMPLETED
     ).count()
+    users_with_contracts = User.objects.filter(created_contracts__isnull=False).distinct()
 
     total_fee = aggregates.get("total_fee") or 0
     total_paid = aggregates.get("total_paid") or 0
@@ -880,7 +901,9 @@ def ContractPage(request):
         "contracts": contracts,
         "search_value": search_value,
         "status_filter": status_filter,
+        "created_by_filter": created_by_filter,
         "status_choices": ConsultingContract.StatusChoices.choices,
+        "users_with_contracts": users_with_contracts,
         "total_contracts": total_contracts,
         "active_contracts": active_contracts,
         "completed_contracts": completed_contracts,
@@ -906,7 +929,8 @@ def ContractDetailsAPI(request, id):
         "email": client_info.email if client_info else "",
         "password": client_info.password if client_info else "",
         "passport_number": client_info.passport_number if client_info else contract.passport_number or "",
-        "passport_issue_date": client_info.passport_issue_date if client_info else contract.passport_issue_date or "",
+        "passport_issue_date": client_info.passport_issue_date if client_info else getattr(contract, "passport_issue_date", "") or "",
+        "passport_expiry_date": getattr(contract, "passport_expiry_date", "") or "",
         "passport_issue_place": client_info.passport_issue_place if client_info else contract.passport_issue_place or "",
         "address": client_info.address if client_info else contract.client_address or "",
         "heard": client_info.heard if client_info else "",
@@ -922,6 +946,7 @@ def ContractDetailsAPI(request, id):
             "relationship": member.get_relationship_display(),
             "passport_number": member.passport_number or "",
             "passport_issue_date": member.passport_issue_date or "",
+        "passport_expiry_date": getattr(member, "passport_expiry_date", "") or "",
             "passport_issue_place": member.passport_issue_place or "",
             "birth_date": member.birth_date.strftime("%d.%m.%Y") if member.birth_date else "",
             "phone": member.phone or "",
@@ -951,6 +976,11 @@ def ContractDetailsAPI(request, id):
             img if (img.startswith('/media/') or img.startswith('http')) 
             else (f"/media/{img.replace('/media/', '').replace('media/', '').lstrip('/')}" if img else "")
             for img in (contract.passport_images or []) if img
+        ],
+        "visa_images": [
+            img if (img.startswith('/media/') or img.startswith('http')) 
+            else (f"/media/{img.replace('/media/', '').replace('media/', '').lstrip('/')}" if img else "")
+            for img in (contract.visa_images or []) if img
         ],
         "completed_contract_images": [
             img if (img.startswith('/media/') or img.startswith('http')) 
@@ -1499,6 +1529,7 @@ def ContractCreate(request):
                     "phone2": client_data.get("phone2"),
                     "passport_number": client_data.get("passport_number"),
                     "passport_issue_date": client_data.get("passport_issue_date"),
+                    "passport_expiry_date": client_data.get("passport_expiry_date"),
                     "passport_issue_place": client_data.get("passport_issue_place"),
                     "address": client_data.get("address"),
                     "heard": client_data.get("heard") or "Xech qayerda",
@@ -1515,6 +1546,8 @@ def ContractCreate(request):
                     client_info.passport_number = client_data["passport_number"]
                 if client_data.get("passport_issue_date"):
                     client_info.passport_issue_date = client_data["passport_issue_date"]
+                if client_data.get("passport_expiry_date"):
+                    client_info.passport_expiry_date = client_data["passport_expiry_date"]
                 if client_data.get("passport_issue_place"):
                     client_info.passport_issue_place = client_data["passport_issue_place"]
                 if client_data.get("address"):
@@ -1534,17 +1567,21 @@ def ContractCreate(request):
                     client_info.password = client_data["password"]
                 if client_data.get("heard"):
                     client_info.heard = client_data["heard"]
+                if client_data.get("passport_expiry_date"):
+                    client_info.passport_expiry_date = client_data["passport_expiry_date"]
                 client_info.save()
             
             client_full_name = f"{client_data.get('last_name', '')} {client_data.get('first_name', '')}".strip()
             # Rasmlarni yuklab olish
-            passport_images = _handle_uploaded_images(request, "passport_image", 2, contract_number=payload.get("contract_number"), client_name=client_full_name)
+            passport_images = _handle_uploaded_images(request, "passport_image", 1, contract_number=payload.get("contract_number"), client_name=client_full_name)
+            visa_images = _handle_uploaded_images(request, "visa_image", 1, contract_number=payload.get("contract_number"), client_name=client_full_name)
             completed_contract_images = _handle_uploaded_images(request, "completed_contract_image", 3, contract_number=payload.get("contract_number"), client_name=client_full_name)
             
             # Shartnoma yaratish
             contract = ConsultingContract.objects.create(
                 client=client_info,
                 passport_images=passport_images,
+                visa_images=visa_images,
                 completed_contract_images=completed_contract_images,
                 created_by=request.user,
                 **payload
@@ -1562,6 +1599,7 @@ def ContractCreate(request):
                 member_relationship = request.POST.get(f"family_member_{family_member_index}_relationship", "other")
                 member_passport = request.POST.get(f"family_member_{family_member_index}_passport", "").strip() or None
                 member_passport_date = request.POST.get(f"family_member_{family_member_index}_passport_date", "").strip() or None
+                member_passport_expiry = request.POST.get(f"family_member_{family_member_index}_passport_expiry_date", "").strip() or None
                 member_passport_place = request.POST.get(f"family_member_{family_member_index}_passport_place", "").strip() or None
                 member_birth_date = request.POST.get(f"family_member_{family_member_index}_birth_date", "").strip() or None
                 member_phone = request.POST.get(f"family_member_{family_member_index}_phone", "").strip() or None
@@ -1583,6 +1621,7 @@ def ContractCreate(request):
                     relationship=member_relationship,
                     passport_number=member_passport,
                     passport_issue_date=member_passport_date,
+                    passport_expiry_date=member_passport_expiry,
                     passport_issue_place=member_passport_place,
                     birth_date=birth_date_parsed,
                     phone=member_phone,
@@ -1652,6 +1691,8 @@ def ContractEdit(request, id):
                     client_info.passport_number = client_data["passport_number"]
                 if client_data.get("passport_issue_date"):
                     client_info.passport_issue_date = client_data["passport_issue_date"]
+                if client_data.get("passport_expiry_date"):
+                    client_info.passport_expiry_date = client_data["passport_expiry_date"]
                 if client_data.get("passport_issue_place"):
                     client_info.passport_issue_place = client_data["passport_issue_place"]
                 if client_data.get("address"):
@@ -1674,6 +1715,7 @@ def ContractEdit(request, id):
                         "phone2": client_data.get("phone2"),
                         "passport_number": client_data.get("passport_number"),
                         "passport_issue_date": client_data.get("passport_issue_date"),
+                        "passport_expiry_date": client_data.get("passport_expiry_date"),
                         "passport_issue_place": client_data.get("passport_issue_place"),
                         "address": client_data.get("address"),
                         "email": client_data.get("email"),
@@ -1690,6 +1732,8 @@ def ContractEdit(request, id):
                         client_info.passport_number = client_data["passport_number"]
                     if client_data.get("passport_issue_date"):
                         client_info.passport_issue_date = client_data["passport_issue_date"]
+                    if client_data.get("passport_expiry_date"):
+                        client_info.passport_expiry_date = client_data["passport_expiry_date"]
                     if client_data.get("passport_issue_place"):
                         client_info.passport_issue_place = client_data["passport_issue_place"]
                     if client_data.get("address"):
@@ -1705,6 +1749,7 @@ def ContractEdit(request, id):
             # Rasmlarni yuklab olish (mavjud rasmlarni saqlab qolish)
             existing_passport_images = list(contract.passport_images or [])
             existing_completed_images = list(contract.completed_contract_images or [])
+            existing_visa_images = list(contract.visa_images or [])
             
             # Eski rasmlarni o'chirish (agar belgilangan bo'lsa)
             delete_passport_indices = []
@@ -1722,23 +1767,36 @@ def ContractEdit(request, id):
                     delete_completed_indices.append(idx)
                 except (ValueError, TypeError):
                     pass
+            delete_visa_indices = []
+            for idx_str in request.POST.getlist("delete_visa_image"):
+                try:
+                    idx = int(idx_str)
+                    delete_visa_indices.append(idx)
+                except (ValueError, TypeError):
+                    pass
             
             # O'chirilgan rasmlarni olib tashlash (indekslar bo'yicha)
             passport_images = [img for idx, img in enumerate(existing_passport_images) if idx not in delete_passport_indices]
             completed_contract_images = [img for idx, img in enumerate(existing_completed_images) if idx not in delete_completed_indices]
+            visa_images = [img for idx, img in enumerate(existing_visa_images) if idx not in delete_visa_indices]
             
             client_full_name = f"{client_data.get('last_name', '')} {client_data.get('first_name', '')}".strip()
             # Yangi rasmlarni qo'shish (cheklovlar bilan)
-            new_passport_images = _handle_uploaded_images(request, "passport_image", 2, contract_number=contract.contract_number, client_name=client_full_name)
+            new_passport_images = _handle_uploaded_images(request, "passport_image", 1, contract_number=contract.contract_number, client_name=client_full_name)
+            new_visa_images = _handle_uploaded_images(request, "visa_image", 1, contract_number=contract.contract_number, client_name=client_full_name)
             new_completed_images = _handle_uploaded_images(request, "completed_contract_image", 3, contract_number=contract.contract_number, client_name=client_full_name)
             
             # Mavjud rasmlar sonini hisoblab, qolgan joyga yangilarini qo'shish
-            remaining_passport_slots = 2 - len(passport_images)
+            remaining_passport_slots = 1 - len(passport_images)
             remaining_completed_slots = 3 - len(completed_contract_images)
             
             if remaining_passport_slots > 0:
                 passport_images.extend(new_passport_images[:remaining_passport_slots])
             
+            # Visa rasmlari: agar yangi yuklansa, eski o'rniga qo'yamiz
+            if new_visa_images:
+                visa_images = new_visa_images[:1]
+
             if remaining_completed_slots > 0:
                 completed_contract_images.extend(new_completed_images[:remaining_completed_slots])
             
@@ -1747,6 +1805,7 @@ def ContractEdit(request, id):
                 setattr(contract, field, value)
             contract.client = client_info
             contract.passport_images = passport_images
+            contract.visa_images = visa_images
             contract.completed_contract_images = completed_contract_images
             contract.save()
             
@@ -1766,6 +1825,7 @@ def ContractEdit(request, id):
                 member_relationship = request.POST.get(f"family_member_{family_member_index}_relationship", "other")
                 member_passport = request.POST.get(f"family_member_{family_member_index}_passport", "").strip() or None
                 member_passport_date = request.POST.get(f"family_member_{family_member_index}_passport_date", "").strip() or None
+                member_passport_expiry = request.POST.get(f"family_member_{family_member_index}_passport_expiry_date", "").strip() or None
                 member_passport_place = request.POST.get(f"family_member_{family_member_index}_passport_place", "").strip() or None
                 member_birth_date = request.POST.get(f"family_member_{family_member_index}_birth_date", "").strip() or None
                 member_phone = request.POST.get(f"family_member_{family_member_index}_phone", "").strip() or None
@@ -1787,6 +1847,7 @@ def ContractEdit(request, id):
                     relationship=member_relationship,
                     passport_number=member_passport,
                     passport_issue_date=member_passport_date,
+                    passport_expiry_date=member_passport_expiry,
                     passport_issue_place=member_passport_place,
                     birth_date=birth_date_parsed,
                     phone=member_phone,

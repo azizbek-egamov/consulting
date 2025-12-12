@@ -40,7 +40,7 @@ urlpatterns = [
     path("contract/<int:id>/", ContractCreatePDF, name="contract-pdf"),
     path("contract/<int:id>/details/", ContractDetailsAPI, name="contract-details-api"),
     
-    path("notifications/", NotificationsPage, name="notifications"),
+    # path("notifications/", NotificationsPage, name="notifications"),
     
     path('leads/', leads_views.leads_kanban, name='leads_kanban'),
     path('leads/list/', leads_views.leads_list, name='leads_list'),

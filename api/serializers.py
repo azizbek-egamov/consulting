@@ -36,6 +36,7 @@ class ClientInformationSerializer(serializers.ModelSerializer):
             "phone2",
             "passport_number",
             "passport_issue_date",
+            "passport_expiry_date",
             "passport_issue_place",
             "address",
             "email",
@@ -64,6 +65,7 @@ class ContractFamilyMemberSerializer(serializers.ModelSerializer):
             "relationship",
             "passport_number",
             "passport_issue_date",
+            "passport_expiry_date",
             "passport_issue_place",
             "birth_date",
             "phone",
@@ -83,6 +85,9 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
     completed_contract_images = serializers.ListField(
         child=serializers.CharField(), required=False, allow_null=True
     )
+    visa_images = serializers.ListField(
+        child=serializers.CharField(), required=False, allow_null=True
+    )
 
     class Meta:
         model = models.ConsultingContract
@@ -93,15 +98,13 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
         stored = []
         media_url = "media"
         name_parts = []
-        if contract_number:
-            name_parts.append(f"contract-{contract_number}")
         if client_name:
             name_parts.append(slugify(client_name))
         base_prefix = "-".join([p for p in name_parts if p]) or prefix
 
         for f in files:
             ext = os.path.splitext(f.name)[1]
-            fname = f"{prefix}/{base_prefix}-{uuid4().hex}{ext}"
+            fname = f"{prefix}/{base_prefix}{ext}"
             path = default_storage.save(fname, ContentFile(f.read()))
             if path.startswith("media/"):
                 path = path[6:]
@@ -145,19 +148,29 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
             if "completed_contract_images" in validated_data
             else (instance.completed_contract_images if instance else [])
         ) or []
+        existing_visa = (
+            validated_data.pop("visa_images", None)
+            if "visa_images" in validated_data
+            else (instance.visa_images if instance else [])
+        ) or []
 
         new_passport_files = self._extract_files(request, "passport_images")
         new_completed_files = self._extract_files(request, "completed_contract_images")
+        new_visa_files = self._extract_files(request, "visa_images")
 
         passport_uploaded = self._handle_files(
-            new_passport_files, "passport_image", 2, contract_number, client_name
+            new_passport_files, "passport_image", 1, contract_number, client_name
         )
         completed_uploaded = self._handle_files(
             new_completed_files, "completed_contract_image", 3, contract_number, client_name
         )
+        visa_uploaded = self._handle_files(
+            new_visa_files, "visa_image", 1, contract_number, client_name
+        )
 
         passport_total = existing_passport + passport_uploaded
         completed_total = existing_completed + completed_uploaded
+        visa_total = existing_visa + visa_uploaded
 
         if len(passport_total) > 2:
             raise serializers.ValidationError(
@@ -167,8 +180,12 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"completed_contract_images": "Maksimal 3 ta rasmga ruxsat."}
             )
+        if len(visa_total) > 1:
+            raise serializers.ValidationError(
+                {"visa_images": "Maksimal 1 ta VISA rasmi yuklash mumkin."}
+            )
 
-        return passport_total, completed_total
+        return passport_total, completed_total, visa_total
 
     def create(self, validated_data):
         request = self.context.get("request")
@@ -187,7 +204,7 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
             ] or 0
             validated_data["contract_number"] = max_num + 1
 
-        passport_images, completed_images = self._validate_images(
+        passport_images, completed_images, visa_images = self._validate_images(
             None, validated_data, request
         )
 
@@ -199,6 +216,7 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
             client=client,
             passport_images=passport_images,
             completed_contract_images=completed_images,
+            visa_images=visa_images,
             **validated_data,
         )
 
@@ -219,7 +237,7 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
             except json.JSONDecodeError:
                 family_members_data = []
 
-        passport_images, completed_images = self._validate_images(
+        passport_images, completed_images, visa_images = self._validate_images(
             instance, validated_data, request
         )
 
@@ -232,6 +250,7 @@ class ConsultingContractSerializer(serializers.ModelSerializer):
 
         instance.passport_images = passport_images
         instance.completed_contract_images = completed_images
+        instance.visa_images = visa_images
 
         for attr, val in validated_data.items():
             setattr(instance, attr, val)

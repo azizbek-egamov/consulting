@@ -185,7 +185,7 @@
       <!-- Header actions ends -->
       <!-- Notification icon starts -->
       <div class="dropdown ms-2">
-        <!-- <a id="notificationSettings" class="dropdown-toggle d-flex align-items-center position-relative" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% comment %} <!-- <a id="notificationSettings" class="dropdown-toggle d-flex align-items-center position-relative" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
           <i class="ri-notification-3-line fs-5" style="color: white;"></i>
           <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="font-size: 0.6rem; display: none;">
             0
@@ -208,7 +208,7 @@
               Barchasini ko'rish
             </a>
           </div>
-        </div> -->
+        </div> --> {% endcomment %}
       </div>
       <!-- Notification icon ends -->
 
@@ -271,9 +271,11 @@
               <li>
                 <a href="/client/">Mijozlar ro'yxati</a>
               </li>
+              {% if request.user.username == "ceoadmin" %}
               <li>
                 <a href="/client/create/">Mijoz qo'shish</a>
               </li>
+              {% endif %}
             </ul>
           </li>
           <li class="treeview">
@@ -318,7 +320,8 @@
           </li>
           {% endif %}
           
-                    <li class="treeview">
+          {% if request.user.username == "ceoadmin" %}
+          <li class="treeview">
             <a href="javascript:void(0);">
                 <i class="ri-bar-chart-box-line"></i>
                 <span class="menu-text">BI</span>
@@ -337,7 +340,7 @@
                 {% endif %}
             </ul>
           </li>
-          
+          {% endif %}
         </ul>
       </div>
       <!-- Sidebar menu ends -->

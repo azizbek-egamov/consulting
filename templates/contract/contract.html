@@ -46,19 +46,21 @@
                 </div>
             </div>
             <div class="col-xl-3 col-md-6">
+            {% if request.user.username == "ceoadmin" %}
         <div class="card shadow-sm border-0 h-100">
           <div class="card-body">
-            <p class="text-muted mb-1">Qoldiq summa</p>
+            <p class="text-muted mb-1">Qarzdorlik miqdori</p>
             <h4 class="mb-0">{{ outstanding|intcomma }} so'm</h4>
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
         
                 <div class="card shadow-sm border-0">
       <div class="card-header bg-white py-3">
         <form method="get" class="row g-2 align-items-center">
-          <div class="col-md-6">
+          <div class="col-lg-4 col-md-6">
             <label class="form-label text-muted mb-1">Qidiruv</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light border-end-0">
@@ -71,7 +73,7 @@
                      placeholder="F.I.O, passport, telefon yoki xizmat">
                         </div>
                     </div>
-          <div class="col-md-3">
+          <div class="col-lg-3 col-md-3">
             <label class="form-label text-muted mb-1">Holat</label>
             <select class="form-select" name="status">
               <option value="">Barchasi</option>
@@ -80,7 +82,18 @@
               {% endfor %}
             </select>
                             </div>
-          <div class="col-md-3 d-flex align-items-end">
+          <div class="col-lg-3 col-md-3">
+            <label class="form-label text-muted mb-1">Yaratgan foydalanuvchi</label>
+            <select class="form-select" name="created_by">
+              <option value="">Barchasi</option>
+              {% for u in users_with_contracts %}
+                <option value="{{ u.id }}" {% if created_by_filter == u.id|stringformat:"s" %}selected{% endif %}>
+                  {{ u.get_full_name|default:u.username }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-12 d-flex align-items-end">
             <button type="submit" class="btn btn-primary w-100 me-2">Filtrlash</button>
             <a href="{% url 'contract' %}" class="btn btn-outline-secondary w-100">Tozalash</a>
                             </div>
@@ -105,7 +118,7 @@
                                     </thead>
                                     <tbody>
             {% for contract in contracts %}
-            <tr>
+            <tr class="contract-row" data-contract-id="{{ contract.id }}">
               <td class="fw-semibold">#{{ contract.contract_number }}</td>
               <td>
                 <div class="fw-semibold">{{ contract.client_full_name }}</div>
@@ -382,6 +395,24 @@
         } else {
           passportImagesHTML = '<p class="text-muted mb-0">Rasmlar mavjud emas</p>';
         }
+
+        // Build VISA images HTML
+        let visaImagesHTML = '';
+        if (data.visa_images && data.visa_images.length > 0) {
+          visaImagesHTML = '<div class="row g-2">';
+          data.visa_images.forEach((img, idx) => {
+            const normalizedImg = normalizeMediaUrl(img);
+            const escapedImg = normalizedImg.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            visaImagesHTML += `
+              <div class="col-md-6">
+                <img src="${escapedImg}" alt="Visa ${idx + 1}" class="img-thumbnail w-100 visa-lightbox-img" style="cursor: pointer; max-height: 200px; object-fit: cover;" data-img-src="${escapedImg}">
+              </div>
+            `;
+          });
+          visaImagesHTML += '</div>';
+        } else {
+          visaImagesHTML = '<p class="text-muted mb-0">Rasm yuklanmagan</p>';
+        }
         
         // Build completed contract images HTML
         let completedImagesHTML = '';
@@ -401,30 +432,79 @@
           completedImagesHTML = '<p class="text-muted mb-0">Rasmlar mavjud emas</p>';
         }
         
-        // Build family members HTML
+        // Build family members HTML with copy actions
         let familyMembersHTML = '';
         if (data.family_members && data.family_members.length > 0) {
           familyMembersHTML = '<div class="row g-3">';
-          data.family_members.forEach(member => {
+          data.family_members.forEach((member, idx) => {
             const memberNameParts = [member.last_name || '', member.first_name || ''];
             if (member.middle_name) {
               memberNameParts.push(member.middle_name);
             }
-            const memberFullName = memberNameParts.filter(n => n).join(' ');
-            const escapedPassport = (member.passport_number || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            const escapedPhone = (member.phone || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            const escapedNotes = (member.notes || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-            
+            const memberFullName = memberNameParts.filter(n => n).join(' ') || `Qarindosh #${idx + 1}`;
+            const memberFields = [
+              ["Ism", member.first_name],
+              ["Familiya", member.last_name],
+              ["Sharif", member.middle_name],
+              ["Qarindoshlik", member.relationship],
+              ["Passport raqami", member.passport_number],
+              ["Passport berilgan sana", member.passport_issue_date],
+              ["Passport tugash sanasi", member.passport_expiry_date],
+              ["Passport bergan tashkilot", member.passport_issue_place],
+              ["Tug'ilgan sana", member.birth_date],
+              ["Telefon", member.phone],
+              ["Izoh", member.notes],
+            ];
+
+            // Copy-all: faqat mavjud qiymatlar, label siz, tartib: F.I.Sh, tug'ilgan sana, passport, telefon, izoh
+            const copyAllValues = [
+              memberFullName,
+              member.birth_date,
+              member.passport_number,
+              member.passport_issue_date,
+              member.passport_expiry_date,
+              member.passport_issue_place,
+              member.phone,
+              member.notes,
+            ].filter(v => v && String(v).trim() !== "");
+            const copyAllText = copyAllValues.join("\n");
+            const copyAllBtn = copyAllText
+              ? `<button type="button"
+                       class="btn btn-outline-secondary btn-sm copy-field-btn"
+                       data-copy="${escapeHtml(copyAllText)}"
+                       title="Barcha ma'lumotlarni nusxalash">
+                   <i class="ri-file-copy-2-line"></i>
+                 </button>`
+              : '';
+            const fieldRows = memberFields.map(([label, value]) => {
+              const hasVal = !!value;
+              const displayVal = hasVal ? escapeHtml(value) : "Kiritilmagan";
+              const copyBtn = hasVal
+                ? `<button type="button"
+                           class="btn btn-outline-secondary btn-sm copy-field-btn"
+                           data-copy="${escapeHtml(value)}"
+                           title="Nusxalash"
+                           style="padding:2px 6px; line-height:1; font-size:12px;">
+                     <i class="ri-file-copy-line" style="font-size:12px;"></i>
+                   </button>`
+                : "";
+              return `
+                <div class="d-flex align-items-center justify-content-between mb-1 gap-2">
+                  <span class="${hasVal ? "" : "text-muted"}"><strong>${label}:</strong> ${displayVal}</span>
+                  ${copyBtn}
+                </div>
+              `;
+            }).join("");
+
             familyMembersHTML += `
               <div class="col-md-6">
                 <div class="card border">
                   <div class="card-body">
-                    <h6 class="mb-2">${memberFullName || 'Noma\'lum'}</h6>
-                    <p class="mb-1"><strong>Qarindoshlik:</strong> ${member.relationship || ''}</p>
-                    ${member.passport_number ? `<p class="mb-1"><strong>Passport:</strong> ${escapedPassport}</p>` : ''}
-                    ${member.birth_date ? `<p class="mb-1"><strong>Tug'ilgan sana:</strong> ${member.birth_date}</p>` : ''}
-                    ${member.phone ? `<p class="mb-1"><strong>Telefon:</strong> ${escapedPhone}</p>` : ''}
-                    ${member.notes ? `<p class="mb-0"><strong>Izoh:</strong> ${escapedNotes}</p>` : ''}
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="mb-0">${escapeHtml(memberFullName)}</h6>
+                      ${copyAllBtn}
+                    </div>
+                    ${fieldRows}
                   </div>
                 </div>
               </div>
@@ -458,6 +538,8 @@
               ${buildCopyRow("Telefon", data.client.phone)}
               ${buildCopyRow("Qo'shimcha telefon", data.client.phone2)}
               ${buildCopyRow("Passport", data.client.passport_number)}
+              ${buildCopyRow("Passport berilgan sana", data.client.passport_issue_date)}
+              ${buildCopyRow("Passport tugash sanasi", data.client.passport_expiry_date)}
               ${buildCopyRow("Email", data.client.email)}
               ${buildCopyRow("Parol", data.client.password)}
               ${buildCopyRow("Qayerda eshitgan", data.client.heard)}
@@ -468,8 +550,16 @@
         <div class="col-12">
           <div class="card border shadow-sm">
             <div class="card-body">
-              <h6 class="mb-3">Passport / ID karta rasmlari</h6>
-              ${passportImagesHTML}
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <h6 class="mb-3">Zagran passport rasmi</h6>
+                  ${passportImagesHTML}
+                </div>
+                <div class="col-md-6">
+                  <h6 class="mb-3">VISA rasmlari</h6>
+                  ${visaImagesHTML}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -505,7 +595,7 @@
         <div class="col-12">
           <div class="card border shadow-sm">
             <div class="card-body">
-              <h6 class="mb-3">Ota-onasi / Farzandlari</h6>
+              <h6 class="mb-3">Qarindoshlari</h6>
               ${familyMembersHTML}
             </div>
           </div>
@@ -548,6 +638,12 @@
               window.openLightbox(this.getAttribute('data-img-src'));
             });
           });
+          const visaImgs = body.querySelectorAll('.visa-lightbox-img');
+          visaImgs.forEach(img => {
+            img.addEventListener('click', function() {
+              window.openLightbox(this.getAttribute('data-img-src'));
+            });
+          });
         }, 100);
       })
       .catch(error => {
@@ -571,6 +667,18 @@
         }, 800);
       })
       .catch(() => {});
+  });
+
+  // Row click -> ochish
+  document.addEventListener('click', function(e) {
+    const row = e.target.closest('.contract-row');
+    if (!row) return;
+    const isAction = e.target.closest('a, button');
+    if (isAction) return; // action tugmalari bosilganda yoq
+    const contractId = row.getAttribute('data-contract-id');
+    if (contractId) {
+      showContractDetails(row);
+    }
   });
 </script>
 {% endblock item %}
