@@ -163,7 +163,9 @@
                     name: 'Shartnomalar soni',
                     type: 'bar',
                     data: userContractsCounts,
-                    itemStyle: { color: '#4a6cf7' }
+                    itemStyle: { color: '#4a6cf7' },
+                    barWidth: '25%',
+                    barCategoryGap: '50%'
                 }]
             });
         }
@@ -207,7 +209,10 @@
                     name: s.name,
                     type: 'line',
                     data: s.data,
-                    smooth: true
+                    smooth: true,
+                    lineStyle: { width: 1.5 },
+                    symbolSize: 4,
+                    symbol: 'circle'
                 }))
             });
         }
@@ -228,7 +233,9 @@
                     name: 'O\'rtacha summa',
                     type: 'bar',
                     data: userAvgAmounts,
-                    itemStyle: { color: '#10b981' }
+                    itemStyle: { color: '#10b981' },
+                    barWidth: '25%',
+                    barCategoryGap: '50%'
                 }]
             });
         }
@@ -251,13 +258,17 @@
                         name: 'Umumiy summa',
                         type: 'bar',
                         data: userTotalAmounts,
-                        itemStyle: { color: '#4a6cf7' }
+                        itemStyle: { color: '#4a6cf7' },
+                        barWidth: '22%',
+                        barCategoryGap: '40%',
+                        barGap: '10%'
                     },
                     {
                         name: 'To\'langan',
                         type: 'bar',
                         data: userPaidAmounts,
-                        itemStyle: { color: '#10b981' }
+                        itemStyle: { color: '#10b981' },
+                        barWidth: '22%'
                     }
                 ]
             });
