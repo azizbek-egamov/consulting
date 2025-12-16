@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+
+{% block title %}Leadlar Statistikasi{% endblock %}
+
+{% block item %}
+<style>
+    .chart-container {
+        width: 100%;
+        height: 400px; /* Barcha chartlar uchun standart balandlik */
+        margin-bottom: 30px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #fff;
+        padding: 15px;
+    }
+    .filter-section {
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .filter-group {
+        margin-bottom: 15px;
+    }
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+    .filter-group select,
+    .filter-group input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .filter-group button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .filter-group button:hover {
+        background-color: #0056b3;
+    }
+    .chart-title {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        color: #333;
+        font-weight: 600;
+    }
+
+</style>
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center">
+        <!-- Breadcrumb starts -->
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item">
+                BI
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                Leadlar Statistikasi
+            </li>
+        </ol>
+        <!-- Breadcrumb ends -->
+    </div>
+    </div>
+<div class="container-fluid">
+
+    <div class="filter-section">
+        <form method="GET" action="{% url 'leads_statistics' %}">
+            <div class="row">
+                <div class="col-md-3 filter-group">
+                    <label for="start_date">Boshlanish sanasi:</label>
+                    <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3 filter-group">
+                    <label for="end_date">Tugash sanasi:</label>
+                    <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                </div>
+                <div class="col-md-3 filter-group">
+                    <label for="operator_id">Operator:</label>
+                    <select id="operator_id" name="operator_id" class="form-control">
+                        <option value="">Barcha operatorlar</option>
+                        {% for operator in all_operators %}
+                            <option value="{{ operator.id }}" {% if selected_operator_id|stringformat:"s" == operator.id|stringformat:"s" %}selected{% endif %}>{{ operator.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 filter-group">
+                    <label for="stage_id">Bosqich:</label>
+                    <select id="stage_id" name="stage_id" class="form-control">
+                        <option value="">Barcha bosqichlar</option>
+                        {% for stage in all_stages %}
+                            <option value="{{ stage.id }}" {% if selected_stage_id|stringformat:"s" == stage.id|stringformat:"s" %}selected{% endif %}>{{ stage.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 filter-group">
+                    <label for="call_status">Qo'ng'iroq holati:</label>
+                    <select id="call_status" name="call_status" class="form-control">
+                        <option value="">Barcha holatlar</option>
+                        {% for status_code, status_name in all_call_statuses %}
+                            <option value="{{ status_code }}" {% if selected_call_status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 filter-group d-flex align-items-end">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="converted_only" name="converted_only" value="true" {% if selected_converted_only == 'true' %}checked{% endif %}>
+                        <label class="form-check-label" for="converted_only">Faqat konvertatsiya bo'lganlar</label>
+                    </div>
+                </div>
+                <div class="col-md-3 filter-group d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">Filtrlash</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">1. Kunlik qo‘shilgan Leadlar soni</h6>
+                </div>
+                <div class="card-body">
+                    <div id="dailyLeadsChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">2. Operatorlar bo‘yicha Leadlar soni</h6>
+                </div>
+                <div class="card-body">
+                    <div id="operatorLeadsChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">3. Leadlar bosqichlar bo‘yicha taqsimoti</h6>
+                </div>
+                <div class="card-body">
+                    <div id="stageDistributionChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">4. Qo‘ng‘iroq holati bo‘yicha Leadlar</h6>
+                </div>
+                <div class="card-body">
+                    <div id="callStatusDoughnutChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">5. Leaddagi o‘rtacha qo‘ng‘iroq davomiyligi (kunlar bo‘yicha)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="avgCallDurationChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">6. Har bir operator bo‘yicha qo‘ng‘iroq holati</h6>
+                </div>
+                <div class="card-body">
+                    <div id="operatorCallStatusStackedBarChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">7. Har kunlik konversiyaga aylangan leadlar</h6>
+                </div>
+                <div class="card-body">
+                    <div id="dailyConvertedLeadsChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">8. Bosqichlar bo‘yicha joriy Leadlar soni</h6>
+                </div>
+                <div class="card-body">
+                    <div id="stageHorizontalBarChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">9. Keyingi aloqa bo‘yicha rejalashtirilgan leadlar</h6>
+                </div>
+                <div class="card-body">
+                    <div id="followUpLeadsChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-6 col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">10. Leadlar oylik tahlili (faoliyat trendi)</h6>
+                </div>
+                <div class="card-body">
+                    <div id="monthlyOperatorLeadsChart" class="chart-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ECharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    const lightTheme = {
+        textColor: '#333333',
+        labelColor: '#666666',
+        gridColor: '#e0e0e0',
+        tooltipBg: '#ffffff',
+        tooltipBorder: '#dddddd'
+    };
+
+    // Ma'lumotlarni Django contextidan olish
+    const dailyLeadsDates = JSON.parse('{{ daily_leads_dates|escapejs }}');
+    const dailyLeadsCounts = JSON.parse('{{ daily_leads_counts|escapejs }}');
+
+    const operatorNames = JSON.parse('{{ operator_names|escapejs }}');
+    const operatorCounts = JSON.parse('{{ operator_counts|escapejs }}');
+
+    const stagePieData = JSON.parse('{{ stage_pie_data|escapejs }}');
+
+    const callStatusDoughnutData = JSON.parse('{{ call_status_doughnut_data|escapejs }}');
+
+    const avgDurationDates = JSON.parse('{{ avg_duration_dates|escapejs }}');
+    const avgDurationValues = JSON.parse('{{ avg_duration_values|escapejs }}');
+
+    const operatorsForStacked = JSON.parse('{{ operators_for_stacked|escapejs }}');
+    const stackedSeries = JSON.parse('{{ stacked_series|escapejs }}');
+
+    const dailyConvertedDates = JSON.parse('{{ daily_converted_dates|escapejs }}');
+    const dailyConvertedCounts = JSON.parse('{{ daily_converted_counts|escapejs }}');
+
+    const stageHorizontalBarNames = JSON.parse('{{ stage_horizontal_bar_names|escapejs }}');
+    const stageHorizontalBarCounts = JSON.parse('{{ stage_horizontal_bar_counts|escapejs }}');
+
+    const followUpChartDates = JSON.parse('{{ follow_up_chart_dates|escapejs }}');
+    const followUpChartCounts = JSON.parse('{{ follow_up_chart_counts|escapejs }}');
+
+    const allMonthsMultiLine = JSON.parse('{{ all_months_multi_line|escapejs }}');
+    const multiLineSeries = JSON.parse('{{ multi_line_series|escapejs }}');
+
+    // Helper function to initialize and resize charts
+    function initChart(elementId, option) {
+        const chartDom = document.getElementById(elementId);
+        if (!chartDom) return null;
+        const myChart = echarts.init(chartDom);
+        myChart.setOption(option);
+        window.addEventListener('resize', () => myChart.resize());
+        return myChart;
+    }
+
+    // 1. Kunlik qo‘shilgan Leadlar soni (Line Chart)
+    initChart('dailyLeadsChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Kunlik qo‘shilgan Leadlar soni', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'category', data: dailyLeadsDates, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: [{
+            name: 'Leadlar',
+            type: 'line',
+            smooth: true,
+            data: dailyLeadsCounts,
+            itemStyle: { color: '#4e73df' }
+        }]
+    });
+
+    // 2. Operatorlar bo‘yicha Leadlar soni (Bar Chart)
+    initChart('operatorLeadsChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Operatorlar bo‘yicha Leadlar soni', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'category', data: operatorNames, axisLabel: { rotate: 45, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: [{
+            name: 'Leadlar',
+            type: 'bar',
+            data: operatorCounts,
+            itemStyle: { color: '#1cc88a' }
+        }]
+    });
+
+    // 3. Leadlar bosqichlar bo‘yicha taqsimoti (Pie Chart)
+    initChart('stageDistributionChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Leadlar bosqichlar bo‘yicha taqsimoti', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        legend: { orient: 'vertical', left: 'left', top: 'bottom', textStyle: { color: lightTheme.textColor } },
+        series: [{
+            name: 'Bosqichlar',
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '50%'],
+            data: stagePieData,
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }]
+    });
+
+    // 4. Qo‘ng‘iroq holati bo‘yicha Leadlar (Doughnut Chart)
+    initChart('callStatusDoughnutChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Qo‘ng‘iroq holati bo‘yicha Leadlar', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        legend: { orient: 'vertical', left: 'left', top: 'bottom', textStyle: { color: lightTheme.textColor } },
+        series: [{
+            name: 'Qo‘ng‘iroq holati',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+                show: false,
+                position: 'center'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 20,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: false },
+            data: callStatusDoughnutData
+        }]
+    });
+
+    // 5. Leaddagi o‘rtacha qo‘ng‘iroq davomiyligi (kunlar bo‘yicha) (Line Chart)
+    initChart('avgCallDurationChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'O‘rtacha qo‘ng‘iroq davomiyligi (sekundda)', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', formatter: function(params) {
+            let value = params[0].value;
+            let hours = Math.floor(value / 3600);
+            let minutes = Math.floor((value % 3600) / 60);
+            let seconds = Math.floor(value % 60);
+            return params[0].name + '<br/>O‘rtacha davomiylik: ' + 
+                   (hours > 0 ? hours + 's ' : '') + 
+                   (minutes > 0 ? minutes + 'm ' : '') + 
+                   seconds + 's';
+        }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'category', data: avgDurationDates, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', name: 'Davomiylik (sekund)', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: [{
+            name: 'O‘rtacha davomiylik',
+            type: 'line',
+            smooth: true,
+            data: avgDurationValues,
+            itemStyle: { color: '#f6c23e' }
+        }]
+    });
+
+    // 6. Har bir operator bo‘yicha qo‘ng‘iroq holati (Stacked Bar Chart)
+    initChart('operatorCallStatusStackedBarChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Har bir operator bo‘yicha qo‘ng‘iroq holati', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        legend: { data: stackedSeries.map(s => s.name), bottom: 0, textStyle: { color: lightTheme.textColor } },
+        grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
+        xAxis: { type: 'category', data: operatorsForStacked, axisLabel: { rotate: 45, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: stackedSeries
+    });
+
+    // 7. Har kunlik konversiyaga aylangan leadlar (Line Chart)
+    initChart('dailyConvertedLeadsChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Har kunlik konversiyaga aylangan leadlar', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'category', data: dailyConvertedDates, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: [{
+            name: 'Konvertatsiya',
+            type: 'line',
+            smooth: true,
+            data: dailyConvertedCounts,
+            itemStyle: { color: '#36b9cc' }
+        }]
+    });
+
+    // 8. Bosqichlar bo‘yicha joriy Leadlar soni (Horizontal Bar Chart)
+    initChart('stageHorizontalBarChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Bosqichlar bo‘yicha joriy Leadlar soni', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'category', data: stageHorizontalBarNames.reverse(), axisLabel: { rotate: 0, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } }, // Reverse for better display
+        series: [{
+            name: 'Leadlar',
+            type: 'bar',
+            data: stageHorizontalBarCounts.reverse(), // Reverse data to match reversed names
+            itemStyle: { color: '#858796' }
+        }]
+    });
+
+    // 9. Keyingi aloqa bo‘yicha rejalashtirilgan leadlar (Bar Chart)
+    initChart('followUpLeadsChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Keyingi aloqa bo‘yicha rejalashtirilgan leadlar', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        xAxis: { type: 'category', data: followUpChartDates, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: [{
+            name: 'Rejalashtirilgan Leadlar',
+            type: 'bar',
+            data: followUpChartCounts,
+            itemStyle: { color: '#e74a3b' }
+        }]
+    });
+
+    // 10. Leadlar oylik tahlili (faoliyat trendi) (Multi-line Chart)
+    initChart('monthlyOperatorLeadsChart', {
+        backgroundColor: 'transparent',
+        textStyle: { color: lightTheme.textColor },
+        title: { text: 'Leadlar oylik tahlili (faoliyat trendi)', left: 'center', textStyle: { color: lightTheme.textColor } },
+        tooltip: { trigger: 'axis', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+        legend: { data: multiLineSeries.map(s => s.name), bottom: 0, textStyle: { color: lightTheme.textColor } },
+        grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
+        xAxis: { type: 'category', data: allMonthsMultiLine, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+        yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+        series: multiLineSeries
+    });
+
+</script>
+{% endblock %}

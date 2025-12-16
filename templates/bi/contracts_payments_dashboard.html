@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shartnomalar va To'lovlar Statistikasi{% endblock %}
+
+{% block item %} {# Changed from block content to block item #}
+
+<div class="app-container">
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item">
+                BI
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                Shartnomalar statistikasi
+            </li>
+        </ol>
+    </div>
+    <!-- App hero header ends -->
+
+    <div class="container-fluid mt-4">
+
+    <div class="card mb-4">
+        <div class="card-header">
+            Filtrlar
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'bi_contracts_payments' %}">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">Boshlanish sanasi:</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">Tugash sanasi:</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Shartnoma holati:</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">Barcha holatlar</option>
+                            {% for status_value, status_label in all_contract_statuses %}
+                                <option value="{{ status_value }}" {% if status_value == selected_contract_status %}selected{% endif %}>{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Filtrlash</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Kunlik shartnoma tuzish
+                </div>
+                <div class="card-body">
+                    <div id="dailyContractsChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Shartnomalar holati bo'yicha
+                </div>
+                <div class="card-body">
+                    <div id="contractsByStatusChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Vaqt o'tishi bilan umumiy daromad
+                </div>
+                <div class="card-body">
+                    <div id="revenueOverTimeChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    Qarzdorlik holati
+                </div>
+                <div class="card-body">
+                    <div id="debtStatusChart" style="width: 100%; height: 300px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lightTheme = {
+            textColor: '#333333',
+            labelColor: '#666666',
+            gridColor: '#e0e0e0',
+            tooltipBg: '#ffffff',
+            tooltipBorder: '#dddddd'
+        };
+
+        // Chart 1: Daily Contract Creation
+        var dailyContractsChart = echarts.init(document.getElementById('dailyContractsChart'));
+        var dailyContractDates = {{ daily_contract_dates|safe }};
+        var dailyContractCounts = {{ daily_contract_counts|safe }};
+        if (dailyContractDates && dailyContractCounts) {
+            dailyContractsChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Kunlik shartnoma tuzish', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: lightTheme.tooltipBg,
+                    borderColor: lightTheme.tooltipBorder,
+                    textStyle: { color: lightTheme.textColor }
+                },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: dailyContractDates,
+                    axisLabel: { color: lightTheme.labelColor },
+                    axisLine: { lineStyle: { color: lightTheme.gridColor } }
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: { color: lightTheme.labelColor },
+                    axisLine: { lineStyle: { color: lightTheme.gridColor } },
+                    splitLine: { lineStyle: { color: lightTheme.gridColor } }
+                },
+                series: [{ 
+                    name: 'Shartnomalar', 
+                    type: 'line', 
+                    data: dailyContractCounts,
+                    smooth: true,
+                    itemStyle: { color: '#4a6cf7' }
+                }]
+            });
+        }
+
+        // Chart 2: Contracts by Status (Pie Chart)
+        var contractsByStatusChart = echarts.init(document.getElementById('contractsByStatusChart'));
+        var statusPieData = {{ status_pie_data|safe }};
+        if (statusPieData && statusPieData.length > 0) {
+            contractsByStatusChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Shartnomalar holati bo\'yicha', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: {
+                    trigger: 'item',
+                    formatter: '{a} <br/>{b} : {c} ({d}%)',
+                    backgroundColor: lightTheme.tooltipBg,
+                    borderColor: lightTheme.tooltipBorder,
+                    textStyle: { color: lightTheme.textColor }
+                },
+                legend: { orient: 'vertical', left: 'left', data: statusPieData.map(item => item.name), textStyle: { color: lightTheme.textColor } },
+                series: [{
+                    name: 'Shartnomalar',
+                    type: 'pie',
+                    radius: '55%',
+                    center: ['50%', '60%'],
+                    data: statusPieData,
+                    emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+                }]
+            });
+        }
+
+        // Chart 3: Total Revenue Over Time (Line Chart)
+        var revenueOverTimeChart = echarts.init(document.getElementById('revenueOverTimeChart'));
+        var revenueDates = {{ revenue_dates|safe }};
+        var revenueAmounts = {{ revenue_amounts|safe }};
+        if (revenueDates && revenueAmounts) {
+            revenueOverTimeChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Vaqt o\'tishi bilan umumiy daromad', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'axis', formatter: function(params) {
+                    var value = params[0].value;
+                    return params[0].name + '<br/>' + params[0].seriesName + ': ' + value.toLocaleString('ru-RU') + ' so\'m';
+                }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+                xAxis: {
+                    type: 'category',
+                    data: revenueDates,
+                    axisLabel: { color: lightTheme.labelColor },
+                    axisLine: { lineStyle: { color: lightTheme.gridColor } }
+                },
+                yAxis: { 
+                    type: 'value', 
+                    axisLabel: { 
+                        color: lightTheme.labelColor,
+                        formatter: function(value) {
+                            return (value / 1000000).toFixed(1) + 'M';
+                        }
+                    },
+                    axisLine: { lineStyle: { color: lightTheme.gridColor } },
+                    splitLine: { lineStyle: { color: lightTheme.gridColor } },
+                    axisLabel: { 
+                        formatter: function(value) {
+                            return (value / 1000000).toFixed(1) + 'M';
+                        }
+                    } 
+                },
+                series: [{ 
+                    name: 'Daromad', 
+                    type: 'line', 
+                    data: revenueAmounts,
+                    smooth: true,
+                    itemStyle: { color: '#4a6cf7' },
+                    areaStyle: { opacity: 0.3 }
+                }]
+            });
+        }
+
+        // Chart 6: Debt Status Distribution (Pie Chart)
+        var debtStatusChart = echarts.init(document.getElementById('debtStatusChart'));
+        var debtPieData = {{ debt_pie_data|safe }};
+        if (debtPieData && debtPieData.length > 0) {
+            debtStatusChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Qarzdorlik holati', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                legend: { orient: 'vertical', left: 'left', data: debtPieData.map(item => item.name), textStyle: { color: lightTheme.textColor } },
+                series: [{
+                    name: 'Qarzdorlik',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    center: ['50%', '60%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: {
+                        borderRadius: 10,
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    },
+                    label: {
+                        show: false,
+                        position: 'center'
+                    },
+                    emphasis: {
+                        label: {
+                            show: true,
+                            fontSize: '18',
+                            fontWeight: 'bold'
+                        }
+                    },
+                    labelLine: {
+                        show: false
+                    },
+                    data: debtPieData.map(item => ({
+                        value: item.value,
+                        name: item.name,
+                        itemStyle: {
+                            color: item.name === 'Qarzdorlar' ? '#E4405F' : '#4a6cf7'
+                        }
+                    }))
+                }]
+            });
+        }
+
+        // Handle chart resizing
+        window.addEventListener('resize', function() {
+            if (dailyContractsChart) dailyContractsChart.resize();
+            if (contractsByStatusChart) contractsByStatusChart.resize();
+            if (revenueOverTimeChart) revenueOverTimeChart.resize();
+            if (debtStatusChart) debtStatusChart.resize();
+        });
+    });
+</script>
+{% endblock %}

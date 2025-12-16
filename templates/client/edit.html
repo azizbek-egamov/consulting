@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mijoz tahrirlash - Major Consulting{% endblock title %}
+
+{% block item %}
+<style>
+  .form-section {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #0d6efd;
+  }
+  
+  .client-info-card {
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #0d6efd;
+  }
+  
+  .info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(13, 110, 253, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+  }
+  
+  .info-icon i {
+    color: #0d6efd;
+    font-size: 20px;
+  }
+  
+  .info-content {
+    flex: 1;
+  }
+  
+  .info-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-bottom: 2px;
+  }
+  
+  .info-value {
+    font-weight: 500;
+    color: #212529;
+  }
+  
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .input-group-text {
+    background-color: #f8f9fa;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+</style>
+
+<div class="app-container">
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center">
+      <!-- Breadcrumb starts -->
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+          <a href="/">Asosiy</a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="/client{% if filter_params %}{{ filter_params }}{% endif %}">Mijozlar</a>
+          </li>
+        <li class="breadcrumb-item text-primary" aria-current="page">
+          Tahrirlash
+        </li>
+      </ol>
+      <!-- Breadcrumb ends -->
+    </div>
+    <!-- App Hero header ends -->
+
+    <!-- App body starts -->
+    <div class="app-body animate-fade-in">
+      {% include 'messages.html' %}
+
+      <!-- Row starts -->
+      <div class="row gx-3">
+        <div class="col-xl-12">
+          <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+              <h5 class="card-title mb-0 d-flex align-items-center">
+                <i class="ri-user-settings-line me-2 text-primary"></i>
+                Mijoz ma'lumotlarini tahrirlash
+              </h5>
+            </div>
+            <div class="card-body">
+              <!-- Client info card -->
+              <div class="client-info-card">
+                <h5 class="mb-4">
+                  <i class="ri-information-line me-2"></i> Mijoz ma'lumotlari
+                </h5>
+                <div class="row">
+                  <div class="col-md-4 col-sm-6">
+                    <div class="info-item">
+                      <div class="info-icon">
+                        <i class="ri-user-3-line"></i>
+                      </div>
+                      <div class="info-content">
+                        <div class="info-label">Mijoz ID</div>
+                        <div class="info-value">#00{{client.pk}}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 col-sm-6">
+                    <div class="info-item">
+                      <div class="info-icon">
+                        <i class="ri-calendar-line"></i>
+                      </div>
+                      <div class="info-content">
+                        <div class="info-label">Qo'shilgan sana</div>
+                        <div class="info-value">{{client.created|date:'d.m.Y'}}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-4 col-sm-6">
+                    <div class="info-item">
+                      <div class="info-icon">
+                        <i class="ri-information-line"></i>
+                      </div>
+                      <div class="info-content">
+                        <div class="info-label">Qayerda eshitgan</div>
+                        <div class="info-value">
+                          {% if client.heard == "Telegramda" %}
+                          <span class="badge bg-info">Telegramda</span>
+                          {% elif client.heard == "Instagramda" %}
+                          <span class="badge bg-danger">Instagramda</span>
+                          {% elif client.heard == "YouTubeda" %}
+                          <span class="badge bg-danger">YouTubeda</span>
+                          {% elif client.heard == "Odamlar orasida" %}
+                          <span class="badge bg-success">Odamlar orasida</span>
+                          {% else %}
+                          <span class="badge bg-secondary">{{client.heard}}</span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <form method="POST">
+                {% csrf_token %}
+                
+                <!-- Client Information Section -->
+                <div class="form-section mb-4">
+                  <h6 class="mb-3 text-primary">
+                    <i class="ri-information-line me-2"></i> Mijoz ma'lumotlari
+                  </h6>
+                  
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="firstName">
+                          Ism <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-user-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="first_name" 
+                            id="firstName" 
+                            value="{% if client.first_name %}{{client.first_name}}{% endif %}"
+                            placeholder="Ism" 
+                            required
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="lastName">
+                          Familiya <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-user-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="last_name" 
+                            id="lastName" 
+                            value="{% if client.last_name %}{{client.last_name}}{% endif %}"
+                            placeholder="Familiya" 
+                            required
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="middleName">
+                          Sharif
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-user-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="middle_name" 
+                            id="middleName" 
+                            value="{% if client.middle_name %}{{client.middle_name}}{% endif %}"
+                            placeholder="Sharif"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="phone-input">
+                          Telefon raqami <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-phone-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control phone-input" 
+                            name="phone" 
+                            id="phone-input" 
+                            value="{{client.phone}}"
+                            placeholder="97 212 21 21" 
+                            required
+                          >
+                        </div>
+                        <div class="form-text">
+                          <i class="ri-information-line me-1"></i> Telefon raqamini to'g'ri formatda kiriting
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="phone2-input">
+                          Qo'shimcha telefon
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-phone-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control phone-input" 
+                            name="phone2" 
+                            id="phone2-input" 
+                            value="{% if client.phone2 %}{{ client.phone2 }}{% endif %}"
+                            placeholder="97 212 21 21"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="passport_number">
+                          Passport raqami
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-id-card-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="passport_number" 
+                            id="passport_number" 
+                            value="{% if client.passport_number %}{{ client.passport_number }}{% endif %}"
+                            placeholder="AA1234567"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="passport_issue_date">
+                          Passport berilgan sana
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-calendar-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="passport_issue_date" 
+                            id="passport_issue_date" 
+                            value="{% if client.passport_issue_date %}{{ client.passport_issue_date }}{% endif %}"
+                            placeholder="01.01.2020"
+                            data-date-mask="true"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="passport_expiry_date">
+                          Passport tugash sanasi
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-calendar-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="passport_expiry_date" 
+                            id="passport_expiry_date" 
+                            value="{% if client.passport_expiry_date %}{{ client.passport_expiry_date }}{% endif %}"
+                            placeholder="01.01.2030"
+                            data-date-mask="true"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="passport_issue_place">
+                          Passport bergan tashkilot
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-building-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="passport_issue_place" 
+                            id="passport_issue_place" 
+                            value="{% if client.passport_issue_place %}{{ client.passport_issue_place }}{% endif %}"
+                            placeholder="MIB, IIB va h.k."
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="birth_date">
+                          Tug'ilgan sana
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-calendar-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="birth_date" 
+                            id="birth_date"
+                            placeholder="01.01.2000"
+                            data-date-mask="true"
+                            value="{% if client.birth_date %}{{ client.birth_date }}{% endif %}"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-12">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="address">
+                          Yashash manzili
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-map-pin-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text" 
+                            class="form-control" 
+                            name="address" 
+                            id="address" 
+                            value="{% if client.address %}{{ client.address }}{% endif %}"
+                            placeholder="Manzilni kiriting"
+                          >
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="mb-3">
+                        <label class="form-label fw-medium" for="heardSource">
+                          Qayerda eshitgan <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text bg-light">
+                            <i class="ri-information-line text-primary"></i>
+                          </span>
+                          <input 
+                            type="text"
+                            class="form-control"
+                            name="heard"
+                            id="heardSource"
+                            value="{{ client.heard }}"
+                            placeholder="Masalan: Instagram, Telegram, tanishlar..."
+                            required
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submit buttons -->
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <a href="{% if next_url %}{{ next_url }}{% else %}/client{% endif %}" class="btn btn-outline-secondary">
+                    <i class="ri-arrow-left-line me-1"></i> Bekor qilish
+                  </a>
+                  <button type="submit" class="btn btn-primary">
+                    <i class="ri-save-line me-1"></i> Saqlash
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Row ends -->
+    </div>
+    <!-- App body ends -->
+</div>
+
+<script>
+  // Phone number formatting
+  function formatPhone(input) {
+    if (input) {
+      input.addEventListener('input', function(e) {
+        let value = this.value.replace(/\D/g, '');
+        if (value.length > 0) {
+          if (value.length <= 2) {
+            this.value = value;
+          } else if (value.length <= 5) {
+            this.value = value.slice(0, 2) + ' ' + value.slice(2);
+          } else if (value.length <= 7) {
+            this.value = value.slice(0, 2) + ' ' + value.slice(2, 5) + ' ' + value.slice(5);
+          } else {
+            this.value = value.slice(0, 2) + ' ' + value.slice(2, 5) + ' ' + value.slice(5, 7) + ' ' + value.slice(7, 9);
+          }
+        }
+      });
+    }
+  }
+  
+  formatPhone(document.getElementById('phone-input'));
+  formatPhone(document.getElementById('phone2-input'));
+  
+  // Passport number formatting
+  const passportInput = document.getElementById('passport_number');
+  if (passportInput) {
+    passportInput.addEventListener('input', function(e) {
+      let v = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      let letters = v.slice(0, 2).replace(/[^A-Z]/g, '');
+      let digits = v.slice(2).replace(/\D/g, '').slice(0, 7);
+      this.value = letters + digits;
+    });
+  }
+  
+  // Date mask
+  const dateInput = document.getElementById('passport_issue_date');
+  const dateExpiryInput = document.getElementById('passport_expiry_date');
+  function attachDateMask(input) {
+    if (!input) return;
+    input.addEventListener('input', function(e) {
+      let value = this.value.replace(/\D/g, '');
+      if (value.length >= 2) {
+        value = value.slice(0, 2) + '.' + value.slice(2);
+      }
+      if (value.length >= 5) {
+        value = value.slice(0, 5) + '.' + value.slice(5, 9);
+      }
+      this.value = value;
+    });
+  }
+  attachDateMask(dateInput);
+  attachDateMask(dateExpiryInput);
+  
+  // Remove None values
+  document.querySelectorAll('input[type="text"]').forEach(function(field) {
+    if (field.value === 'None' || field.value === 'none') {
+      field.value = '';
+    }
+  });
+</script>
+{% endblock item %}

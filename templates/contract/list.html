@@ -1,0 +1,2173 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}To'lovlar jadvali - Major Consulting{% endblock title %}
+
+{% block item %}
+<div class="app-container">
+
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center justify-content-between">
+        <!-- Breadcrumb starts -->
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item" aria-current="page">
+                <a href="/contract">Shartnomalar</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                To'lovlar jadvali
+            </li>
+        </ol>
+        <!-- Breadcrumb ends -->
+
+        <!-- Header actions -->
+        <div class="header-actions d-flex gap-2">
+            <a href="{% if request.GET.next %}{{ request.GET.next }}{% else %}/contract{% endif %}" class="btn btn-outline-secondary">
+                <i class="ri-arrow-left-line me-2"></i>Orqaga
+            </a>
+
+            <button id="editModeBtn" class="btn btn-warning">
+                <i class="ri-edit-line me-2"></i>Tahrirlash rejimi
+            </button>
+            <button id="saveAllBtn" class="btn btn-success" style="display: none;">
+                <i class="ri-save-line me-2"></i>Barchasini saqlash
+            </button>
+            <button id="cancelEditBtn" class="btn btn-outline-danger" style="display: none;">
+                <i class="ri-close-line me-2"></i>Bekor qilish
+            </button>
+            <button id="customPaymentBtn" class="btn btn-primary">
+                <i class="ri-money-dollar-circle-line me-2"></i>Ixtiyoriy to'lov qilish
+            </button>
+            <a href="/contract/{{pk}}/list/download/" target="_blank" class="btn btn-outline-primary">
+                <i class="ri-download-line me-2"></i>Yuklab olish
+            </a>
+        </div>
+    </div>
+    <!-- App Hero header ends -->
+
+    <!-- App body starts -->
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <!-- Contract info cards -->
+        <div class="row gx-3 mb-4">
+            <div class="col-12 col-xl-3 col-lg-6 col-md-6 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 border border-primary rounded-circle me-3">
+                                <div class="icon-box md bg-primary-subtle rounded-5">
+                                    <i class="ri-contract-line fs-4 text-primary"></i>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <h4 class="lh-1 mb-1">#{{contract.contract}}</h4>
+                                <p class="text-muted m-0 small">Shartnoma raqami</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-3 col-lg-6 col-md-6 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 border border-success rounded-circle me-3">
+                                <div class="icon-box md bg-success-subtle rounded-5">
+                                    <i class="ri-building-line fs-4 text-success"></i>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <h4 class="lh-1 mb-1">{{contract.home_price|floatformat:0|intcomma}} so'm</h4>
+                                <p class="text-muted m-0 small">Xonadon narxi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-3 col-lg-6 col-md-6 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 border border-danger rounded-circle me-3">
+                                <div class="icon-box md bg-danger-subtle rounded-5">
+                                    <i class="ri-money-dollar-circle-line fs-4 text-danger"></i>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <h4 class="lh-1 mb-1">{{contract.residual|intcomma}} so'm</h4>
+                                <p class="text-muted m-0 small">Qolgan qarz</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-xl-3 col-lg-6 col-md-6 col-sm-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="p-2 border border-warning rounded-circle me-3">
+                                <div class="icon-box md bg-warning-subtle rounded-5">
+                                    <i class="ri-calendar-check-line fs-4 text-warning"></i>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column">
+                                <h4 class="lh-1 mb-1">Oyning {{contract.pay_date}}-sanasida</h4>
+                                <p class="text-muted m-0 small">To'lov qilish sanasi</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment schedule controls -->
+        <div class="card border-0 shadow-sm mb-3" id="scheduleControls" style="display: none;">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">Jami oylar soni:</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="totalMonthsInput" min="1" max="120" value="{{months_count}}">
+                            <button class="btn btn-outline-primary" id="updateMonthsBtn">
+                                <i class="ri-refresh-line me-1"></i>Yangilash
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">Maqsadli summa:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="targetAmountDisplay" readonly value="{{target_remaining_amount|floatformat:0|intcomma}}">
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                        <small class="text-muted">Xonadon narxi - Boshlang'ich to'lov</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-medium">Hozirgi jami:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="currentTotalDisplay" readonly value="0">
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                        <small class="text-muted">Barcha oylik to'lovlar yig'indisi</small>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-medium">Farq:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="differenceDisplay" readonly value="0">
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                        <small class="text-muted">Maqsadli summa - Hozirgi jami</small>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="alert alert-info w-100 mb-0" role="alert">
+                            <i class="ri-information-line me-2"></i>
+                            <strong>Maqsad:</strong> Farq 0 so'm bo'lishi kerak
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                            <i class="ri-information-line fs-5 me-2"></i>
+                            <div>
+                                <strong>Aqlli taqsimlash qoidalari:</strong> 
+                                <ul class="mb-0 mt-2">
+                                    <li><strong>To'langan oylar:</strong> O'zgarishsiz qoladi va himoyalangan</li>
+                                    <li><strong>Boshlang'ich to'lov:</strong> O'zgarsa, faqat to'lanmagan oylar qayta taqsimlanadi</li>
+                                    <li><strong>Oylik to'lov:</strong> O'zgarsa, faqat keyingi oylar qayta taqsimlanadi</li>
+                                    <li><strong>Umumiy summa:</strong> Har doim {{target_remaining_amount|floatformat:0|intcomma}} so'm bo'lishi kerak</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment schedule table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                <h5 class="card-title mb-0">
+                    <i class="ri-calendar-todo-line me-2 text-primary"></i>To'lovlar jadvali
+                </h5>
+                <div class="d-flex gap-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="selectAllRows" style="display: none;">
+                        <label class="form-check-label" for="selectAllRows" id="selectAllLabel" style="display: none;">
+                            Barchasini tanlash
+                        </label>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="ri-file-export-line me-1"></i>
+                            Export
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                            <li><a class="dropdown-item" href="/contract/{{pk}}/list/download/"><i class="ri-file-pdf-line me-2"></i>PDF</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="ri-file-excel-line me-2"></i>Excel</a></li>
+                        </ul>
+                    </div>
+                    <a id="printBtn" href="/contract/{{pk}}/list/download/" target="_blank" class="btn btn-outline-primary">
+                        <i class="ri-printer-line me-1"></i>
+                        Chop etish
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- Table starts -->
+                <div class="table-responsive">
+                    <table id="paymentTable" class="table table-hover table-striped m-0 align-middle">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="ps-4" style="width: 50px;">
+                                    <div class="form-check" id="selectAllContainer" style="display: none;">
+                                        <input class="form-check-input" type="checkbox" id="selectAllHeader">
+                                    </div>
+                                    <span id="monthHeader">Oy</span>
+                                </th>
+                                <th>To'lov miqdori</th>
+                                <th>To'langan miqdor</th>
+                                <th>Oy uchun qoldiq</th>
+                                <th>To'lov sanasi</th>
+                                <th>Holati</th>
+                                <th class="text-end pe-4">Harakat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentTableBody">
+                            {% for i in rasrochka %}
+                            <tr class="payment-row" 
+                                data-month="{{i.month}}" 
+                                data-payment-id="{{i.id}}" 
+                                data-qoldiq="{{i.qoldiq|floatformat:0}}" 
+                                data-original-amount="{{i.amount|floatformat:0}}" 
+                                data-original-date="{{i.date|date:'Y-m-d'}}"
+                                data-is-paid="{% if i.qoldiq == 0 and i.amount > 0 %}true{% else %}false{% endif %}">
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="form-check me-2 row-checkbox" style="display: none;">
+                                            <input class="form-check-input" type="checkbox" data-payment-id="{{i.id}}">
+                                        </div>
+                                        <div class="month-display">
+                                            {% if i.month == 0 %}
+                                                <span class="fw-bold text-primary">
+                                                    <i class="ri-star-line me-1"></i>Boshlang'ich to'lov
+                                                </span>
+                                            {% else %}
+                                                <span class="fw-bold">{{i.month}}-oy</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="amount-display">
+                                            <span class="fw-medium">{{i.amount|floatformat:0|intcomma}} so'm</span>
+                                            {% if i.qoldiq == 0 and i.amount > 0 %}
+                                                <small class="text-success d-block">
+                                                    <i class="ri-lock-line me-1"></i>To'langan (himoyalangan)
+                                                </small>
+                                            {% elif i.month == 0 %}
+                                                <small class="text-info d-block">
+                                                    <i class="ri-star-line me-1"></i>Boshlang'ich to'lov
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                        <div class="amount-edit" style="display: none;">
+                                            <div class="input-group">
+                                                <input type="text"
+                                                       class="form-control form-control-sm amount-input" 
+                                                       value="{{i.amount|floatformat:0|intcomma}}"
+                                                       data-payment-id="{{i.id}}" 
+                                                       data-month="{{i.month}}"
+                                                       data-original="{{i.amount|floatformat:0}}" 
+                                                       data-is-paid="{% if i.qoldiq == 0 and i.amount > 0 %}true{% else %}false{% endif %}"
+                                                       {% if i.qoldiq == 0 and i.amount > 0 %}readonly title="To'langan oyni o'zgartirib bo'lmaydi"{% endif %}
+                                                       step="1">
+                                                <button class="btn btn-outline-primary btn-sm edit-amount-btn" type="button"
+                                                        {% if i.qoldiq == 0 and i.amount > 0 %}disabled title="To'langan oyni o'zgartirib bo'lmaydi"{% endif %}>
+                                                    <i class="ri-edit-line"></i>
+                                                </button>
+                                            </div>
+                                            {% if i.qoldiq == 0 and i.amount > 0 %}
+                                                <small class="text-success">
+                                                    <i class="ri-shield-check-line me-1"></i>To'langan oy himoyalangan
+                                                </small>
+                                            {% elif i.month == 0 %}
+                                                <small class="text-info">
+                                                    <i class="ri-information-line me-1"></i>Boshlang'ich to'lov - barcha oylarni ta'sir qiladi
+                                                </small>
+                                            {% else %}
+                                                <small class="text-muted">
+                                                    <i class="ri-arrow-right-line me-1"></i>Faqat keyingi oylarni ta'sir qiladi
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="fw-medium paid-amount-display">{{i.amount_paid|floatformat:0|intcomma}} so'm</span>
+                                        {% comment %} {% if is_ceo_admin and i.amount_paid > 0 %} {% endcomment %}
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-warning dropdown-toggle admin-edit-btn" 
+                                                        type="button" 
+                                                        data-bs-toggle="dropdown" 
+                                                        aria-expanded="false"
+                                                        title="Admin: To'lovni tahrirlash">
+                                                    <i class="ri-settings-3-line"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item edit-paid-amount" 
+                                                           href="#" 
+                                                           data-payment-id="{{i.id}}"
+                                                           data-current-paid="{{i.amount_paid|floatformat:0}}"
+                                                           data-max-amount="{{i.amount|floatformat:0}}"
+                                                           data-month="{{i.month}}">
+                                                            <i class="ri-edit-line me-2"></i>To'lovni tahrirlash
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item reset-payment" 
+                                                           href="#" 
+                                                           data-payment-id="{{i.id}}"
+                                                           data-month="{{i.month}}">
+                                                            <i class="ri-refresh-line me-2"></i>To'lovni bekor qilish
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item add-partial-payment" 
+                                                           href="#" 
+                                                           data-payment-id="{{i.id}}"
+                                                           data-current-paid="{{i.amount_paid|floatformat:0}}"
+                                                           data-max-amount="{{i.amount|floatformat:0}}"
+                                                           data-remaining="{{i.qoldiq|floatformat:0}}"
+                                                           data-month="{{i.month}}">
+                                                            <i class="ri-add-line me-1"></i>Qo'shimcha to'lov
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        {% comment %} {% endif %} {% endcomment %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-medium qoldiq-display">{{i.qoldiq|floatformat:0|intcomma}} so'm</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="date-display">
+                                            <span class="text-muted">{{i.date|date:"d.m.Y"}}</span>
+                                        </div>
+                                        <div class="date-edit" style="display: none;">
+                                            <div class="input-group">
+                                                <input type="date" 
+                                                       class="form-control form-control-sm date-input" 
+                                                       value="{{i.date|date:'Y-m-d'}}" 
+                                                       data-payment-id="{{i.id}}" 
+                                                       data-original="{{i.date|date:'Y-m-d'}}">
+                                                <button class="btn btn-outline-primary btn-sm edit-date-btn" type="button">
+                                                    <i class="ri-edit-line"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if i.qoldiq > 0 %}
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                            <i class="ri-time-line me-1"></i>To'lanmagan
+                                        </span>
+                                    {% elif i.qoldiq == 0 and i.amount > 0 %}
+                                        <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <i class="ri-check-line me-1"></i>To'langan
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary rounded-pill px-3 py-2">
+                                            <i class="ri-hourglass-line me-1"></i>Kutilmoqda
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="action-buttons">
+                                        {% if i.qoldiq > 0 and contract.status != "Tugallangan" %}
+                                            <button class="btn btn-sm btn-primary rounded-pill make-payment" 
+                                                    data-month="{{i.month}}" 
+                                                    data-amount="{{i.qoldiq|floatformat:0}}" 
+                                                    data-id="{{i.id}}">
+                                                <i class="ri-bank-card-line me-1"></i>To'lov qilish
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary rounded-pill" disabled>
+                                                <i class="ri-lock-line me-1"></i>Mavjud emas
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Table ends -->
+            </div>
+            <div class="card-footer bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        <i class="ri-information-line me-1"></i>
+                        To'lovlar jadvalida ko'rsatilgan summalar shartnoma shartlariga muvofiq o'zgarishi mumkin.
+                        {% comment %} {% if is_ceo_admin %} {% endcomment %}
+                            <br><strong class="text-warning">Admin rejimi:</strong> Siz to'langan to'lovlarni o'zgartirish huquqiga egasiz.
+                        {% comment %} {% endif %} {% endcomment %}
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button id="autoDistributeBtn" class="btn btn-outline-info" style="display: none;">
+                            <i class="ri-calculator-line me-2"></i>Avtomatik taqsimlash
+                        </button>
+                        <button id="truncatePaymentsBtn" class="btn btn-outline-warning" style="display: none;">
+                            <i class="ri-scissors-line me-2"></i>Oxirgi oylarni qisqartirish
+                        </button>
+                        <button id="customPaymentBtnFooter" class="btn btn-success">
+                            <i class="ri-money-dollar-circle-line me-2"></i>Ixtiyoriy to'lov qilish
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- App body ends -->
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title" id="paymentModalLabel">
+                            <i class="ri-bank-card-line me-2 text-primary"></i>To'lov qilish
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-4">
+                            <label for="amount" class="form-label fw-medium">Summani kiriting:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="ri-money-dollar-circle-line text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg amountInp" 
+                                    placeholder="To'lov miqdori" name="amount" id="amount" required>
+                                <span class="input-group-text bg-light">so'm</span>
+                            </div>
+                            <input type="hidden" name="payment-type" value="monthly">
+                            <input type="hidden" name="debt-id" id="debt-id" class="debtorId">
+                            <input type="hidden" name="max-amount" id="max-amount">
+                            <div id="amountError" class="text-danger mt-2" style="display: none;">
+                                <i class="ri-error-warning-line me-1"></i>
+                                To'lov miqdori oy uchun qoldiqdan oshmasligi kerak
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="ri-information-line me-1"></i>
+                                To'lov miqdori oy uchun qoldiqdan oshmasligi kerak
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info d-flex align-items-center" role="alert">
+                            <i class="ri-information-line fs-5 me-2"></i>
+                            <div>
+                                To'lov tasdiqlangandan so'ng, to'lov ma'lumotlari tizimda saqlanadi va shartnoma bo'yicha qoldiq qayta hisoblanadi.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="ri-close-line me-1"></i>Bekor qilish
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="paymentSubmitBtn">
+                            <i class="ri-check-line me-1"></i>To'lovni tasdiqlash
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Payment Modal -->
+    <div class="modal fade" id="customPaymentModal" tabindex="-1" aria-labelledby="customPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="modal-header border-bottom">
+                        <h5 class="modal-title" id="customPaymentModalLabel">
+                            <i class="ri-money-dollar-circle-line me-2 text-success"></i>Ixtiyoriy to'lov qilish
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="mb-4">
+                            <label for="customAmount" class="form-label fw-medium">Summani kiriting:</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">
+                                    <i class="ri-money-dollar-circle-line text-success"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-lg" 
+                                    placeholder="To'lov miqdori" name="customAmount" id="customAmount" required>
+                                <span class="input-group-text bg-light">so'm</span>
+                            </div>
+                            <input type="hidden" name="payment-type" value="custom">
+                            <input type="hidden" name="total-remaining" id="custom-total-remaining">
+                            <div id="customAmountError" class="text-danger mt-2" style="display: none;">
+                                <i class="ri-error-warning-line me-1"></i>
+                                To'lov miqdori xonadon uchun qolgan qoldiqdan oshmasligi kerak
+                            </div>
+                            <div id="customMinPaymentError" class="text-danger mt-2" style="display: none;">
+                                <i class="ri-error-warning-line me-1"></i>
+                                To'lov miqdori kamida 1 so'm bo'lishi kerak
+                            </div>
+                            <div class="form-text mt-2">
+                                <i class="ri-information-line me-1"></i>
+                                Ixtiyoriy to'lov qilish orqali siz shartnoma bo'yicha qoldiq summani kamaytirish imkoniyatiga ega bo'lasiz
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-success d-flex align-items-center" role="alert">
+                            <i class="ri-information-line fs-5 me-2"></i>
+                            <div>
+                                Ixtiyoriy to'lov qilish orqali siz shartnoma bo'yicha qoldiq summani kamaytirish imkoniyatiga ega bo'lasiz. To'lov avtomatik ravishda eng yaqin to'lanmagan oylarga taqsimlanadi.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="ri-close-line me-1"></i>Bekor qilish
+                        </button>
+                        <button type="submit" class="btn btn-success" id="customPaymentSubmitBtn" disabled>
+                            <i class="ri-check-line me-1"></i>To'lovni tasdiqlash
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Truncate Payments Modal -->
+    <div class="modal fade" id="truncateModal" tabindex="-1" aria-labelledby="truncateModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="truncateModalLabel">
+                        <i class="ri-scissors-line me-2 text-warning"></i>To'lovlarni qisqartirish
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="ri-alert-line fs-5 me-2"></i>
+                        <div>
+                            <strong>Diqqat!</strong> Bu amal belgilangan oydan keyingi barcha to'lovlarni 0 ga o'rnatadi.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="truncateFromMonth" class="form-label fw-medium">Qaysi oydan boshlab qisqartirish:</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="ri-calendar-line text-warning"></i>
+                            </span>
+                            <select class="form-select form-select-lg" id="truncateFromMonth" required>
+                                <option value="">Oyni tanlang</option>
+                                {% for i in rasrochka %}
+                                    {% if i.month > 0 %}
+                                        <option value="{{i.month}}">{{i.month}}-oy</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="ri-information-line me-1"></i>
+                            Tanlangan oydan boshlab oxirgi oygacha barcha to'lovlar 0 ga o'rnatiladi
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="ri-information-line fs-5 me-2"></i>
+                        <div>
+                            Masalan: 27-oyni tanlasangiz, 27-oydan 36-oygacha barcha to'lovlar 0 ga o'rnatiladi.
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Bekor qilish
+                    </button>
+                    <button type="button" class="btn btn-warning" id="truncateSubmitBtn" disabled>
+                        <i class="ri-scissors-line me-1"></i>Qisqartirish
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Paid Amount Modal (CEO Admin only) -->
+    {% comment %} {% if is_ceo_admin %} {% endcomment %}
+    <div class="modal fade" id="editPaidModal" tabindex="-1" aria-labelledby="editPaidModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="editPaidModalLabel">
+                        <i class="ri-edit-2-line me-2 text-warning"></i>To'langan summani o'zgartirish
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-warning d-flex align-items-center" role="alert">
+                        <i class="ri-alert-line fs-5 me-2"></i>
+                        <div>
+                            <strong>Diqqat!</strong> Bu amal to'langan summani o'zgartiradi va shartnoma qoldiqiga ta'sir qiladi.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Umumiy summa:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="editTotalAmount" readonly>
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="editPaidAmount" class="form-label fw-medium">To'langan summa:</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="ri-money-dollar-circle-line text-warning"></i>
+                            </span>
+                            <input type="text" class="form-control form-control-lg" 
+                                placeholder="To'langan summa" id="editPaidAmount" required>
+                            <span class="input-group-text bg-light">so'm</span>
+                        </div>
+                        <div id="editPaidError" class="text-danger mt-2" style="display: none;">
+                            <i class="ri-error-warning-line me-1"></i>
+                            To'langan summa umumiy summadan oshmasligi kerak
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="ri-information-line me-1"></i>
+                            To'langan summani 0 ga o'rnatish to'lovni bekor qiladi
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="editPaymentId">
+                    <input type="hidden" id="editContractId" value="{{contract.id}}">
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Bekor qilish
+                    </button>
+                    <button type="button" class="btn btn-warning" id="editPaidSubmitBtn" disabled>
+                        <i class="ri-check-line me-1"></i>O'zgarishni saqlash
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% comment %} {% endif %} {% endcomment %}
+
+    <!-- Add Partial Payment Modal (CEO Admin only) -->
+    {% comment %} {% if is_ceo_admin %} {% endcomment %}
+    <div class="modal fade" id="addPartialPaymentModal" tabindex="-1" aria-labelledby="addPartialPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title" id="addPartialPaymentModalLabel">
+                        <i class="ri-add-line me-2 text-info"></i>Qo'shimcha to'lov qilish
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-info d-flex align-items-center" role="alert">
+                        <i class="ri-information-line fs-5 me-2"></i>
+                        <div>
+                            <strong>Ma'lumot:</strong> Bu amal mavjud to'lovga qo'shimcha summa qo'shadi.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Hozirgi to'langan summa:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="currentPaidAmount" readonly>
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Qolgan summa:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="remainingAmount" readonly>
+                            <span class="input-group-text">so'm</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="additionalAmount" class="form-label fw-medium">Qo'shimcha to'lov:</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="ri-money-dollar-circle-line text-info"></i>
+                            </span>
+                            <input type="text" class="form-control form-control-lg" 
+                                placeholder="Qo'shimcha summa" id="additionalAmount" required>
+                            <span class="input-group-text bg-light">so'm</span>
+                        </div>
+                        <div id="additionalAmountError" class="text-danger mt-2" style="display: none;">
+                            <i class="ri-error-warning-line me-1"></i>
+                            Qo'shimcha summa qolgan summadan oshmasligi kerak
+                        </div>
+                        <div class="form-text mt-2">
+                            <i class="ri-information-line me-1"></i>
+                            Qo'shimcha summa hozirgi to'lovga qo'shiladi
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="partialPaymentId">
+                    <input type="hidden" id="partialContractId" value="{{contract.id}}">
+                </div>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        <i class="ri-close-line me-1"></i>Bekor qilish
+                    </button>
+                    <button type="button" class="btn btn-info" id="addPartialSubmitBtn" disabled>
+                        <i class="ri-check-line me-1"></i>Qo'shimcha to'lov qilish
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% comment %} {% endif %} {% endcomment %}
+</div>
+
+<style>
+.amount-input, .date-input {
+    border-radius: 0.375rem 0 0 0.375rem !important;
+}
+
+.edit-amount-btn, .edit-date-btn {
+    border-radius: 0 0.375rem 0.375rem 0 !important;
+    border-left: 0;
+}
+
+.input-group .form-control:focus + .btn {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.payment-row.editing {
+    background-color: #fff3cd !important;
+}
+
+.payment-row.changed {
+    background-color: #d1ecf1 !important;
+}
+
+.amount-input.changed, .date-input.changed {
+    background-color: #fff3cd;
+    border-color: #ffc107;
+}
+
+.amount-input[readonly] {
+    background-color: #e9ecef !important;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.amount-input[readonly] + .btn {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.table-responsive {
+    min-height: 400px;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+}
+
+.input-group-sm > .form-control {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Target amount display styling */
+#targetAmountDisplay {
+    background-color: #e7f3ff !important;
+    border-color: #0d6efd !important;
+    color: #0d6efd !important;
+    font-weight: 600;
+}
+
+#currentTotalDisplay {
+    transition: all 0.3s ease;
+}
+
+#currentTotalDisplay.balanced {
+    background-color: #d4edda !important;
+    border-color: #198754 !important;
+    color: #0f5132 !important;
+}
+
+#currentTotalDisplay.over {
+    background-color: #f8d7da !important;
+    border-color: #dc3545 !important;
+    color: #721c24 !important;
+}
+
+#currentTotalDisplay.under {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+    color: #664d03 !important;
+}
+
+#differenceDisplay {
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+#differenceDisplay.zero {
+    background-color: #d4edda !important;
+    border-color: #198754 !important;
+    color: #0f5132 !important;
+}
+
+#differenceDisplay.positive {
+    background-color: #fff3cd !important;
+    border-color: #ffc107 !important;
+    color: #664d03 !important;
+}
+
+#differenceDisplay.negative {
+    background-color: #f8d7da !important;
+    border-color: #dc3545 !important;
+    color: #721c24 !important;
+}
+
+.validation-error {
+    border-color: #dc3545 !important;
+    background-color: #f8d7da !important;
+}
+
+.validation-success {
+    border-color: #198754 !important;
+    background-color: #d4edda !important;
+}
+
+.payment-row[data-is-paid="true"] {
+    background-color: rgba(25, 135, 84, 0.05) !important;
+}
+
+.payment-row[data-is-paid="true"] .amount-input {
+    background-color: #e9ecef !important;
+    border-color: #198754;
+}
+
+.payment-row.zero-amount {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+}
+
+.payment-row.zero-amount .amount-input {
+    background-color: #f8f9fa !important;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.payment-row.truncated {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+}
+
+.payment-row.truncated .amount-input {
+    background-color: #fff3cd !important;
+    border-color: #ffc107;
+}
+
+.admin-edit-btn {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.admin-edit-btn:hover {
+    opacity: 1;
+}
+
+.payment-row:hover .admin-edit-btn {
+    opacity: 1;
+}
+
+.dropdown-menu {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+    width: 1rem;
+    text-align: center;
+}
+
+.modal-content {
+    border-radius: 0.75rem;
+}
+
+.modal-header {
+    background-color: #f8f9fa;
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.form-control-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+}
+
+.input-group-text {
+    font-weight: 500;
+}
+
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.card {
+    border-radius: 0.75rem;
+}
+
+.card-header {
+    border-radius: 0.75rem 0.75rem 0 0;
+}
+
+.btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+}
+
+.btn-sm {
+    border-radius: 0.375rem;
+}
+
+.rounded-pill {
+    border-radius: 50rem !important;
+}
+
+.amountInp {
+    text-align: right;
+}
+
+.amountInp:focus {
+    text-align: right;
+}
+
+input[type="text"].amount-input {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+input[type="text"].form-control-lg {
+    text-align: right;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+.btn.loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 1rem;
+    height: 1rem;
+    top: 50%;
+    left: 50%;
+    margin-left: -0.5rem;
+    margin-top: -0.5rem;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.btn, .form-control, .alert {
+    transition: all 0.3s ease;
+}
+
+.payment-row {
+    transition: background-color 0.3s ease;
+}
+
+.payment-row:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+}
+
+.card:hover {
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1) !important;
+}
+
+.form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .input-group-sm > .form-control {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem;
+    }
+}
+
+@media print {
+    .header-actions,
+    .action-buttons,
+    .admin-edit-btn,
+    .modal,
+    .btn {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+    
+    .badge {
+        border: 1px solid #000;
+        color: #000 !important;
+        background-color: transparent !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Global variables
+    let isEditMode = false;
+    let originalData = {};
+    let changedRows = new Set();
+    
+    // Contract constants - THESE SHOULD NEVER CHANGE
+    const CONTRACT_HOME_PRICE = {{ contract.home_price|default:0 }};
+    const CONTRACT_INITIAL_PAYMENT = {{ contract.payment|default:0 }};
+    const TARGET_REMAINING_AMOUNT = CONTRACT_HOME_PRICE - CONTRACT_INITIAL_PAYMENT;
+    const CONTRACT_ID = {{ contract.id }};
+    const IS_CEO_ADMIN = {{ is_ceo_admin|yesno:"true,false" }};
+    
+    console.log('Contract constants:');
+    console.log('- Home price:', CONTRACT_HOME_PRICE);
+    console.log('- Initial payment:', CONTRACT_INITIAL_PAYMENT);
+    console.log('- Target remaining:', TARGET_REMAINING_AMOUNT);
+    console.log('- Contract ID:', CONTRACT_ID);
+    
+    // Initialize
+    initializeEventListeners();
+    initializeAmountFormatting();
+    initializePaymentModals();
+    updateAllDisplays();
+    
+    function initializeEventListeners() {
+        // Edit mode toggle
+        document.getElementById('editModeBtn')?.addEventListener('click', toggleEditMode);
+        document.getElementById('saveAllBtn')?.addEventListener('click', saveAllChanges);
+        document.getElementById('cancelEditBtn')?.addEventListener('click', cancelEdit);
+        
+        // Schedule controls
+        document.getElementById('updateMonthsBtn')?.addEventListener('click', updateMonthsCount);
+        document.getElementById('autoDistributeBtn')?.addEventListener('click', autoDistributePayments);
+        document.getElementById('truncatePaymentsBtn')?.addEventListener('click', showTruncateModal);
+        
+        // Amount and date inputs
+        document.addEventListener('input', handleInputChange);
+        document.addEventListener('click', handleButtonClick);
+        
+        // Custom payment buttons
+        document.getElementById('customPaymentBtn')?.addEventListener('click', showCustomPaymentModal);
+        document.getElementById('customPaymentBtnFooter')?.addEventListener('click', showCustomPaymentModal);
+        
+        // Modal events
+        initializeModalEvents();
+    }
+    
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        
+        if (isEditMode) {
+            enterEditMode();
+        } else {
+            exitEditMode();
+        }
+    }
+    
+    function enterEditMode() {
+        // Show/hide buttons
+        document.getElementById('editModeBtn').style.display = 'none';
+        document.getElementById('saveAllBtn').style.display = 'inline-block';
+        document.getElementById('cancelEditBtn').style.display = 'inline-block';
+        document.getElementById('scheduleControls').style.display = 'block';
+        document.getElementById('autoDistributeBtn').style.display = 'inline-block';
+        document.getElementById('truncatePaymentsBtn').style.display = 'inline-block';
+        
+        // Show checkboxes
+        document.querySelectorAll('.row-checkbox').forEach(el => el.style.display = 'block');
+        document.getElementById('selectAllContainer').style.display = 'block';
+        document.getElementById('monthHeader').style.display = 'none';
+        document.getElementById('selectAllLabel').style.display = 'inline-block';
+        
+        // Show edit inputs
+        document.querySelectorAll('.amount-display, .date-display').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.amount-edit, .date-edit').forEach(el => el.style.display = 'block');
+        
+        // Store original data
+        storeOriginalData();
+        
+        showNotification('Tahrirlash rejimi yoqildi', 'info');
+    }
+    
+    function exitEditMode() {
+        // Show/hide buttons
+        document.getElementById('editModeBtn').style.display = 'inline-block';
+        document.getElementById('saveAllBtn').style.display = 'none';
+        document.getElementById('cancelEditBtn').style.display = 'none';
+        document.getElementById('scheduleControls').style.display = 'none';
+        document.getElementById('autoDistributeBtn').style.display = 'none';
+        document.getElementById('truncatePaymentsBtn').style.display = 'none';
+        
+        // Hide checkboxes
+        document.querySelectorAll('.row-checkbox').forEach(el => el.style.display = 'none');
+        document.getElementById('selectAllContainer').style.display = 'none';
+        document.getElementById('monthHeader').style.display = 'inline';
+        document.getElementById('selectAllLabel').style.display = 'none';
+        
+        // Hide edit inputs
+        document.querySelectorAll('.amount-display, .date-display').forEach(el => el.style.display = 'block');
+        document.querySelectorAll('.amount-edit, .date-edit').forEach(el => el.style.display = 'none');
+        
+        // Clear changed rows
+        changedRows.clear();
+        document.querySelectorAll('.payment-row').forEach(row => {
+            row.classList.remove('editing', 'changed');
+        });
+        
+        showNotification('Tahrirlash rejimi o\'chirildi', 'info');
+    }
+    
+    function storeOriginalData() {
+        originalData = {};
+        document.querySelectorAll('.payment-row').forEach(row => {
+            const paymentId = row.dataset.paymentId;
+            const amountInput = row.querySelector('.amount-input');
+            const dateInput = row.querySelector('.date-input');
+            
+            originalData[paymentId] = {
+                amount: parseNumber(amountInput?.dataset.original || '0'),
+                date: dateInput?.dataset.original || '',
+                isPaid: row.dataset.isPaid === 'true'
+            };
+        });
+        
+        console.log('Original data stored:', originalData);
+    }
+    
+    function handleInputChange(e) {
+        if (!isEditMode) return;
+        
+        if (e.target.classList.contains('amount-input')) {
+            handleAmountChange(e.target);
+        } else if (e.target.classList.contains('date-input')) {
+            handleDateChange(e.target);
+        }
+    }
+    
+    function handleAmountChange(input) {
+        // Skip if input is readonly (paid months)
+        if (input.readOnly) {
+            return;
+        }
+        
+        const paymentId = input.dataset.paymentId;
+        const month = input.dataset.month;
+        const originalAmount = parseNumber(input.dataset.original);
+        const newAmount = parseNumber(input.value);
+        const isPaid = input.dataset.isPaid === 'true';
+        
+        console.log('Amount changed for payment', paymentId, 'month', month, 'from', originalAmount, 'to', newAmount, 'isPaid:', isPaid);
+        
+        // Don't allow changes to paid months
+        if (isPaid) {
+            input.value = formatNumber(originalAmount);
+            showNotification('To\'langan oyning miqdorini o\'zgartirib bo\'lmaydi', 'warning');
+            return;
+        }
+        
+        // Format the input value
+        formatAmountInput(input);
+        
+        // Mark as changed if different from original
+        if (newAmount !== originalAmount) {
+            changedRows.add(paymentId);
+            input.classList.add('changed');
+            input.closest('.payment-row').classList.add('changed');
+            
+            // Apply visual styling for zero amounts
+            if (newAmount === 0) {
+                input.closest('.payment-row').classList.add('zero-amount');
+            } else {
+                input.closest('.payment-row').classList.remove('zero-amount');
+            }
+            
+            // Smart redistribution based on month type
+            if (month === '0') {
+                // Initial payment changed - redistribute all unpaid monthly payments
+                redistributeFromInitialPayment(paymentId, newAmount);
+            } else {
+                // Monthly payment changed - redistribute only subsequent unpaid months
+                redistributeFromMonthlyPayment(paymentId, parseInt(month), newAmount);
+            }
+        } else {
+            changedRows.delete(paymentId);
+            input.classList.remove('changed');
+            input.closest('.payment-row').classList.remove('changed', 'zero-amount');
+        }
+        
+        updateSaveButtonState();
+        updateAllDisplays();
+    }
+    
+    function redistributeFromInitialPayment(changedPaymentId, newInitialAmount) {
+        console.log('Redistributing from initial payment change to:', newInitialAmount);
+        
+        // Calculate new target for monthly payments
+        const newTargetForMonthly = TARGET_REMAINING_AMOUNT - newInitialAmount;
+        
+        if (newTargetForMonthly < 0) {
+            showNotification('Boshlang\'ich to\'lov juda katta. Oylik to\'lovlar uchun summa qolmadi.', 'error');
+            // Reset to original value
+            const changedInput = document.querySelector(`[data-payment-id="${changedPaymentId}"]`);
+            const originalAmount = parseNumber(changedInput.dataset.original);
+            changedInput.value = formatNumber(originalAmount);
+            return;
+        }
+        
+        // Get all unpaid monthly payments (month > 0 and not paid)
+        const monthlyInputs = Array.from(document.querySelectorAll('.amount-input'))
+            .filter(input => {
+                const month = input.dataset.month;
+                const isPaid = input.dataset.isPaid === 'true';
+                return month !== '0' && !isPaid;
+            });
+        
+        if (monthlyInputs.length === 0) {
+            console.log('No unpaid monthly payments to redistribute');
+            return;
+        }
+        
+        // Redistribute the new target amount among monthly payments
+        redistributeAmountAmongPayments(monthlyInputs, newTargetForMonthly);
+    }
+    
+    function redistributeFromMonthlyPayment(changedPaymentId, changedMonth, newAmount) {
+        console.log('Redistributing from monthly payment change, month:', changedMonth, 'new amount:', newAmount);
+        
+        // Get the original amount for this payment
+        const changedInput = document.querySelector(`[data-payment-id="${changedPaymentId}"]`);
+        const originalChangedAmount = parseNumber(changedInput.dataset.original);
+        const difference = newAmount - originalChangedAmount;
+        
+        console.log('Difference:', difference);
+        
+        // Get all unpaid monthly payments that come AFTER the changed month
+        const subsequentInputs = Array.from(document.querySelectorAll('.amount-input'))
+            .filter(input => {
+                const month = parseInt(input.dataset.month);
+                const isPaid = input.dataset.isPaid === 'true';
+                const paymentId = input.dataset.paymentId;
+                return month > changedMonth && !isPaid && paymentId !== changedPaymentId;
+            });
+        
+        if (subsequentInputs.length === 0) {
+            console.log('No subsequent unpaid payments to redistribute');
+            updateAllDisplays();
+            return;
+        }
+        
+        // Calculate current total for subsequent payments
+        let currentSubsequentTotal = 0;
+        subsequentInputs.forEach(input => {
+            currentSubsequentTotal += parseNumber(input.value);
+        });
+        
+        // Calculate new total for subsequent payments (reduce by the difference)
+        const newSubsequentTotal = currentSubsequentTotal - difference;
+        
+        if (newSubsequentTotal < 0) {
+            // Allow negative redistribution by setting subsequent payments to 0
+            console.log('Subsequent total would be negative, setting subsequent payments to 0');
+            subsequentInputs.forEach(input => {
+                input.value = formatNumber(0);
+                
+                // Mark as changed
+                const originalAmount = parseNumber(input.dataset.original);
+                if (0 !== originalAmount) {
+                    changedRows.add(input.dataset.paymentId);
+                    input.classList.add('changed');
+                    input.closest('.payment-row').classList.add('changed', 'zero-amount');
+                } else {
+                    changedRows.delete(input.dataset.paymentId);
+                    input.classList.remove('changed');
+                    input.closest('.payment-row').classList.remove('changed', 'zero-amount');
+                }
+            });
+            updateAllDisplays();
+            return;
+        }
+        
+        // Redistribute among subsequent unpaid payments
+        redistributeAmountAmongPayments(subsequentInputs, newSubsequentTotal);
+    }
+    
+    function redistributeAmountAmongPayments(inputs, totalAmount) {
+        if (inputs.length === 0) return;
+        
+        const amountPerPayment = Math.floor(totalAmount / inputs.length);
+        const remainder = totalAmount - (amountPerPayment * inputs.length);
+        
+        console.log('Redistributing', totalAmount, 'among', inputs.length, 'payments');
+        console.log('Amount per payment:', amountPerPayment, 'remainder:', remainder);
+        
+        inputs.forEach((input, index) => {
+            let assignedAmount = amountPerPayment;
+            
+            // Add remainder to the last payment
+            if (index === inputs.length - 1) {
+                assignedAmount += remainder;
+            }
+            
+            // Update input value
+            input.value = formatNumber(assignedAmount);
+            
+            // Apply visual styling for zero amounts
+            if (assignedAmount === 0) {
+                input.closest('.payment-row').classList.add('zero-amount');
+            } else {
+                input.closest('.payment-row').classList.remove('zero-amount');
+            }
+            
+            // Mark as changed if different from original
+            const originalAmount = parseNumber(input.dataset.original);
+            if (assignedAmount !== originalAmount) {
+                changedRows.add(input.dataset.paymentId);
+                input.classList.add('changed');
+                input.closest('.payment-row').classList.add('changed');
+            } else {
+                changedRows.delete(input.dataset.paymentId);
+                input.classList.remove('changed');
+                input.closest('.payment-row').classList.remove('changed');
+            }
+        });
+        
+        updateAllDisplays();
+    }
+    
+    function handleDateChange(input) {
+        const paymentId = input.dataset.paymentId;
+        const originalDate = input.dataset.original;
+        const newDate = input.value;
+        
+        if (newDate !== originalDate) {
+            changedRows.add(paymentId);
+            input.classList.add('changed');
+            input.closest('.payment-row').classList.add('changed');
+        } else {
+            changedRows.delete(paymentId);
+            input.classList.remove('changed');
+            input.closest('.payment-row').classList.remove('changed');
+        }
+        
+        updateSaveButtonState();
+    }
+    
+    function handleButtonClick(e) {
+        if (e.target.classList.contains('edit-amount-btn') || e.target.closest('.edit-amount-btn')) {
+            e.preventDefault();
+            const btn = e.target.classList.contains('edit-amount-btn') ? e.target : e.target.closest('.edit-amount-btn');
+            const input = btn.previousElementSibling;
+            
+            if (input.hasAttribute('readonly')) return;
+            
+            input.focus();
+            input.select();
+        }
+        
+        if (e.target.classList.contains('edit-date-btn') || e.target.closest('.edit-date-btn')) {
+            e.preventDefault();
+            const btn = e.target.classList.contains('edit-date-btn') ? e.target : e.target.closest('.edit-date-btn');
+            const input = btn.previousElementSibling;
+            
+            input.focus();
+        }
+    }
+    
+    function updateAllDisplays() {
+        updateCurrentTotalDisplay();
+        updateDifferenceDisplay();
+        updateSaveButtonState();
+    }
+    
+    function updateCurrentTotalDisplay() {
+        let currentTotal = 0;
+        
+        // Calculate total from all payment inputs (excluding initial payment)
+        document.querySelectorAll('.amount-input').forEach(input => {
+            const month = input.dataset.month;
+            if (month !== '0') { // Exclude initial payment
+                currentTotal += parseNumber(input.value);
+            }
+        });
+        
+        const currentTotalDisplay = document.getElementById('currentTotalDisplay');
+        if (currentTotalDisplay) {
+            currentTotalDisplay.value = formatNumber(currentTotal);
+            
+            // Apply styling based on comparison with target
+            currentTotalDisplay.classList.remove('balanced', 'over', 'under');
+            if (currentTotal === TARGET_REMAINING_AMOUNT) {
+                currentTotalDisplay.classList.add('balanced');
+            } else if (currentTotal > TARGET_REMAINING_AMOUNT) {
+                currentTotalDisplay.classList.add('over');
+            } else {
+                currentTotalDisplay.classList.add('under');
+            }
+        }
+        
+        console.log('Current total (monthly only):', currentTotal, 'Target:', TARGET_REMAINING_AMOUNT);
+    }
+    
+    function updateDifferenceDisplay() {
+        let currentTotal = 0;
+        
+        // Calculate total from monthly payments only
+        document.querySelectorAll('.amount-input').forEach(input => {
+            const month = input.dataset.month;
+            if (month !== '0') { // Exclude initial payment
+                currentTotal += parseNumber(input.value);
+            }
+        });
+        
+        const difference = TARGET_REMAINING_AMOUNT - currentTotal;
+        const differenceDisplay = document.getElementById('differenceDisplay');
+        
+        if (differenceDisplay) {
+            differenceDisplay.value = formatNumber(Math.abs(difference));
+            
+            // Apply styling based on difference
+            differenceDisplay.classList.remove('zero', 'positive', 'negative');
+            if (difference === 0) {
+                differenceDisplay.classList.add('zero');
+            } else if (difference > 0) {
+                differenceDisplay.classList.add('positive');
+            } else {
+                differenceDisplay.classList.add('negative');
+            }
+        }
+        
+        console.log('Difference:', difference);
+    }
+    
+    async function saveAllChanges() {
+        if (changedRows.size === 0) {
+            showNotification('Hech qanday o\'zgarish topilmadi', 'warning');
+            return;
+        }
+        
+        // Show loading state
+        const saveBtn = document.getElementById('saveAllBtn');
+        saveBtn.classList.add('loading');
+        saveBtn.disabled = true;
+        
+        try {
+            const changes = [];
+            
+            changedRows.forEach(paymentId => {
+                const row = document.querySelector(`[data-payment-id="${paymentId}"]`);
+                const amountInput = row.querySelector('.amount-input');
+                const dateInput = row.querySelector('.date-input');
+                
+                const newAmount = parseNumber(amountInput.value);
+                const newDate = dateInput.value;
+                
+                changes.push({
+                    id: paymentId,
+                    amount: newAmount,
+                    date: newDate
+                });
+            });
+            
+            const response = await fetch(`/contract/${CONTRACT_ID}/update-schedule/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    changes: changes
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                
+                // Update original data
+                changes.forEach(change => {
+                    originalData[change.id].amount = change.amount;
+                    originalData[change.id].date = change.date;
+                    
+                    // Update data attributes
+                    const row = document.querySelector(`[data-payment-id="${change.id}"]`);
+                    const amountInput = row.querySelector('.amount-input');
+                    const dateInput = row.querySelector('.date-input');
+                    
+                    amountInput.dataset.original = change.amount;
+                    dateInput.dataset.original = change.date;
+                });
+                
+                // Clear changed state
+                changedRows.clear();
+                document.querySelectorAll('.changed').forEach(el => {
+                    el.classList.remove('changed');
+                });
+                document.querySelectorAll('.payment-row.changed').forEach(row => {
+                    row.classList.remove('changed');
+                });
+                
+                updateSaveButtonState();
+                
+                // Optionally reload the page to reflect all changes
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+                
+            } else {
+                showNotification(result.message || 'Xatolik yuz berdi', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error saving changes:', error);
+            showNotification('Xatolik yuz berdi: ' + error.message, 'error');
+        } finally {
+            // Remove loading state
+            saveBtn.classList.remove('loading');
+            saveBtn.disabled = false;
+        }
+    }
+    
+    function cancelEdit() {
+        // Restore original values
+        Object.keys(originalData).forEach(paymentId => {
+            const row = document.querySelector(`[data-payment-id="${paymentId}"]`);
+            const amountInput = row.querySelector('.amount-input');
+            const dateInput = row.querySelector('.date-input');
+            
+            if (amountInput && !originalData[paymentId].isPaid) {
+                amountInput.value = formatNumber(originalData[paymentId].amount);
+                amountInput.classList.remove('changed');
+            }
+            if (dateInput) {
+                dateInput.value = originalData[paymentId].date;
+                dateInput.classList.remove('changed');
+            }
+            
+            row.classList.remove('changed');
+        });
+        
+        changedRows.clear();
+        updateAllDisplays();
+        exitEditMode();
+        showNotification('O\'zgarishlar bekor qilindi', 'info');
+    }
+    
+    function updateSaveButtonState() {
+        const saveBtn = document.getElementById('saveAllBtn');
+        if (saveBtn) {
+            saveBtn.disabled = changedRows.size === 0;
+            
+            if (changedRows.size > 0) {
+                saveBtn.innerHTML = `<i class="ri-save-line me-2"></i>Saqlash (${changedRows.size})`;
+            } else {
+                saveBtn.innerHTML = '<i class="ri-save-line me-2"></i>Barchasini saqlash';
+            }
+        }
+    }
+    
+    async function updateMonthsCount() {
+        const newMonthsCount = parseInt(document.getElementById('totalMonthsInput').value);
+        
+        if (!newMonthsCount || newMonthsCount < 1 || newMonthsCount > 120) {
+            showNotification('Oylar soni 1 dan 120 gacha bo\'lishi kerak', 'error');
+            return;
+        }
+        
+        const updateBtn = document.getElementById('updateMonthsBtn');
+        updateBtn.classList.add('loading');
+        updateBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`/contract/${CONTRACT_ID}/update-months/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    months_count: newMonthsCount
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                // Reload page to show updated schedule
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                showNotification(result.message || 'Xatolik yuz berdi', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error updating months count:', error);
+            showNotification('Xatolik yuz berdi: ' + error.message, 'error');
+        } finally {
+            updateBtn.classList.remove('loading');
+            updateBtn.disabled = false;
+        }
+    }
+    
+    function autoDistributePayments() {
+        if (!isEditMode) return;
+        
+        const monthlyRows = document.querySelectorAll('.payment-row[data-month]:not([data-month="0"])');
+        const unpaidRows = Array.from(monthlyRows).filter(row => row.dataset.isPaid !== 'true');
+        
+        if (unpaidRows.length === 0) {
+            showNotification('Taqsimlash uchun to\'lanmagan oylar topilmadi', 'warning');
+            return;
+        }
+        
+        // Use TARGET_REMAINING_AMOUNT for distribution
+        const monthlyAmount = Math.floor(TARGET_REMAINING_AMOUNT / unpaidRows.length);
+        const remainder = TARGET_REMAINING_AMOUNT % unpaidRows.length;
+        
+        unpaidRows.forEach((row, index) => {
+            const amountInput = row.querySelector('.amount-input');
+            if (amountInput && !amountInput.hasAttribute('readonly')) {
+                const amount = monthlyAmount + (index < remainder ? 1 : 0);
+                amountInput.value = formatNumber(amount);
+                
+                // Mark as changed
+                const paymentId = row.dataset.paymentId;
+                const originalAmount = parseNumber(amountInput.dataset.original);
+                if (amount !== originalAmount) {
+                    changedRows.add(paymentId);
+                    row.classList.add('changed');
+                    amountInput.classList.add('changed');
+                } else {
+                    changedRows.delete(paymentId);
+                    row.classList.remove('changed');
+                    amountInput.classList.remove('changed');
+                }
+            }
+        });
+        
+        updateAllDisplays();
+        showNotification(`${unpaidRows.length} ta oyga avtomatik taqsimlandi`, 'success');
+    }
+    
+    function showTruncateModal() {
+        const modal = new bootstrap.Modal(document.getElementById('truncateModal'));
+        modal.show();
+        
+        // Handle truncate form
+        const truncateFromMonth = document.getElementById('truncateFromMonth');
+        const truncateSubmitBtn = document.getElementById('truncateSubmitBtn');
+        
+        truncateFromMonth.addEventListener('change', function() {
+            truncateSubmitBtn.disabled = !this.value;
+        });
+        
+        truncateSubmitBtn.addEventListener('click', function() {
+            const fromMonth = parseInt(truncateFromMonth.value);
+            if (!fromMonth) return;
+            
+            // Set amounts to 0 for months >= fromMonth
+            document.querySelectorAll('.payment-row').forEach(row => {
+                const month = parseInt(row.dataset.month);
+                if (month >= fromMonth && row.dataset.isPaid !== 'true') {
+                    const amountInput = row.querySelector('.amount-input');
+                    if (amountInput && !amountInput.hasAttribute('readonly')) {
+                        amountInput.value = '0';
+                        
+                        // Mark as changed
+                        const paymentId = row.dataset.paymentId;
+                        const originalAmount = parseNumber(amountInput.dataset.original);
+                        if (0 !== originalAmount) {
+                            changedRows.add(paymentId);
+                            row.classList.add('changed');
+                            amountInput.classList.add('changed');
+                        }
+                    }
+                }
+            });
+            
+            updateAllDisplays();
+            modal.hide();
+            showNotification(`${fromMonth}-oydan boshlab qisqartirildi`, 'success');
+        });
+    }
+    
+    // Amount formatting functions
+    function initializeAmountFormatting() {
+        document.querySelectorAll('.amountInp, .amount-input, #customAmount, #editPaidAmount, #additionalAmount').forEach(input => {
+            input.addEventListener('input', function() {
+                formatAmountInput(this);
+            });
+            
+            input.addEventListener('blur', function() {
+                if (this.value) {
+                    const numValue = parseNumber(this.value);
+                    this.value = formatNumber(numValue);
+                }
+            });
+        });
+    }
+    
+    function formatAmountInput(input) {
+        let value = input.value.replace(/[^\d]/g, '');
+        if (value && !isNaN(value)) {
+            input.value = formatNumber(parseInt(value));
+        }
+    }
+    
+    function formatNumber(num) {
+        if (isNaN(num) || num === null || num === undefined) return '0';
+        return Math.floor(num).toLocaleString('en-US');
+    }
+    
+    function parseNumber(value) {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') {
+            // Remove all non-digit characters
+            const cleaned = value.replace(/[^\d]/g, '');
+            const parsed = parseInt(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
+    }
+    
+    // Payment modal functionality
+    function initializePaymentModals() {
+        // Regular payment modal
+        document.querySelectorAll('.make-payment').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const month = this.dataset.month;
+                const amount = this.dataset.amount;
+                const id = this.dataset.id;
+                
+                document.getElementById('amount').value = formatNumber(amount);
+                document.getElementById('debt-id').value = id;
+                document.getElementById('max-amount').value = amount;
+                
+                const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                modal.show();
+            });
+        });
+        
+        // Amount validation for payment modal
+        const amountInput = document.getElementById('amount');
+        const paymentSubmitBtn = document.getElementById('paymentSubmitBtn');
+        const amountError = document.getElementById('amountError');
+        
+        if (amountInput) {
+            amountInput.addEventListener('input', function() {
+                const maxAmount = parseNumber(document.getElementById('max-amount').value);
+                const currentAmount = parseNumber(this.value);
+                
+                if (currentAmount > maxAmount) {
+                    amountError.style.display = 'block';
+                    paymentSubmitBtn.disabled = true;
+                } else {
+                    amountError.style.display = 'none';
+                    paymentSubmitBtn.disabled = currentAmount <= 0;
+                }
+            });
+        }
+    }
+    
+    function showCustomPaymentModal() {
+        const totalRemaining = {{ contract.residual|default:0 }};
+        document.getElementById('custom-total-remaining').value = totalRemaining;
+        
+        const modal = new bootstrap.Modal(document.getElementById('customPaymentModal'));
+        modal.show();
+        
+        // Custom payment validation
+        const customAmountInput = document.getElementById('customAmount');
+        const customPaymentSubmitBtn = document.getElementById('customPaymentSubmitBtn');
+        const customAmountError = document.getElementById('customAmountError');
+        const customMinPaymentError = document.getElementById('customMinPaymentError');
+        
+        customAmountInput.addEventListener('input', function() {
+            const currentAmount = parseNumber(this.value);
+            
+            customAmountError.style.display = 'none';
+            customMinPaymentError.style.display = 'none';
+            
+            if (currentAmount > totalRemaining) {
+                customAmountError.style.display = 'block';
+                customPaymentSubmitBtn.disabled = true;
+            } else if (currentAmount < 1) {
+                customMinPaymentError.style.display = 'block';
+                customPaymentSubmitBtn.disabled = true;
+            } else {
+                customPaymentSubmitBtn.disabled = false;
+            }
+        });
+    }
+    
+    // Modal events for CEO admin functions
+    function initializeModalEvents() {
+        {% comment %} {% if is_ceo_admin %} {% endcomment %}
+        // Edit paid amount modal
+        document.querySelectorAll('.edit-paid-amount').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const paymentId = this.dataset.paymentId;
+                const currentPaid = this.dataset.currentPaid;
+                const maxAmount = this.dataset.maxAmount;
+                const month = this.dataset.month;
+                
+                document.getElementById('editPaymentId').value = paymentId;
+                document.getElementById('editPaidAmount').value = formatNumber(currentPaid);
+                document.getElementById('editTotalAmount').value = formatNumber(maxAmount);
+                
+                const modal = new bootstrap.Modal(document.getElementById('editPaidModal'));
+                modal.show();
+            });
+        });
+        
+        // Reset payment
+        document.querySelectorAll('.reset-payment').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (confirm('Bu to\'lovni bekor qilishni xohlaysizmi?')) {
+                    const paymentId = this.dataset.paymentId;
+                    resetPayment(paymentId);
+                }
+            });
+        });
+        
+        // Add partial payment modal
+        document.querySelectorAll('.add-partial-payment').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const paymentId = this.dataset.paymentId;
+                const currentPaid = this.dataset.currentPaid;
+                const remaining = this.dataset.remaining;
+                
+                document.getElementById('partialPaymentId').value = paymentId;
+                document.getElementById('currentPaidAmount').value = formatNumber(currentPaid);
+                document.getElementById('remainingAmount').value = formatNumber(remaining);
+                
+                const modal = new bootstrap.Modal(document.getElementById('addPartialPaymentModal'));
+                modal.show();
+            });
+        });
+        
+        // Edit paid amount validation
+        const editPaidAmountInput = document.getElementById('editPaidAmount');
+        const editPaidSubmitBtn = document.getElementById('editPaidSubmitBtn');
+        const editPaidError = document.getElementById('editPaidError');
+        
+        if (editPaidAmountInput) {
+            editPaidAmountInput.addEventListener('input', function() {
+                const maxAmount = parseNumber(document.getElementById('editTotalAmount').value);
+                const currentAmount = parseNumber(this.value);
+                
+                if (currentAmount > maxAmount) {
+                    editPaidError.style.display = 'block';
+                    editPaidSubmitBtn.disabled = true;
+                } else {
+                    editPaidError.style.display = 'none';
+                    editPaidSubmitBtn.disabled = false;
+                }
+            });
+        }
+        
+        // Additional amount validation
+        const additionalAmountInput = document.getElementById('additionalAmount');
+        const addPartialSubmitBtn = document.getElementById('addPartialSubmitBtn');
+        const additionalAmountError = document.getElementById('additionalAmountError');
+        
+        if (additionalAmountInput) {
+            additionalAmountInput.addEventListener('input', function() {
+                const remaining = parseNumber(document.getElementById('remainingAmount').value);
+                const additionalAmount = parseNumber(this.value);
+                
+                if (additionalAmount > remaining) {
+                    additionalAmountError.style.display = 'block';
+                    addPartialSubmitBtn.disabled = true;
+                } else {
+                    additionalAmountError.style.display = 'none';
+                    addPartialSubmitBtn.disabled = additionalAmount <= 0;
+                }
+            });
+        }
+        
+        // Submit handlers for admin modals
+        editPaidSubmitBtn?.addEventListener('click', function() {
+            const paymentId = document.getElementById('editPaymentId').value;
+            const newPaidAmount = parseNumber(document.getElementById('editPaidAmount').value);
+            editPaidAmount(paymentId, newPaidAmount);
+        });
+        
+        addPartialSubmitBtn?.addEventListener('click', function() {
+            const paymentId = document.getElementById('partialPaymentId').value;
+            const additionalAmount = parseNumber(document.getElementById('additionalAmount').value);
+            addPartialPayment(paymentId, additionalAmount);
+        });
+        {% comment %} {% endif %} {% endcomment %}
+    }
+    
+    {% comment %} {% if is_ceo_admin %} {% endcomment %}
+    async function editPaidAmount(paymentId, newPaidAmount) {
+        try {
+            const response = await fetch(`/contract/${CONTRACT_ID}/admin-edit-payment/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    payment_id: paymentId,
+                    new_paid_amount: newPaidAmount
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(result.message || 'Xatolik yuz berdi', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error editing paid amount:', error);
+            showNotification('Xatolik yuz berdi: ' + error.message, 'error');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('editPaidModal')).hide();
+    }
+    
+    async function resetPayment(paymentId) {
+        try {
+            const response = await fetch(`/contract/${CONTRACT_ID}/admin-reset-payment/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    payment_id: paymentId
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(result.message || 'Xatolik yuz berdi', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error resetting payment:', error);
+            showNotification('Xatolik yuz berdi: ' + error.message, 'error');
+        }
+    }
+    
+    async function addPartialPayment(paymentId, additionalAmount) {
+        try {
+            const response = await fetch(`/contract/${CONTRACT_ID}/admin-edit-payment/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCsrfToken()
+                },
+                body: JSON.stringify({
+                    payment_id: paymentId,
+                    additional_amount: additionalAmount
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                showNotification(result.message || 'Xatolik yuz berdi', 'error');
+            }
+            
+        } catch (error) {
+            console.error('Error adding partial payment:', error);
+            showNotification('Xatolik yuz berdi: ' + error.message, 'error');
+        }
+        
+        bootstrap.Modal.getInstance(document.getElementById('addPartialPaymentModal')).hide();
+    }
+    {% comment %} {% endif %} {% endcomment %}
+    
+    // Utility functions
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+    
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        
+        const iconMap = {
+            'success': 'ri-check-line',
+            'error': 'ri-error-warning-line',
+            'warning': 'ri-alert-line',
+            'info': 'ri-information-line'
+        };
+        
+        notification.innerHTML = `
+            <i class="${iconMap[type] || 'ri-information-line'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    // Select all functionality
+    const selectAllHeader = document.getElementById('selectAllHeader');
+    const selectAllRows = document.getElementById('selectAllRows');
+    
+    selectAllHeader?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+    
+    selectAllRows?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        selectAllHeader.checked = this.checked;
+    });
+    
+    // Update select all state when individual checkboxes change
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.row-checkbox input[type="checkbox"]')) {
+            const allCheckboxes = document.querySelectorAll('.row-checkbox input[type="checkbox"]');
+            const checkedCheckboxes = document.querySelectorAll('.row-checkbox input[type="checkbox"]:checked');
+            
+            if (selectAllHeader) {
+                selectAllHeader.checked = allCheckboxes.length === checkedCheckboxes.length;
+                selectAllHeader.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < allCheckboxes.length;
+            }
+            
+            if (selectAllRows) {
+                selectAllRows.checked = allCheckboxes.length === checkedCheckboxes.length;
+            }
+        }
+    });
+    
+    console.log('Payment schedule script initialized with fixed calculations');
+});
+</script>
+{% endblock item %}

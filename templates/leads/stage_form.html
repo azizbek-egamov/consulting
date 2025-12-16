@@ -1,0 +1,47 @@
+<form id="stageForm" method="post" action="{% if stage %}{% url 'edit_lead_stage' stage.id %}{% else %}{% url 'create_lead_stage' %}{% endif %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label for="stageName" class="form-label">Bosqich nomi *</label>
+        <input type="text" class="form-control" id="stageName" name="name" value="{{ stage.name|default:'' }}" required oninput="generateKey(this.value)">
+    </div>
+    <div class="mb-3">
+        <label for="stageKey" class="form-label">Kalit (inglizcha) *</label>
+        <input type="text" class="form-control" id="stageKey" name="key" value="{{ stage.key|default:'' }}" required {% if stage.is_system_stage %}readonly{% endif %}>
+        {% if stage.is_system_stage %}
+        <small class="form-text text-muted">Tizim bosqichining kalitini o'zgartirib bo'lmaydi.</small>
+        {% endif %}
+    </div>
+    <div class="mb-3">
+        <label for="stageColor" class="form-label">Rang (HEX) *</label>
+        <input type="color" class="form-control form-control-color" id="stageColor" name="color" value="{{ stage.color|default:'#007bff' }}" required>
+    </div>
+    <div class="mb-3">
+        <label for="stageDescription" class="form-label">Tavsif</label>
+        <textarea class="form-control" id="stageDescription" name="description" rows="3">{{ stage.description|default:'' }}</textarea>
+    </div>
+    <div class="mb-3">
+        <label for="stageOrder" class="form-label">Tartib raqami</label>
+        <input type="number" class="form-control" id="stageOrder" name="order" value="{{ stage.order|default:0 }}">
+    </div>
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="submit" class="btn btn-primary">
+            <i class="ri-save-line"></i> Saqlash
+        </button>
+    </div>
+</form>
+
+<script>
+    function generateKey(name) {
+        const keyInput = document.getElementById('stageKey');
+        const isSystemStage = keyInput.readOnly; // Check if it's a system stage
+
+        if (!isSystemStage) { // Only generate if not a system stage
+            let key = name.toLowerCase()
+                          .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric chars except space and hyphen
+                          .replace(/\s+/g, '_') // Replace spaces with underscores
+                          .replace(/^-+|-+$/g, ''); // Trim hyphens from start/end
+            keyInput.value = key;
+        }
+    }
+</script>

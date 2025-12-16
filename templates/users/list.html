@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Foydalanuvchilar{% endblock title %}
+
+{% block item %}
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center justify-content-between">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">Foydalanuvchilar</li>
+        </ol>
+        <a href="{% url 'user-create' %}" class="btn btn-primary d-flex align-items-center">
+            <i class="ri-add-line me-2"></i> Yangi foydalanuvchi
+        </a>
+    </div>
+
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <div class="row g-3 mb-3">
+            <div class="col-xl-12">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Jami foydalanuvchilar</p>
+                        <h4 class="mb-0">{{ total_users }}</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Foydalanuvchilar ro'yxati</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>№</th>
+                            <th>Familiya</th>
+                            <th>Ism</th>
+                            <th>Username</th>
+                            <th>Yaratilgan sana</th>
+                            <th>Shartnomalar soni</th>
+                            <th class="text-end">Harakat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in users_with_stats %}
+                        <tr>
+                            <td class="fw-semibold">{{ forloop.counter }}</td>
+                            <td>{{ item.user.last_name|default:"-" }}</td>
+                            <td>{{ item.user.first_name|default:"-" }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ item.user.username }}</div>
+                                {% if item.user.username == "ceoadmin" %}
+                                <small class="badge bg-primary">Asosiy Admin</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ item.user.date_joined|date:"d.m.Y H:i" }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ item.contracts_count }}</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex gap-2 justify-content-end">
+                                {% if item.user.username == "ceoadmin" %}
+                                    <a href="{% url 'user-edit' item.user.id %}" class="btn btn-sm btn-outline-primary" title="Tahrirlash">
+                                        <i class="ri-edit-line"></i>
+                                    </a>
+                                    <!-- joyni bo'sh qoldirish uchun ko'rinmaydigan tugmalar -->
+                                    <span class="btn btn-sm btn-outline-secondary invisible" aria-hidden="true">
+                                        <i class="ri-lock-password-line"></i>
+                                    </span>
+                                    <span class="btn btn-sm btn-outline-danger invisible" aria-hidden="true">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'user-edit' item.user.id %}" class="btn btn-sm btn-outline-primary" title="Tahrirlash">
+                                        <i class="ri-edit-line"></i>
+                                    </a>
+                                    <a href="{% url 'user-change-password' item.user.id %}" class="btn btn-sm btn-outline-warning" title="Parolni o'zgartirish">
+                                        <i class="ri-lock-password-line"></i>
+                                    </a>
+                                    <form method="post" action="{% url 'user-delete' item.user.id %}" class="d-inline" onsubmit="return confirm('Foydalanuvchini o\'chirishni tasdiqlaysizmi?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="O'chirish">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="ri-user-line fs-1 d-block mb-2"></i>
+                                Foydalanuvchilar topilmadi
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock item %}
+

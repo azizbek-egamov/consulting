@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Yangi foydalanuvchi{% endblock title %}
+
+{% block item %}
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center justify-content-between">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'user-management' %}">Foydalanuvchilar</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">Yangi foydalanuvchi</li>
+        </ol>
+    </div>
+
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Yangi foydalanuvchi qo'shish</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Familiya <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="last_name" value="{{ last_name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ism <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="first_name" value="{{ first_name|default:'' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="username" value="{{ username|default:'' }}" required>
+                            <small class="text-muted">Login qilish uchun ishlatiladi</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Parol <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" name="password" required>
+                            <small class="text-muted">Kamida 6 ta belgi</small>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="ri-save-line me-2"></i> Saqlash
+                                </button>
+                                <a href="{% url 'user-management' %}" class="btn btn-outline-secondary">
+                                    <i class="ri-close-line me-2"></i> Bekor qilish
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock item %}
+

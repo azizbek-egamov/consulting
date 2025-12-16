@@ -1,0 +1,98 @@
+<div class="lead-detail-container" data-audio-url="{% if lead.audio_recording %}{{ lead.audio_recording.url }}{% endif %}">
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Asosiy ma'lumotlar</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Mijoz ismi:</strong></td>
+                    <td>{{ lead.client_name|default:"Noma'lum" }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Telefon:</strong></td>
+                    <td>{{ lead.phone_number }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Operator:</strong></td>
+                    <td>{{ lead.operator.full_name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Holat:</strong></td>
+                    <td>
+                        <span class="badge bg-{% if lead.call_status == 'answered' %}success{% elif lead.call_status == 'client_answered' %}info{% elif lead.call_status == 'not_answered' %}danger{% elif lead.call_status == 'client_not_answered' %}warning{% else %}secondary{% endif %}">
+                            {% if lead.call_status == 'answered' %}Javob berdi
+                            {% elif lead.call_status == 'not_answered' %}Javob bermadi
+                            {% elif lead.call_status == 'client_answered' %}Mijoz javob berdi
+                            {% elif lead.call_status == 'client_not_answered' %}Mijoz javob bermadi
+                            {% else %}Qo'ng'iroq qilinmagan{% endif %}
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-md-6">
+            <h6>Qo'shimcha ma'lumotlar</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td><strong>Yaratilgan:</strong></td>
+                    <td>{{ lead.created_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Yangilangan:</strong></td>
+                    <td>{{ lead.updated_at|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% if lead.call_duration %}
+                <tr>
+                    <td><strong>Davomiylik:</strong></td>
+                    <td>{{ lead.get_duration_display }}</td>
+                </tr>
+                {% endif %}
+                {% if lead.follow_up_date %}
+                <tr>
+                    <td><strong>Keyingi qo'ng'iroq:</strong></td>
+                    <td>{{ lead.follow_up_date|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td><strong>Mijozga aylangan:</strong></td>
+                    <td>
+                        {% if lead.is_converted %}
+                            <span class="badge bg-success">Ha</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Yo'q</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    
+    {% if lead.notes %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <h6>Izohlar</h6>
+            <div class="alert alert-light">
+                {{ lead.notes|linebreaks }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if lead.audio_recording %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <h6>Audio yozuv</h6>
+            <div class="audio-player">
+                <audio controls style="width: 100%;">
+                    <source src="{{ lead.audio_recording.url }}" type="audio/mpeg">
+                    <source src="{{ lead.audio_recording.url }}" type="audio/wav">
+                    <source src="{{ lead.audio_recording.url }}" type="audio/ogg">
+                    Brauzeringiz audio faylni qo'llab-quvvatlamaydi.
+                </audio>
+                <div class="mt-2">
+                    <small class="text-muted">Fayl: {{ lead.audio_recording.name }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>

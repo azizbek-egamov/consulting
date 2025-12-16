@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+{% load number_filters %}
+<html lang="uz">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Shartnoma</title>
+	<style>
+		@page {
+			size: A4;
+			margin: 1.5cm 1.5cm 1.5cm 1.5cm;
+		}
+		
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+		
+		body {
+			font-family: "Times New Roman", "DejaVu Serif", serif;
+			font-size: 11pt;
+			line-height: 1.3;
+			color: #000000;
+			background: #ffffff;
+			padding: 0;
+			margin: 0;
+		}
+		
+		.contract-header {
+			text-align: center;
+			margin-bottom: 10px;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+		
+		.contract-title {
+			font-size: 12pt;
+			font-weight: bold;
+			margin-bottom: 8px;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+			line-height: 1.2;
+		}
+		
+		.contract-date {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 8px;
+			font-size: 10pt;
+		}
+		
+		.contract-date-left {
+			text-align: left;
+		}
+		
+		.contract-date-right {
+			text-align: right;
+		}
+		
+		.contract-intro {
+			margin-bottom: 10px;
+			text-align: justify;
+			line-height: 1.4;
+			padding: 0 5px;
+			font-size: 10pt;
+		}
+		
+		.section {
+			margin-bottom: 10px;
+		}
+		
+		.section-title {
+			font-weight: bold;
+			font-size: 11pt;
+			margin-bottom: 6px;
+			margin-top: 10px;
+			text-align: center;
+			line-height: 1.2;
+		}
+		
+		.section-content {
+			text-align: justify;
+			margin-bottom: 6px;
+			line-height: 1.3;
+			text-indent: 0;
+		}
+		
+		.subsection {
+			margin-bottom: 5px;
+			text-align: justify;
+			padding: 0 5px;
+			line-height: 1.3;
+			font-size: 10pt;
+		}
+		
+		.subsection-title {
+			font-weight: bold;
+			margin-right: 3px;
+		}
+		
+		.signature-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 15px;
+			margin-bottom: 10px;
+		}
+		
+		.signature-table td {
+			border: 1px solid #000;
+			padding: 8px 10px;
+			vertical-align: top;
+			width: 50%;
+		}
+		
+		.signature-table p {
+			margin-bottom: 3px;
+			line-height: 1.3;
+			font-size: 9pt;
+		}
+		
+		.signature-table .section-label {
+			font-weight: bold;
+			margin-bottom: 5px;
+			font-size: 10pt;
+		}
+		
+		.signature-line {
+			margin-top: 15px;
+			border-top: 1px solid #000;
+			padding-top: 3px;
+			text-align: left;
+		}
+		
+		.highlight {
+			color: #ff0000;
+			font-weight: bold;
+		}
+		
+		.empty-line {
+			height: 8px;
+		}
+		
+		@media print {
+			body {
+				padding: 0;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="contract-header">
+		<div class="contract-title">
+			Angliya hududiga ishchi vizasi bo'yicha xizmatlar ko'rsatish shartnomasi
+		</div>
+	</div>
+	
+	<div class="contract-date">
+		<span class="contract-date-left">{{contract.contract_location}} sh.</span>
+		<span class="contract-date-right">"{{contract.created_at.day}}" {{month}} {{contract.created_at.year}} yil</span>
+	</div>
+	
+	<div class="contract-intro">
+		{{contract.client.full_name}} tomondan va "<span class="">HASANBOY MASTER SERVICE</span>" MChJ direktori Raximov X.R. keyingi o'rinlarda «Bajaruvchi», ikkinchi tomondan, ular o'rtasida ushbu shartnoma quyidagilar haqida tuzilgan:
+	</div>
+	
+	<div class="section">
+		<div class="section-title">1. Shartnoma tuzishdan maqsad:</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">1.1.</span> Ushbu shartnomaga asosan «Bajaruvchi», «Buyurtmachi»ga Angliya hududiga ishchi vizasini qo'lga kiritsh uchun talab etiladigan hujjatlar tayyorlash va anketalar to'ldirish xizmatlarini ko'rsatadi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">1.2.</span> O'z navbatida «Buyurtmachi», «Bajaruvchi»ning ko'rsatgan xizmatlari uchun shartnomada belgilab qo'yilgan miqdorda va tartibda xizmat haqi to'lab berishi shart.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">1.3.</span> Bajaruvchi xorijiy ish beruvchi bilan bevosita shartnoma tuzmaydi, balki faqat vositachilik (axborot xizmat ko'rsatish markazi) xizmatini amalga oshiradi.
+		</div>
+	</div>
+	
+	<div class="section">
+		<div class="section-title">2. Tomonlarning huquq va majburiyatlari</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">2.1.</span> «Bajaruvchi»ning majburiyatlari:<br>
+			Angliya hududiga ishchi vizasini qo'lga kiritish uchun kerakli barcha hujjatlarni tayyorlash va anketalar to'ldirishni o'z bo'yniga oladi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">2.2.</span> «Bajaruvchi»ning huquqlari:<br>
+			"Buyurtmachi" "Bajaruvchi"ga so'ralgan barcha hujjatlarni taqdim etishga majbur. "Bajaruvchi" tomonidan so'ralgan barcha hujjatlar taqdim etilganidan so'ng "Buyurtmachi" o'z xizmatlarini ko'rsatishga kirishadi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">2.3.</span> «Buyurtmachi» majburiyatlari:<br>
+			«Bajaruvchi»ning xizmat haqini shartnoma shartlari asosida o'z vaqtida to'lab berish.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">2.4.</span> Suhbatdan o'tolmasa yoki hujjatlarida muammo chiqsa, Bajaruvchiga e'tiroz bildirmaslik.
+		</div>
+	</div>
+	
+	<div class="section">
+		<div class="section-title">3. To'lov tartibi:</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.1.</span> «Bajaruvchi»ning ko'rsatadigan xizmat haqi <span class="">{{contract.total_service_fee|dotcomma}}</span> so'm. Ushbu summadan 4/1 qismi ya'ni {{contract.initial_payment_amount|dotcomma}} so'mini oldindan ushbu shartnoma tuzilganidan {{contract.initial_payment_due_days}} kun ichida «Bajaruvchi»ning bankdagi hisob raqamiga to'lashi shart. «Buyurtmachi» Angliya davlatiga ketish uchun suhbatdan o'tganidan keyin {{contract.post_interview_due_days}} kun ichida qolgan {{contract.post_interview_payment_amount|dotcomma}} so'mni «Bajaruvchi»ning bankdagi hisob raqamiga to'lashi shart.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.2.</span> Agarda suhbatdan o'taolmasa to'langan {{contract.initial_payment_amount|dotcomma}} so'mdan 1.500.000 so'm miqdorida ushlab qolinadi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.3.</span> «Buyurtmachi» Angliya ishchi vizani qo'lga kiritish jarayonida elchixonadan rad javobini olgan taqdirda shartnomada ko'rsatilgan to'lov qaytarilmaydi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.4.</span> «Bajaruvchi» Angliya hududidagi ish beruvchidan «Buyurtmachi»ga mehnat shartnomasi va ishga taklifnomasini qo'lga kiritganidan keyin «Buyurtmachi» o'z xohishi bilan shartnomani qilib to'lagan to'lovini qaytarmoqchi bo'lsa, ushbu shartnomada ko'rsatilgan oldindan qilgan to'lovidan 100% ushlab qolinadi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.5.</span> Ushbu shartnoma, tuzilgan kunidan boshlab {{contract.service_duration_months}} oy muddatda amal qiladi agarda {{contract.service_duration_months}} oydan so'ng "Buyurtmachi"ga shartnoma shartlari asosida xizmat to'liq ko'rsatilmagan bo'lsa oldindan to'lovdan 5.000.000 so'm qaytarib beriladi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">3.6.</span> Shartnomani bekor qilinsa shu bekor qilgan kundan boshlab 1 oy ichida qaytarib beriladi.
+		</div>
+	</div>
+	
+	<div class="section">
+		<div class="section-title">4. Fors-major:</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">4.1.</span> Bajaruvchi o'z faoliyatini O'zbekiston Respublikasi Fuqarolik kodeksining 8-moddasi (Fuqarolik huquqlari himoyasi asoslari) hamda 164-moddasi (vositachilik majburiyatlari) asosida amalga oshiradi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">4.2.</span> Buyurtmachi noto'g'ri ma'lumot taqdim etsa, hujjatlarida xatolik bo'lsa yoki soxta ma'lumot bersa, bunga to'liq o'zi javob beradi. Bu holatda Bajaruvchi zararni qoplashdan ozod etiladi (Fuqarolik kodeksi 14- va 17-moddalari asosida).
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">4.3.</span> Bajaruvchi tomonidan xizmat bajarilganidan keyin Buyurtmachi xorijga chiqmasa, chiqishni xohlamasa yoki elchixona rad etsa, alimentdan MIB Sud va sud organlari yoki xorijga chiqish davlat tomonidan taqiqlangan bo'lsa bu Bajaruvchi aybi hisoblanmaydi.
+		</div>
+		
+		<div class="subsection">
+			Bu holatda Buyurtmachining to'lovi qaytarilmaydi, chunki xizmat ko'rsatilgan deb topiladi (Fuqarolik kodeksi 390-moddasi asosida) bo'lsa.
+		</div>
+	</div>
+	
+	<div class="section">
+		<div class="section-title">5. Yakuniy qoidalar:</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.1.</span> Ushbu shartnoma ikki nusxada tuzilib tomonlardan har biriga bir nusxadan beriladi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.2.</span> Ushbu shartnoma har ikala tomon imzochekkandan keyin kuchga kiradi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.3.</span> Mazkur holatlar O'zbekiston Respublikasi Fuqarolik kodeksi 333-336-moddalari muvofiq "tasodifiy holatlar" sifatida baholanadi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.4.</span> Agar Buyurtmachi Bajaruvchini ichki ishlar, prokuratura yoki sud organlariga shikoyat qilsa, bu haqorat yoki asossiz da'vo sifatida baholanadi, chunki shartnomada barcha shartlar ochiq bayon etilgan.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.5.</span> Buyurtmachi buni imzolash orqali firmaga hech qanday da'vo bildirmaslik majburiyatini o'z zimmasiga oladi.
+		</div>
+		
+		<div class="subsection">
+			<span class="subsection-title">5.6.</span> Tomonlarning Shartnoma bo'yicha majburiyatlarini bajarishi natijasida kelib chiqadigan barcha nizolar va kelishmovchiliklar muzokaralar yo'li bilan hal qilinadi. Agar ularni yo'q qilishning iloji bo'lmasa, tomonlar o'z manfaatlarini sud tomonidan himoya qilish to'g'risida ariza berish huquqiga ega.
+		</div>
+	</div>
+	
+	<table class="signature-table">
+		<tr>
+			<td>
+				<p class="section-label">IJROCHI:</p>
+				<p>«HASANBOY MASTER SERVICE» MChJ</p>
+				<p>Manzil: Xiva sh, Buyuk 75/2 1-xonadon, «ESKI MIB» ro'parasida.</p>
+				<p>AKB «KAPITALBANK»</p>
+				<p>20208000907108274001</p>
+				<p>STR: 311474378</p>
+				<p>MFO: 01088</p>
+				<p>Direktor. HASANBOY RAHIMOV</p>
+				<div class="signature-line">
+					<br>
+					<p>Imzo: ________________</p>
+				</div>
+			</td>
+			<td>
+				<p class="section-label">BUYURTMACHI:</p>
+				<p>F.I.O: {% if contract.client.full_name %}{{contract.client.full_name}}{% else %}________________{% endif %}</p>
+				<p>№ PASPORT: {% if contract.client.passport_number %}{{contract.client.passport_number}}{% else %}________________{% endif %}</p>
+				<p style="margin-top: 8px; margin-bottom: 8px; font-size: 9pt; line-height: 1.3;">Ushbu shartnomani shahsan o'z hohishim bilan imzoladim. Hech kim tomonidan majburlanmadim. Shartlar bilan tanishib chiqdim va o'z ixtiyorim bilan rozilik berdim.</p>
+				<div class="signature-line">
+					<br>
+					<p>Imzo: ________________</p>
+				</div>
+			</td>
+	</tr>
+</table>
+	
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+{% load math_filters %}
+{% load humanize %}
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>To'lov Grafigi</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+        
+        body {
+            font-family: "Times New Roman", serif;
+            font-size: 10pt;
+            line-height: 1.3;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            widows: 0;
+            orphans: 0;
+        }
+        
+        .header-title {
+            text-align: center;
+            font-size: 12pt;
+            font-weight: bold;
+            letter-spacing: 2pt;
+            margin-bottom: 5px;
+        }
+        
+        .contract-subject {
+            text-align: center;
+            font-size: 10pt;
+            margin-bottom: 10px;
+        }
+        
+        .date-location {
+            text-align: justify;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 10pt;
+        }
+        
+        .parties-intro {
+            text-align: justify;
+            text-indent: 15pt;
+            line-height: 1.2;
+            margin-bottom: 10px;
+            font-size: 10pt;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 11pt;
+            font-weight: bold;
+            margin: 8pt 0 5pt 0;
+            line-height: 1.2;
+        }
+        
+        .section-content {
+            text-align: justify;
+            line-height: 1.2;
+            margin-bottom: 4px;
+            font-size: 10pt;
+        }
+        
+        .subsection {
+            text-align: justify;
+            line-height: 1.2;
+            margin: 3px 0;
+            font-size: 10pt;
+        }
+        
+        .indent-list {
+            text-indent: 15pt;
+            margin: 3px 0;
+            font-size: 10pt;
+            line-height: 1.2;
+        }
+        
+        .price-highlight {
+            font-weight: bold;
+            background-color: #fff3cd;
+            padding: 1px 2px;
+        }
+        
+        .signatures-section {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .signature-block {
+            text-align: center;
+        }
+        
+        .signature-details {
+            font-size: 9pt;
+            font-style: italic;
+            font-weight: bold;
+            text-align: left;
+            line-height: 1.2;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #000;
+            margin: 10px 0 3px;
+            text-align: center;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .no-break {
+            page-break-inside: avoid;
+        }
+        
+        ol, ul {
+            margin: 0;
+            padding-left: 15px;
+        }
+        
+        li {
+            margin: 3px 0;
+            font-size: 10pt;
+            line-height: 1.2;
+        }
+        
+        .highlight {
+            font-weight: bold;
+        }
+        
+        .company-info {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        
+        .client-info {
+            font-weight: bold;
+        }
+        
+        .compact {
+            margin: 2px 0;
+            line-height: 1.1;
+        }
+        
+        .small-text {
+            font-size: 9pt;
+            line-height: 1.1;
+        }
+
+        .payment-schedule-section {
+            margin-top: 30px;
+        }
+
+        .payment-schedule-section .title {
+            font-size: 14pt;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+        }
+
+        .payment-schedule-section .header-info {
+            margin-bottom: 10px;
+            font-size: 9pt;
+        }
+
+        .payment-schedule-section .amount {
+            color: red;
+            font-weight: bold;
+        }
+
+        .payment-schedule-section table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 8pt;
+        }
+
+        .payment-schedule-section th, 
+        .payment-schedule-section td {
+            border: 1px solid black;
+            padding: 2px;
+            text-align: center;
+            font-size: 8pt;
+        }
+
+        .payment-schedule-section th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+<div class="payment-schedule-section">
+        <div class="title" style="margin-top: 20px; margin-bottom: 15px;">
+            TO'LOV GRAFIGI
+        </div>
+        
+        <div class="header-info" style="margin-bottom: 10px;">
+            <p><strong>Mijoz:</strong> {{ contract.client.full_name }} {{ contract.passport }}</p>
+            <div>
+                <p><strong>Xonadon bahosi:</strong> <span class="amount">{{ rounded_home_price|intcomma }}</span> so'm</p>
+                <p><strong>{{ foiz }}% oldindan to'lov:</strong> <span class="amount">{{ mijoz_tolagan|intcomma }}</span> so'm</p>
+                <p><strong>Qoldiq:</strong> <span class="amount">{{ qoldiq|intcomma }}</span> so'm</p>
+            </div>
+        </div>
+        
+        <table style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th>N</th>
+                    <th>Kun</th>
+                    <th>Oy</th>
+                    <th>Yil</th>
+                    <th>To'lov</th>
+                    <th>Qoldiq</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in pay_list %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.day }}</td>
+                    <td>{{ row.month }}</td>
+                    <td>{{ row.year }}</td>
+                    <td>{{ row.payment|intcomma }}</td>
+                    <td>{{ row.remaining|intcomma }}</td>
+                </tr>
+                {% endfor %}
+                <tr style="font-weight: bold;">
+                    <td colspan="4">Jami:</td>
+                    <td>{{ qoldiq|intcomma }}</td>
+                    <td>0</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <p><strong>«Mega building» MCHJ</strong></p>
+                <p>Rahbar: Сабиров Ж.Ш. &nbsp;&nbsp;&nbsp;&nbsp;_____________</p>
+            </div>
+            <div>
+                <br>
+                <p>Mijoz: {{ contract.client.full_name|slice:":1" }}.{{ contract.client.full_name.split.1|slice:":1" }}&nbsp;&nbsp;&nbsp;&nbsp;_____________</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

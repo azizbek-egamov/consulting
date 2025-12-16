@@ -1,0 +1,781 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Konsalting shartnomalari{% endblock title %}
+
+{% block item %}
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center justify-content-between">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+      <li class="breadcrumb-item text-primary" aria-current="page">Shartnomalar</li>
+        </ol>
+    <a href="{% url 'contract-create' %}" class="btn btn-primary d-flex align-items-center">
+      <i class="ri-add-line me-2"></i> Yangi shartnoma
+    </a>
+    </div>
+
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <div class="row g-3 mb-3">
+            <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <p class="text-muted mb-1">Jami shartnomalar</p>
+            <h4 class="mb-0">{{ total_contracts }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <p class="text-muted mb-1">Faol shartnomalar</p>
+            <h4 class="mb-0">{{ active_contracts }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <p class="text-muted mb-1">Yakunlangan</p>
+            <h4 class="mb-0">{{ completed_contracts }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+            {% if request.user.username == "ceoadmin" %}
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <p class="text-muted mb-1">Qarzdorlik miqdori</p>
+            <h4 class="mb-0">{{ outstanding|intcomma }} so'm</h4>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+                <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3">
+        <form method="get" class="row g-2 align-items-center">
+          <div class="col-lg-4 col-md-6">
+            <label class="form-label text-muted mb-1">Qidiruv</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0">
+                                        <i class="ri-search-line text-muted"></i>
+                                    </span>
+              <input type="text"
+                     class="form-control border-start-0"
+                     name="q"
+                     value="{{ search_value }}"
+                     placeholder="F.I.O, passport, telefon yoki xizmat">
+                        </div>
+                    </div>
+          <div class="col-lg-3 col-md-3">
+            <label class="form-label text-muted mb-1">Holat</label>
+            <select class="form-select" name="status">
+              <option value="">Barchasi</option>
+              {% for value, label in status_choices %}
+              <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+                            </div>
+          <div class="col-lg-3 col-md-3">
+            <label class="form-label text-muted mb-1">Yaratgan foydalanuvchi</label>
+            <select class="form-select" name="created_by">
+              <option value="">Barchasi</option>
+              {% for u in users_with_contracts %}
+                <option value="{{ u.id }}" {% if created_by_filter == u.id|stringformat:"s" %}selected{% endif %}>
+                  {{ u.get_full_name|default:u.username }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-lg-2 col-md-12 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100 me-2">Filtrlash</button>
+            <a href="{% url 'contract' %}" class="btn btn-outline-secondary w-100">Tozalash</a>
+                            </div>
+        </form>
+                        </div>
+
+                            <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>№</th>
+              <th>Mijoz</th>
+              <th>Passport</th>
+              <th>Telefon</th>
+              <th>Xizmat</th>
+              <th>Umumiy summa</th>
+              <th>To'langan</th>
+              <th>Qoldiq</th>
+              <th>Holat</th>
+              <th class="text-end">Harakat</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+            {% for contract in contracts %}
+            <tr class="contract-row" data-contract-id="{{ contract.id }}">
+              <td class="fw-semibold">#{{ contract.contract_number }}</td>
+              <td>
+                <div class="fw-semibold">{{ contract.client_full_name }}</div>
+                <small class="text-muted">{{ contract.contract_date|date:"d.m.Y" }} {{ contract.created_at.time }} | {{ contract.contract_location }}</small>
+              </td>
+              <td>{{ contract.passport_number }}</td>
+              <td>{{ contract.phone_primary }}</td>
+              <td>
+                <div class="fw-semibold">{{ contract.service_name }}</div>
+                <small class="text-muted">{{ contract.visa_type }}</small>
+                                            </td>
+              <td>{{ contract.total_service_fee|intcomma }} so'm</td>
+              <td class="text-success">{{ contract.amount_paid|intcomma }} so'm</td>
+              <td class="text-danger">{{ contract.remaining_amount|intcomma }} so'm</td>
+              <td>
+                <span class="badge rounded-pill {% if contract.status == 'completed' %}bg-success{% elif contract.status == 'cancelled' %}bg-danger{% elif contract.status == 'submitted' %}bg-primary{% else %}bg-warning text-dark{% endif %}">
+                  {{ contract.get_status_display }}
+                </span>
+              </td>
+              <td class="text-end">
+                <div class="btn-group" role="group">
+                  <button class="btn btn-outline-info btn-sm"
+                          onclick="showContractDetails(this)"
+                          data-contract-id="{{ contract.id }}">
+                                                        <i class="ri-eye-line"></i>
+                                                    </button>
+                  <a href="{% url 'contract-edit' contract.id %}" class="btn btn-outline-success btn-sm">
+                    <i class="ri-edit-2-line"></i>
+                                                    </a>
+                  <a href="{% url 'contract-pdf' contract.id %}" target="_blank" class="btn btn-outline-primary btn-sm">
+                    <i class="ri-file-pdf-line"></i>
+                                                    </a>
+                  <button class="btn btn-outline-danger btn-sm"
+                          data-bs-toggle="modal"
+                          data-bs-target="#deleteContractModal"
+                          data-delete-url="{% url 'contract-delete' contract.id %}">
+                                                        <i class="ri-delete-bin-line"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="text-center text-muted py-4">
+                Hozircha shartnomalar mavjud emas.
+              </td>
+            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if contracts.has_other_pages %}
+                            <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+                                <div class="text-muted small">
+                                    <i class="ri-file-list-3-line me-1"></i>
+                                    Sahifa <strong>{{ contracts.number }}</strong> / <strong>{{ contracts.paginator.num_pages }}</strong> 
+                                    (Jami <strong>{{ contracts.paginator.count }}</strong> ta shartnoma)
+                                </div>
+                                <nav aria-label="Shartnomalar paginatsiyasi">
+                                    <ul class="pagination pagination-sm mb-0">
+                                        {% if contracts.has_previous %}
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="1" aria-label="Birinchi" title="Birinchi sahifa">
+                                                    <i class="ri-skip-back-line"></i>
+                                                </a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="{{ contracts.previous_page_number }}" aria-label="Oldingi" title="Oldingi sahifa">
+                                                    <i class="ri-arrow-left-s-line"></i>
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="ri-skip-back-line"></i></span>
+                                            </li>
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="ri-arrow-left-s-line"></i></span>
+                                            </li>
+                                        {% endif %}
+                                        
+                                        {% for num in contracts.paginator.page_range %}
+                                            {% if contracts.number == num %}
+                                                <li class="page-item active">
+                                                    <span class="page-link">{{ num }}</span>
+                                                </li>
+                                            {% elif num > contracts.number|add:'-3' and num < contracts.number|add:'3' %}
+                                                <li class="page-item">
+                                                    <a class="page-link pagination-link" href="#" data-page="{{ num }}">{{ num }}</a>
+                                                </li>
+                                            {% elif num == 1 or num == contracts.paginator.num_pages %}
+                                                <li class="page-item">
+                                                    <a class="page-link pagination-link" href="#" data-page="{{ num }}">{{ num }}</a>
+                                                </li>
+                                            {% elif num == contracts.number|add:'-3' or num == contracts.number|add:'3' %}
+                                                <li class="page-item disabled">
+                                                    <span class="page-link">...</span>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                        
+                                        {% if contracts.has_next %}
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="{{ contracts.next_page_number }}" aria-label="Keyingi" title="Keyingi sahifa">
+                                                    <i class="ri-arrow-right-s-line"></i>
+                                                </a>
+                                            </li>
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="{{ contracts.paginator.num_pages }}" aria-label="Oxirgi" title="Oxirgi sahifa">
+                                                    <i class="ri-skip-forward-line"></i>
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="ri-arrow-right-s-line"></i></span>
+                                            </li>
+                                            <li class="page-item disabled">
+                                                <span class="page-link"><i class="ri-skip-forward-line"></i></span>
+                                            </li>
+                                        {% endif %}
+                                    </ul>
+                                </nav>
+                            </div>
+                            {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="contractDetailsModal" tabindex="-1" aria-labelledby="contractDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+            <div class="modal-header">
+        <h5 class="modal-title" id="contractDetailsModalLabel">Shartnoma tafsilotlari</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+      <div class="modal-body" id="contractDetailsBody"></div>
+                                </div>
+                            </div>
+                        </div>
+
+<div class="modal fade" id="deleteContractModal" tabindex="-1" aria-labelledby="deleteContractModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" class="modal-content" id="deleteContractForm">
+      {% csrf_token %}
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteContractModalLabel">Shartnomani o'chirish</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+      <div class="modal-body">
+        Ushbu shartnomani o'chirishni tasdiqlaysizmi?
+                            </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+        <button type="submit" class="btn btn-danger">O'chirish</button>
+                                </div>
+    </form>
+                                </div>
+                            </div>
+
+<style>
+  .modal-backdrop.lightbox-backdrop {
+    background-color: rgba(0, 0, 0, 0.85);
+  }
+  #imageLightboxModal .modal-content {
+    box-shadow: none;
+  }
+  .lightbox-image-wrapper {
+    border: 1px solid #e6e9ef;
+    border-radius: 12px;
+    padding: 12px;
+    background: #f8f9fb;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  }
+  .lightbox-image {
+    max-height: 78vh;
+    border-radius: 10px;
+    display: block;
+  }
+</style>
+
+<script>
+  const deleteModal = document.getElementById("deleteContractModal");
+  if (deleteModal) {
+    deleteModal.addEventListener("show.bs.modal", function (event) {
+      const button = event.relatedTarget;
+      const actionUrl = button.getAttribute("data-delete-url");
+      const form = document.getElementById("deleteContractForm");
+      form.setAttribute("action", actionUrl);
+    });
+  }
+
+  // Lightbox modal
+  const lightboxModal = document.createElement('div');
+  lightboxModal.className = 'modal fade';
+  lightboxModal.id = 'imageLightboxModal';
+  lightboxModal.innerHTML = `
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+      <div class="modal-content border-0 bg-white text-dark shadow-lg">
+        <div class="modal-header border-bottom d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-semibold">Rasm</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <a id="lightboxDownload" class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center" download title="Yuklab olish" style="width: 36px; height: 36px;">
+              <i class="ri-download-2-line"></i>
+            </a>
+            <button type="button" class="btn-close ms-1" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-body bg-white">
+          <div class="d-flex justify-content-center">
+            <div class="lightbox-image-wrapper d-inline-block">
+              <img id="lightboxImage" src="" alt="Image" class="img-fluid lightbox-image">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(lightboxModal);
+
+  // Backdrop'ni qoraytirish uchun class qo'shamiz
+  const ensureLightboxBackdrop = () => {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    if (backdrops.length) {
+      backdrops[backdrops.length - 1].classList.add('lightbox-backdrop');
+    }
+  };
+
+  // Global function for opening lightbox
+  window.openLightbox = function(imageSrc) {
+    const img = document.getElementById('lightboxImage');
+    const downloadBtn = document.getElementById('lightboxDownload');
+    if (img) {
+      img.src = imageSrc;
+      if (downloadBtn) {
+        downloadBtn.href = imageSrc;
+        try {
+          const urlParts = imageSrc.split('/');
+          downloadBtn.download = urlParts[urlParts.length - 1] || 'image';
+        } catch (e) {
+          downloadBtn.download = 'image';
+        }
+      }
+      const modal = new bootstrap.Modal(lightboxModal);
+      modal.show();
+      ensureLightboxBackdrop();
+    }
+  };
+
+  // ESC key to close lightbox
+  // ESC tugmasi bosilganda faqat lightbox yopilsin, asosiy modal yopilmasin
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && lightboxModal.classList.contains('show')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = bootstrap.Modal.getInstance(lightboxModal);
+      if (modal) modal.hide();
+    }
+  });
+
+  // Lightbox ochilganda contract modalini ESC bilan yopilishini vaqtincha o'chiramiz
+  lightboxModal.addEventListener('shown.bs.modal', function() {
+    const contractModal = bootstrap.Modal.getInstance(document.getElementById('contractDetailsModal'));
+    if (contractModal && contractModal._config) {
+      contractModal._previousKeyboard = contractModal._config.keyboard;
+      contractModal._config.keyboard = false;
+    }
+    ensureLightboxBackdrop();
+  });
+
+  lightboxModal.addEventListener('hidden.bs.modal', function() {
+    const contractModal = bootstrap.Modal.getInstance(document.getElementById('contractDetailsModal'));
+    if (contractModal && contractModal._config && contractModal.hasOwnProperty('_previousKeyboard')) {
+      contractModal._config.keyboard = contractModal._previousKeyboard;
+    }
+  });
+
+  // Global function for showing contract details
+  window.showContractDetails = function(button) {
+    const contractId = button.getAttribute("data-contract-id");
+    const body = document.getElementById("contractDetailsBody");
+    body.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Yuklanmoqda...</span></div></div>';
+
+    // Media URL'larini normalizatsiya qilish (protokolga bog'lamaslik va bitta / bilan boshlash)
+    const normalizeMediaUrl = (url) => {
+      if (!url) return '';
+      if (/^https?:\/\//i.test(url)) return url;        // to'liq URL
+      if (url.startsWith('//')) return '/' + url.replace(/^\/+/, ''); // //media -> /media
+      if (url.startsWith('/')) return url;              // /media/...
+      return '/' + url;                                 // media/... -> /media/...
+    };
+    const escapeHtml = (value) => {
+      if (value === null || value === undefined) return '';
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+    const buildCopyRow = (label, value) => {
+      const hasValue = !!value;
+      const displayValue = hasValue ? escapeHtml(value) : "Kiritilmagan";
+      const mutedClass = hasValue ? "" : "text-muted";
+      const copyBtn = hasValue
+        ? `<button type="button"
+                 class="btn btn-outline-secondary d-inline-flex align-items-center copy-field-btn"
+                 style="padding:2px 6px; line-height:1; font-size:12px;"
+                 data-copy="${escapeHtml(value)}"
+                 title="Nusxalash">
+             <i class="ri-file-copy-line" style="font-size:14px;"></i>
+           </button>`
+        : "";
+      return `
+        <div class="d-flex align-items-center justify-content-between mb-1 gap-2">
+          <span class="${mutedClass}"><strong>${label}:</strong> ${displayValue}</span>
+          ${copyBtn}
+        </div>
+      `;
+    };
+    
+    fetch(`/contract/${contractId}/details/`)
+      .then(response => response.json())
+      .then(data => {
+        // Build client full name and fields
+        const clientNameParts = [data.client.last_name, data.client.first_name];
+        if (data.client.middle_name) {
+          clientNameParts.push(data.client.middle_name);
+        }
+        const clientFullName = clientNameParts.join(' ');
+        
+        // Build passport images HTML
+        let passportImagesHTML = '';
+        if (data.passport_images && data.passport_images.length > 0) {
+          passportImagesHTML = '<div class="row g-2">';
+          data.passport_images.forEach((img, idx) => {
+            const normalizedImg = normalizeMediaUrl(img);
+            const escapedImg = normalizedImg.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            passportImagesHTML += `
+              <div class="col-md-6">
+                <img src="${escapedImg}" alt="Passport ${idx + 1}" class="img-thumbnail w-100 passport-lightbox-img" style="cursor: pointer; max-height: 200px; object-fit: cover;" data-img-src="${escapedImg}">
+              </div>
+            `;
+          });
+          passportImagesHTML += '</div>';
+        } else {
+          passportImagesHTML = '<p class="text-muted mb-0">Rasmlar mavjud emas</p>';
+        }
+
+        // Build VISA images HTML
+        let visaImagesHTML = '';
+        if (data.visa_images && data.visa_images.length > 0) {
+          visaImagesHTML = '<div class="row g-2">';
+          data.visa_images.forEach((img, idx) => {
+            const normalizedImg = normalizeMediaUrl(img);
+            const escapedImg = normalizedImg.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            visaImagesHTML += `
+              <div class="col-md-6">
+                <img src="${escapedImg}" alt="Visa ${idx + 1}" class="img-thumbnail w-100 visa-lightbox-img" style="cursor: pointer; max-height: 200px; object-fit: cover;" data-img-src="${escapedImg}">
+              </div>
+            `;
+          });
+          visaImagesHTML += '</div>';
+        } else {
+          visaImagesHTML = '<p class="text-muted mb-0">Rasm yuklanmagan</p>';
+        }
+        
+        // Build completed contract images HTML
+        let completedImagesHTML = '';
+        if (data.completed_contract_images && data.completed_contract_images.length > 0) {
+          completedImagesHTML = '<div class="row g-2">';
+          data.completed_contract_images.forEach((img, idx) => {
+            const normalizedImg = normalizeMediaUrl(img);
+            const escapedImg = normalizedImg.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            completedImagesHTML += `
+              <div class="col-md-4">
+                <img src="${escapedImg}" alt="Shartnoma ${idx + 1}" class="img-thumbnail w-100 completed-lightbox-img" style="cursor: pointer; max-height: 200px; object-fit: cover;" data-img-src="${escapedImg}">
+              </div>
+            `;
+          });
+          completedImagesHTML += '</div>';
+        } else {
+          completedImagesHTML = '<p class="text-muted mb-0">Rasmlar mavjud emas</p>';
+        }
+        
+        // Build family members HTML with copy actions
+        let familyMembersHTML = '';
+        if (data.family_members && data.family_members.length > 0) {
+          familyMembersHTML = '<div class="row g-3">';
+          data.family_members.forEach((member, idx) => {
+            const memberNameParts = [member.last_name || '', member.first_name || ''];
+            if (member.middle_name) {
+              memberNameParts.push(member.middle_name);
+            }
+            const memberFullName = memberNameParts.filter(n => n).join(' ') || `Qarindosh #${idx + 1}`;
+            const memberFields = [
+              ["Ism", member.first_name],
+              ["Familiya", member.last_name],
+              ["Sharif", member.middle_name],
+              ["Qarindoshlik", member.relationship],
+              ["Passport raqami", member.passport_number],
+              ["Passport berilgan sana", member.passport_issue_date],
+              ["Passport tugash sanasi", member.passport_expiry_date],
+              ["Passport bergan tashkilot", member.passport_issue_place],
+              ["Tug'ilgan sana", member.birth_date],
+              ["Telefon", member.phone],
+              ["Izoh", member.notes],
+            ];
+
+            // Copy-all: faqat mavjud qiymatlar, label siz, tartib: F.I.Sh, tug'ilgan sana, passport, telefon, izoh
+            const copyAllValues = [
+              memberFullName,
+              member.birth_date,
+              member.passport_number,
+              member.passport_issue_date,
+              member.passport_expiry_date,
+              member.passport_issue_place,
+              member.phone,
+              member.notes,
+            ].filter(v => v && String(v).trim() !== "");
+            const copyAllText = copyAllValues.join("\n");
+            const copyAllBtn = copyAllText
+              ? `<button type="button"
+                       class="btn btn-outline-secondary btn-sm copy-field-btn"
+                       data-copy="${escapeHtml(copyAllText)}"
+                       title="Barcha ma'lumotlarni nusxalash">
+                   <i class="ri-file-copy-2-line"></i>
+                 </button>`
+              : '';
+            const fieldRows = memberFields.map(([label, value]) => {
+              const hasVal = !!value;
+              const displayVal = hasVal ? escapeHtml(value) : "Kiritilmagan";
+              const copyBtn = hasVal
+                ? `<button type="button"
+                           class="btn btn-outline-secondary btn-sm copy-field-btn"
+                           data-copy="${escapeHtml(value)}"
+                           title="Nusxalash"
+                           style="padding:2px 6px; line-height:1; font-size:12px;">
+                     <i class="ri-file-copy-line" style="font-size:12px;"></i>
+                   </button>`
+                : "";
+              return `
+                <div class="d-flex align-items-center justify-content-between mb-1 gap-2">
+                  <span class="${hasVal ? "" : "text-muted"}"><strong>${label}:</strong> ${displayVal}</span>
+                  ${copyBtn}
+                </div>
+              `;
+            }).join("");
+
+            familyMembersHTML += `
+              <div class="col-md-6">
+                <div class="card border">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <h6 class="mb-0">${escapeHtml(memberFullName)}</h6>
+                      ${copyAllBtn}
+                    </div>
+                    ${fieldRows}
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          familyMembersHTML += '</div>';
+        } else {
+          familyMembersHTML = '<p class="text-muted mb-0">Qarindoshlar mavjud emas</p>';
+        }
+        
+        body.innerHTML = `
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card border shadow-sm h-100">
+            <div class="card-body">
+              <p class="text-muted mb-1">Shartnoma ma'lumotlari</p>
+              ${buildCopyRow("Shartnoma raqami", data.number ? `#${data.number}` : "")}
+              ${buildCopyRow("Holati", data.status)}
+              ${buildCopyRow("Sana", data.date)}
+              ${buildCopyRow("Tuzilgan joy", data.location)}
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card border shadow-sm h-100">
+            <div class="card-body">
+              <p class="text-muted mb-1">Mijoz</p>
+              ${buildCopyRow("Familiya", data.client.last_name)}
+              ${buildCopyRow("Ism", data.client.first_name)}
+              ${buildCopyRow("Sharif", data.client.middle_name)}
+              ${buildCopyRow("Telefon", data.client.phone)}
+              ${buildCopyRow("Qo'shimcha telefon", data.client.phone2)}
+              ${buildCopyRow("Passport", data.client.passport_number)}
+              ${buildCopyRow("Passport berilgan sana", data.client.passport_issue_date)}
+              ${buildCopyRow("Passport tugash sanasi", data.client.passport_expiry_date)}
+              ${buildCopyRow("Tug'ilgan sana", data.client.birth_date)}
+              ${buildCopyRow("Email", data.client.email)}
+              ${buildCopyRow("Parol", data.client.password)}
+              ${buildCopyRow("Qayerda eshitgan", data.client.heard)}
+              ${buildCopyRow("Manzil", data.client.address)}
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card border shadow-sm">
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <h6 class="mb-3">Zagran passport rasmi</h6>
+                  ${passportImagesHTML}
+                </div>
+                <div class="col-md-6">
+                  <h6 class="mb-3">VISA rasmlari</h6>
+                  ${visaImagesHTML}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card border shadow-sm">
+            <div class="card-body">
+              <p class="text-muted mb-1">Xizmat haqida</p>
+              ${buildCopyRow("Xizmat nomi", data.service.name)}
+              ${buildCopyRow("Visa turi", data.service.visa_type)}
+              ${buildCopyRow("Davlat", data.service.country)}
+              ${buildCopyRow("Tavsif", data.service.description)}
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card border shadow-sm">
+            <div class="card-body row text-center">
+              <div class="col-md-4">
+                <p class="text-muted mb-1">Umumiy summa</p>
+                <h5>${data.payment.total.toLocaleString('ru-RU')} so'm</h5>
+              </div>
+              <div class="col-md-4">
+                <p class="text-muted mb-1">To'langan</p>
+                <h5 class="text-success">${data.payment.paid.toLocaleString('ru-RU')} so'm</h5>
+              </div>
+              <div class="col-md-4">
+                <p class="text-muted mb-1">Qoldiq</p>
+                <h5 class="text-danger">${data.payment.remaining.toLocaleString('ru-RU')} so'm</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card border shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">Qarindoshlari</h6>
+              ${familyMembersHTML}
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="card border shadow-sm">
+            <div class="card-body">
+              <h6 class="mb-3">Ish yakunlanganidan keyin shartnoma rasmlari</h6>
+              ${completedImagesHTML}
+            </div>
+          </div>
+        </div>
+        ${data.notes ? `
+          <div class="col-12">
+            <div class="card border shadow-sm">
+              <div class="card-body">
+                <p class="text-muted mb-1">Izoh</p>
+                <p class="mb-0">${String(data.notes).replace(/'/g, "\\'")}</p>
+              </div>
+            </div>
+          </div>` : ""}
+      </div>
+    `;
+
+        const modal = new bootstrap.Modal(document.getElementById("contractDetailsModal"));
+        modal.show();
+        
+        // Add event listeners for lightbox images after modal is shown
+        setTimeout(() => {
+          const passportImgs = body.querySelectorAll('.passport-lightbox-img');
+          passportImgs.forEach(img => {
+            img.addEventListener('click', function() {
+              window.openLightbox(this.getAttribute('data-img-src'));
+            });
+          });
+          
+          const completedImgs = body.querySelectorAll('.completed-lightbox-img');
+          completedImgs.forEach(img => {
+            img.addEventListener('click', function() {
+              window.openLightbox(this.getAttribute('data-img-src'));
+            });
+          });
+          const visaImgs = body.querySelectorAll('.visa-lightbox-img');
+          visaImgs.forEach(img => {
+            img.addEventListener('click', function() {
+              window.openLightbox(this.getAttribute('data-img-src'));
+            });
+          });
+        }, 100);
+      })
+      .catch(error => {
+        console.error('Error loading contract details:', error);
+        body.innerHTML = '<div class="alert alert-danger">Ma\'lumotlarni yuklashda xatolik yuz berdi.</div>';
+      });
+  };
+
+  // Copy handler (delegated)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.copy-field-btn');
+    if (!btn) return;
+    const text = btn.getAttribute('data-copy') || '';
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-success');
+        setTimeout(() => {
+          btn.classList.add('btn-outline-secondary');
+          btn.classList.remove('btn-success');
+        }, 800);
+      })
+      .catch(() => {});
+  });
+
+  // Row click -> ochish
+  document.addEventListener('click', function(e) {
+    const row = e.target.closest('.contract-row');
+    if (!row) return;
+    const isAction = e.target.closest('a, button');
+    if (isAction) return; // action tugmalari bosilganda yoq
+    const contractId = row.getAttribute('data-contract-id');
+    if (contractId) {
+      showContractDetails(row);
+    }
+  });
+
+  // Paginatsiya linklarini boshqarish
+  document.addEventListener('DOMContentLoaded', function() {
+    const paginationLinks = document.querySelectorAll('.pagination-link');
+    paginationLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        if (!page) return;
+        
+        // Joriy URL parametrlarini olish
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('page', page);
+        
+        // Barcha mavjud parametrlarni saqlash (q, status, created_by)
+        // Bu parametrlar allaqachon URL'da bo'lsa, ular saqlanadi
+        
+        // Yangi URL'ga o'tish
+        window.location.href = '?' + urlParams.toString();
+      });
+    });
+  });
+</script>
+{% endblock item %}
+

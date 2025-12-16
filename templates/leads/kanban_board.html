@@ -1,0 +1,2407 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load dict_extras %}
+
+{% block title %}Leadlar - Kanban Board{% endblock %}
+
+{% block item %}
+<script>
+    const socket = new WebSocket("wss://mega-building.ardentsoft.uz/ws/leads/");
+
+    socket.onopen = function() {
+        console.log("WebSocket ochildi");
+        socket.send(JSON.stringify({ 'message': 'Salom, server!' }));
+    };
+
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log("Keldi:", data.message);
+    };
+
+    socket.onclose = function() {
+        console.log("WebSocket yopildi");
+    };
+</script>
+
+<style>
+    .kanban-container {
+        display: flex;
+        gap: 20px;
+        overflow-x: auto;
+        padding: 20px 0;
+        min-height: calc(100vh - 200px);
+    }
+
+    .kanban-column {
+        min-width: 300px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border-top: 4px solid;
+        flex-shrink: 0;
+        position: relative; /* For placeholder positioning */
+        transition: all 0.2s ease-in-out; /* Smooth transitions for reordering */
+    }
+
+    /* Ustunlarni sudrab o'tkazish stillari olib tashlandi */
+    /* .kanban-column.dragging-column {
+        opacity: 0.7;
+        transform: scale(0.98);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+    }
+
+    .kanban-column.drag-over-column {
+        background-color: rgba(0, 123, 255, 0.05);
+        border-color: #007bff !important;
+    }
+
+    .column-drag-placeholder {
+        background: rgba(0, 123, 255, 0.1);
+        border: 2px dashed #007bff;
+        border-radius: 8px;
+        min-width: 300px;
+        height: 100%;
+        margin: 0 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #007bff;
+        font-weight: 500;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.2s ease-out;
+        flex-shrink: 0;
+    }
+
+    .column-drag-placeholder.active {
+        opacity: 1;
+    } */
+
+    .kanban-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .kanban-title {
+        font-weight: 600;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #495057;
+        line-height: 1.2;
+    }
+
+    .kanban-count {
+        background: #6c757d;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 500;
+        min-width: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .lead-card {
+        background: white;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.2s;
+        border-left: 3px solid #dee2e6;
+        position: relative;
+    }
+
+    .lead-card:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .lead-card.dragging {
+        opacity: 0.7;
+        transform: rotate(3deg) scale(1.05);
+        z-index: 1000;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .lead-name {
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 4px;
+        font-size: 14px;
+    }
+
+    .lead-phone {
+        color: #6c757d;
+        font-size: 13px;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .lead-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: #868e96;
+        margin-bottom: 6px;
+    }
+
+    .lead-status {
+        padding: 2px 6px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 500;
+    }
+
+    .status-answered {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-not_answered {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-client_answered {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-client_not_answered {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-null {
+        background: #e2e3e5;
+        color: #383d41;
+    }
+
+    .lead-operator {
+        font-size: 10px;
+        color: #6c757d;
+        margin-top: 4px;
+    }
+
+    .lead-notes {
+        font-size: 11px;
+        color: #6c757d;
+        margin-top: 6px;
+        font-style: italic;
+    }
+
+    .follow-up-date {
+        font-size: 10px;
+        color: #dc3545;
+        font-weight: 500;
+        margin-top: 4px;
+    }
+
+    .stats-row {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 24px;
+        font-weight: 700;
+        color: #495057;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 500;
+    }
+
+    .add-lead-btn {
+        width: 100%;
+        border: 2px dashed #dee2e6;
+        background: transparent;
+        color: #6c757d;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        transition: all 0.2s;
+        margin-bottom: 15px;
+        font-weight: 500;
+    }
+
+    .add-lead-btn:hover {
+        border-color: #007bff;
+        color: #007bff;
+        background: rgba(0, 123, 255, 0.05);
+        transform: translateY(-1px);
+    }
+
+    /* Dinamik bosqich ranglari */
+    {% for stage in stages_all %} {# Use stages_all for dynamic colors #}
+    .kanban-column[data-stage="{{ stage.key }}"] {
+        border-top-color: {{ stage.color }};
+    }
+    {% endfor %}
+
+    /* Yangi CSS qoidalari */
+    .kanban-column.invalid-drop-target {
+        border-color: #dc3545 !important;
+        background-color: #f8d7da !important;
+    }
+
+    .kanban-column.invalid-drop-target .kanban-title {
+        color: #dc3545;
+    }
+
+    .kanban-column.invalid-drop-target .kanban-count {
+        background-color: #dc3545;
+    }
+
+    .drop-zone-warning {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        font-size: 12px;
+        text-align: center;
+        display: none;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .drop-zone-warning.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .drop-zone {
+        min-height: 100px;
+        border: 2px dashed transparent;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .drop-zone.drag-over {
+        border-color: #007bff;
+        background: rgba(0, 123, 255, 0.05);
+    }
+
+    .quick-add-form {
+        background: white;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        display: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .quick-add-form.active {
+        display: block;
+        animation: slideDown 0.3s ease;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .quick-add-form input,
+    .quick-add-form textarea {
+        width: 100%;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-bottom: 10px;
+        transition: border-color 0.2s;
+    }
+
+    .quick-add-form input:focus,
+    .quick-add-form textarea:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    .quick-add-form textarea {
+        height: 70px;
+        resize: vertical;
+    }
+
+    .quick-add-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .quick-add-buttons button {
+        flex: 1;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 13px;
+        border: none;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .quick-add-buttons .btn-success:hover {
+        background-color: #218838;
+        transform: translateY(-1px);
+    }
+
+    .quick-add-buttons .btn-secondary:hover {
+        background-color: #5a6268;
+        transform: translateY(-1px);
+    }
+
+    .stage-description {
+        font-size: 10px;
+        color: #6c757d;
+        margin-top: 2px;
+        line-height: 1.2;
+    }
+
+    .lead-actions {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        display: flex;
+        gap: 4px;
+    }
+
+    .lead-card:hover .lead-actions {
+        opacity: 1;
+    }
+
+    .lead-actions button {
+        background: rgba(0, 0, 0, 0.1);
+        border: none;
+        border-radius: 3px;
+        padding: 4px 6px;
+        font-size: 12px;
+        color: #6c757d;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lead-actions button:hover {
+        background: rgba(0, 0, 0, 0.2);
+        color: #495057;
+    }
+
+    .lead-actions .btn-audio {
+        background: rgba(0, 123, 255, 0.1);
+        color: #007bff;
+    }
+
+    .lead-actions .btn-audio:hover {
+        background: rgba(0, 123, 255, 0.2);
+        color: #0056b3;
+    }
+
+    .lead-actions .btn-delete {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+
+    .lead-actions .btn-delete:hover {
+        background: rgba(220, 53, 69, 0.2);
+        color: #c82333;
+    }
+
+    .form-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .audio-player {
+        margin-top: 8px;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+    }
+
+    .audio-player audio {
+        width: 100%;
+        height: 30px;
+    }
+
+    .audio-info {
+        font-size: 10px;
+        color: #6c757d;
+        margin-top: 4px;
+        text-align: center;
+    }
+
+    .drag-placeholder {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: 2px dashed #ffffff;
+        border-radius: 6px;
+        height: 80px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 500;
+        font-size: 12px;
+        opacity: 0;
+        transform: scaleY(0);
+        transition: all 0.3s ease;
+        transform-origin: top;
+    }
+
+    .drag-placeholder.active {
+        opacity: 1;
+        transform: scaleY(1);
+    }
+
+    .drag-placeholder i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    .kanban-column.drag-target {
+        background: rgba(0, 123, 255, 0.05);
+        border-color: #007bff;
+    }
+
+    .audio-player audio::-webkit-media-controls-download-button {
+        display: none;
+    }
+
+    .audio-player audio::-webkit-media-controls-enclosure {
+        overflow: hidden;
+    }
+
+    .audio-player audio::-moz-media-controls {
+        overflow: hidden;
+    }
+
+    .ri-loader-4-line {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Follow-up bo'limi uchun maxsus stillar */
+    .follow-up-section {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    .follow-up-section.today {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+    }
+
+    .follow-up-section.upcoming {
+        background: #e7f3ff;
+        border-color: #b3d9ff;
+    }
+
+    .follow-up-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        color: #495057;
+    }
+
+    .follow-up-filter-controls {
+        margin-bottom: 15px;
+        display: none; /* Dastlab yashirilgan */
+        animation: slideDown 0.3s ease;
+    }
+
+    .follow-up-filter-controls.active {
+        display: block;
+    }
+
+    .follow-up-filter-controls input {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .follow-up-no-add {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 8px;
+        font-size: 11px;
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
+
+    /* Adding styles for phone search inputs */
+    .phone-search-input {
+        width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-bottom: 10px;
+        background: white;
+        transition: border-color 0.2s;
+    }
+
+    .phone-search-input:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    .phone-search-input::placeholder {
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .search-results-count {
+        font-size: 10px;
+        color: #6c757d;
+        margin-bottom: 8px;
+        text-align: center;
+        font-style: italic;
+    }
+
+    .lead-card.hidden-by-search {
+        display: none !important;
+    }
+</style>
+
+<div class="container-fluid">
+    {% include 'messages.html' %}
+    <!-- Statistikalar -->
+    <div class="stats-row">
+        <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-2">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title mb-0">Jami Leadlar</h6>
+                                <h3 class="mb-0">{{ total_leads }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="ri-phone-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title mb-0">Bugungi Leadlar</h6>
+                                <h3 class="mb-0">{{ today_leads }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="ri-calendar-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title mb-0"><b>Mijozga Aylangan</b></h6>
+                                <h3 class="mb-0">{{ converted_today }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="ri-shield-user-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title mb-0"><b>Javob Bergan</b></h6>
+                                <h3 class="mb-0">{{ answered_calls }}</h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="ri-check-line fs-1"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-auto ms-auto">
+                <div class="d-flex gap-2">
+                    <!-- Yangilash tugmasi -->
+                    <button class="btn btn-outline-secondary" onclick="location.reload()" title="Sahifani yangilash">
+                        <i class="ri-refresh-line me-2"></i>Yangilash
+                    </button>
+                    <!-- Filter tugmasi -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="ri-filter-line me-2"></i>Filter
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="filterDropdown">
+                            <li>
+                                <h6 class="dropdown-header">Holat bo'yicha filter</h6>
+                            </li>
+                            <li><a class="dropdown-item {% if current_status_filter == 'all' %}active{% endif %}" href="#" onclick="applyFilter('status', 'all')">
+                                    <i class="ri-list-check me-2"></i>Barchasi
+                                </a></li>
+                            {% for stage in stages_all %}
+                            <li><a class="dropdown-item {% if current_status_filter == stage.key %}active{% endif %}" href="#" onclick="applyFilter('status', '{{ stage.key }}')">
+                                    <i class="ri-arrow-right-line me-2" style="color: {{ stage.color }};"></i>{{ stage.name }}
+                                </a></li>
+                            {% endfor %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header">Sana bo'yicha filter</h6>
+                            </li>
+                            <li><a class="dropdown-item {% if current_date_filter == 'today' %}active{% endif %}" href="#" onclick="applyFilter('date', 'today')">
+                                    <i class="ri-calendar-today-line me-2"></i>Bugun
+                                </a></li>
+                            <li><a class="dropdown-item {% if current_date_filter == 'yesterday' %}active{% endif %}" href="#" onclick="applyFilter('date', 'yesterday')">
+                                    <i class="ri-calendar-line me-2"></i>Kecha
+                                </a></li>
+                            <li><a class="dropdown-item {% if current_date_filter == 'week' %}active{% endif %}" href="#" onclick="applyFilter('date', 'week')">
+                                    <i class="ri-calendar-week-line me-2"></i>Bu hafta
+                                </a></li>
+                            <li><a class="dropdown-item {% if current_date_filter == 'month' %}active{% endif %}" href="#" onclick="applyFilter('date', 'month')">
+                                    <i class="ri-calendar-month-line me-2"></i>Bu oy
+                                </a></li>
+                            <li><a class="dropdown-item {% if current_date_filter == 'all' %}active{% endif %}" href="#" onclick="applyFilter('date', 'all')">
+                                    <i class="ri-calendar-line me-2"></i>Barcha sanalar
+                                </a></li>
+                        </ul>
+                    </div>
+                    {# Bosqichlar tugmasi vaqtincha yashirildi #}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div class="kanban-container">
+        {% for stage in stages %}
+        <div class="kanban-column"
+             data-stage="{{ stage.key }}"
+             data-stage-id="{{ stage.id }}">
+            <div class="kanban-header">
+                <div>
+                    <div class="kanban-title">{{ stage.name }}</div>
+                    <div class="stage-description">{{ stage.description }}</div>
+                </div>
+                <div class="kanban-count">
+                    {% if stage.key == 'follow_up' %}
+                    {{ leads_by_stage.follow_up_today|length|add:leads_by_stage.follow_up_upcoming|length }}
+                    {% else %}
+                    {{ leads_by_stage|lookup:stage.key|length }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Adding phone search input for each column -->
+            <div class="phone-search-container">
+                <input type="text" 
+                       class="phone-search-input" 
+                       placeholder="Telefon raqami bo'yicha qidirish..." 
+                       data-stage="{{ stage.key }}"
+                       onkeyup="searchByPhone('{{ stage.key }}', this.value)"
+                       title="Telefon raqami bo'yicha qidirish">
+                <div class="search-results-count" id="search-count-{{ stage.key }}" style="display: none;"></div>
+            </div>
+
+            {% if stage.key == 'follow_up' %}
+            <!-- Keyingi aloqa bo'limi uchun maxsus content -->
+            <div class="follow-up-no-add">
+                <i class="ri-information-line me-1"></i>
+                Bu bo'limga leadlar qo'shib bo'lmaydi.<br>
+                Bu bo'limda leadlar bog'lanish sanasiga qarab avtomatik ko'rsatiladi.
+            </div>
+
+            <!-- Sana filtri tugmasi -->
+            <button class="btn btn-outline-secondary btn-sm w-100 mb-3" onclick="toggleFollowUpFilter()">
+                <i class="ri-filter-line me-1"></i> Sana bo'yicha filter
+            </button>
+
+            <!-- Sana filtri boshqaruvlari -->
+            <div class="follow-up-filter-controls" id="followUpFilterControls">
+                <input type="date" id="followUpDateFilter" class="form-control" placeholder="Sana bo'yicha filter"
+                    onchange="filterFollowUpByDate(this.value)">
+                <small class="text-muted d-block mb-2">Kerakli sanani tanlang</small>
+                <button class="btn btn-outline-danger btn-sm w-100" onclick="clearFollowUpFilter()">
+                    <i class="ri-close-line me-1"></i> Filterni tozalash
+                </button>
+            </div>
+
+            <!-- Bugungi leadlar -->
+            {% if leads_by_stage.follow_up_today %}
+            <div class="follow-up-section today" id="follow-up-today">
+                <div class="follow-up-section-title">
+                    <i class="ri-calendar-today-line me-1"></i>Bugun bog'lanish kerak ({{leads_by_stage.follow_up_today|length }})
+                </div>
+                {% for lead in leads_by_stage.follow_up_today %}
+                <div class="lead-card" draggable="{{ is_admin|lower }}" data-lead-id="{{ lead.id }}"
+                    data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d H:i'|default:'' }}"
+                    data-client-name="{{ lead.client_name|default:'' }}"
+                    data-phone-number="{{ lead.phone_number }}"
+                    data-call-status="{{ lead.call_status|default:'null' }}"
+                    data-created-at="{{ lead.created_at|date:'d.m H:i' }}"
+                    data-operator-name="{{ lead.operator.full_name }}"
+                    data-notes="{{ lead.notes|default:'' }}"
+                    data-duration-display="{{ lead.get_duration_display|default:'-' }}"
+                    {% if lead.audio_recording %}
+                        data-audio-url="{{ lead.audio_recording.url }}"
+                    {% else %}
+                        data-audio-url=""
+                    {% endif %}
+                    onclick="openLeadEdit({{ lead.id }})">
+                    <div class="lead-actions">
+                        {% if lead.audio_recording %}
+                        <button class="btn-audio" onclick="event.stopPropagation(); playAudio({{ lead.id }})"
+                            title="Audio eshitish">
+                            <i class="ri-volume-up-line"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteLeadConfirm({{ lead.id }})"
+                            title="O'chirish">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+
+                    <div class="lead-name">
+                        {{ lead.client_name|default:"Noma'lum mijoz" }}
+                    </div>
+                    <div class="lead-phone">
+                        <i class="ri-phone-line"></i> {{ lead.phone_number }}
+                    </div>
+                    <div class="lead-meta">
+                        <span class="lead-status status-{{ lead.call_status|default:'null' }}">
+                            {% if lead.call_status == 'answered' %}Javob berdi
+                            {% elif lead.call_status == 'not_answered' %}Javob bermadi
+                            {% elif lead.call_status == 'client_answered' %}Mijoz javob berdi
+                            {% elif lead.call_status == 'client_not_answered' %}Mijoz javob bermadi
+                            {% else %}Qo'ng'iroq qilinmagan{% endif %}
+                        </span>
+                        <span>{{ lead.created_at|date:"d.m H:i" }}</span>
+                    </div>
+
+                    {% if lead.follow_up_date %}
+                    <div class="follow-up-date">
+                        <i class="ri-calendar-line"></i> Keyingi: {{ lead.follow_up_date|date:"d.m H:i" }}
+                    </div>
+                    {% endif %}
+
+                    {% if lead.notes %}
+                    <div class="lead-notes">
+                        {{ lead.notes|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+
+                    <div class="lead-operator">
+                        <i class="ri-user-line"></i> {{ lead.operator.full_name }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Keyingi kunlar uchun leadlar -->
+            {% if leads_by_stage.follow_up_upcoming %}
+            <div class="follow-up-section upcoming" id="follow-up-upcoming">
+                <div class="follow-up-section-title">
+                    <i class="ri-calendar-event-line me-1"></i>Keyingi kunlar ({{ leads_by_stage.follow_up_upcoming|length }})
+                </div>
+                {% for lead in leads_by_stage.follow_up_upcoming %}
+                <div class="lead-card" draggable="{{ is_admin|lower }}" data-lead-id="{{ lead.id }}"
+                    data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d H:i'|default:'' }}"
+                    data-client-name="{{ lead.client_name|default:'' }}"
+                    data-phone-number="{{ lead.phone_number }}"
+                    data-call-status="{{ lead.call_status|default:'null' }}"
+                    data-created-at="{{ lead.created_at|date:'d.m H:i' }}"
+                    data-operator-name="{{ lead.operator.full_name }}"
+                    data-notes="{{ lead.notes|default:'' }}"
+                    data-duration-display="{{ lead.get_duration_display|default:'-' }}"
+                    {% if lead.audio_recording %}
+                        data-audio-url="{{ lead.audio_recording.url }}"
+                    {% else %}
+                        data-audio-url=""
+                    {% endif %}
+                    onclick="openLeadEdit({{ lead.id }})">
+                    <div class="lead-actions">
+                        {% if lead.audio_recording %}
+                        <button class="btn-audio" onclick="event.stopPropagation(); playAudio({{ lead.id }})"
+                            title="Audio eshitish">
+                            <i class="ri-volume-up-line"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteLeadConfirm({{ lead.id }})"
+                            title="O'chirish">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+
+                    <div class="lead-name">
+                        {{ lead.client_name|default:"Noma'lum mijoz" }}
+                    </div>
+                    <div class="lead-phone">
+                        <i class="ri-phone-line"></i> {{ lead.phone_number }}
+                    </div>
+                    <div class="lead-meta">
+                        <span class="lead-status status-{{ lead.call_status|default:'null' }}">
+                            {% if lead.call_status == 'answered' %}Javob berdi
+                            {% elif lead.call_status == 'not_answered' %}Javob bermadi
+                            {% elif lead.call_status == 'client_answered' %}Mijoz javob berdi
+                            {% elif lead.call_status == 'client_not_answered' %}Mijoz javob bermadi
+                            {% else %}Qo'ng'iroq qilinmagan{% endif %}
+                        </span>
+                        <span>{{ lead.created_at|date:"d.m H:i" }}</span>
+                    </div>
+
+                    {% if lead.follow_up_date %}
+                    <div class="follow-up-date">
+                        <i class="ri-calendar-line"></i> Keyingi: {{ lead.follow_up_date|date:"d.m H:i" }}
+                    </div>
+                    {% endif %}
+
+                    {% if lead.notes %}
+                    <div class="lead-notes">
+                        {{ lead.notes|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+
+                    <div class="lead-operator">
+                        <i class="ri-user-line"></i> {{ lead.operator.full_name }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not leads_by_stage.follow_up_today and not leads_by_stage.follow_up_upcoming %}
+            <div class="text-center text-muted py-4" style="font-size: 13px;">
+                <i class="ri-calendar-line"
+                    style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                Keyingi bog'lanish kerak bo'lgan leadlar yo'q
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Boshqa bosqichlar uchun asl content -->
+
+            <!-- Tez qo'shish formi -->
+            <div class="quick-add-form" id="quick-form-{{ stage.key }}">
+                <label class="form-label">Mijoz ismi</label>
+                <input type="text" placeholder="Mijoz ismini kiriting" id="name-{{ stage.key }}">
+
+                <label class="form-label">Telefon raqami *</label>
+                <input type="text" placeholder="+998901234567" id="phone-{{ stage.key }}" required>
+
+                <label class="form-label">Izoh</label>
+                <textarea placeholder="Qo'shimcha ma'lumotlar..." id="notes-{{ stage.key }}"></textarea>
+
+                <div class="quick-add-buttons">
+                    <button type="button" class="btn btn-success" onclick="saveQuickLead('{{ stage.key }}')">
+                        <i class="ri-loader-4-line"></i> Saqlash
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="cancelQuickAdd('{{ stage.key }}')">
+                        <i class="ri-close-line"></i> Bekor qilish
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tez qo'shish tugmasi -->
+            <button class="add-lead-btn" onclick="showQuickAdd('{{ stage.key }}')">
+                <i class="ri-add-line"></i> {{ stage.name }}GA QO'SHISH
+            </button>
+
+            <!-- Leadlar ro'yxati -->
+            <div class="drop-zone" data-stage="{{ stage.key }}">
+                <!-- Ogohlantiruvchi xabar -->
+                <div class="drop-zone-warning" id="warning-{{ stage.key }}">
+                    <i class="ri-error-warning-line me-1"></i>
+                    {% if stage.key == 'converted' %}
+                    Ismi kiritilmagan leadni mijozga aylantirib bo'lmaydi!
+                    {% endif %}
+                </div>
+                {% for lead in leads_by_stage|lookup:stage.key %}
+                <div class="lead-card" draggable="{{ is_admin|lower }}" data-lead-id="{{ lead.id }}"
+                    data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d H:i'|default:'' }}"
+                    data-client-name="{{ lead.client_name|default:'' }}"
+                    data-phone-number="{{ lead.phone_number }}"
+                    data-call-status="{{ lead.call_status|default:'null' }}"
+                    data-created-at="{{ lead.created_at|date:'d.m H:i' }}"
+                    data-operator-name="{{ lead.operator.full_name }}"
+                    data-notes="{{ lead.notes|default:'' }}"
+                    data-duration-display="{{ lead.get_duration_display|default:'-' }}"
+                    {% if lead.audio_recording %}
+                        data-audio-url="{{ lead.audio_recording.url }}"
+                    {% else %}
+                        data-audio-url=""
+                    {% endif %}
+                    data-stage-key="{{ lead.stage.key|default:'' }}"
+                    onclick="openLeadEdit({{ lead.id }})">
+                    <div class="lead-actions">
+                        {% if lead.audio_recording %}
+                        <button class="btn-audio" onclick="event.stopPropagation(); playAudio({{ lead.id }})"
+                            title="Audio eshitish">
+                            <i class="ri-volume-up-line"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn-delete" onclick="event.stopPropagation(); deleteLeadConfirm({{ lead.id }})"
+                            title="O'chirish">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+
+                    <div class="lead-name">
+                        {{ lead.client_name|default:"Noma'lum mijoz" }}
+                    </div>
+                    <div class="lead-phone">
+                        <i class="ri-phone-line"></i> {{ lead.phone_number }}
+                    </div>
+                    <div class="lead-meta">
+                        <span class="lead-status status-{{ lead.call_status|default:'null' }}">
+                            {% if lead.call_status == 'answered' %}Javob berdi
+                            {% elif lead.call_status == 'not_answered' %}Javob bermadi
+                            {% elif lead.call_status == 'client_answered' %}Mijoz javob berdi
+                            {% elif lead.call_status == 'client_not_answered' %}Mijoz javob bermadi
+                            {% else %}Qo'ng'iroq qilinmagan{% endif %}
+                        </span>
+                        <span>{{ lead.created_at|date:"d.m H:i" }}</span>
+                    </div>
+
+                    {% if lead.call_duration %}
+                    <div class="follow-up-date">
+                        <i class="ri-time-line"></i> Davomiylik: {{ lead.get_duration_display }}
+                    </div>
+                    {% endif %}
+
+                    {% if lead.follow_up_date %}
+                    <div class="follow-up-date">
+                        <i class="ri-calendar-line"></i> Keyingi: {{ lead.follow_up_date|date:"d.m H:i" }}
+                    </div>
+                    {% endif %}
+
+                    {% if lead.notes %}
+                    <div class="lead-notes">
+                        {{ lead.notes|truncatechars:50 }}
+                    </div>
+                    {% endif %}
+
+                    <div class="lead-operator">
+                        <i class="ri-user-line"></i> {{ lead.operator.full_name }}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4" style="font-size: 13px;">
+                    <i class="ri-inbox-line"
+                        style="font-size: 24px; display: block; margin-bottom: 8px; opacity: 0.5;"></i>
+                    Bu bosqichda leadlar yo'q
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Lead tahrirlash modal -->
+<div class="modal fade" id="leadEditModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lead tahrirlash</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="leadEditContent">
+                <!-- Lead tahrirlash formi bu yerga yuklanadi -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Follow-up sana kiritish modal -->
+<div class="modal fade" id="followUpDateModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="ri-calendar-line me-2"></i>Keyingi qo'ng'iroq sanasini belgilang
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="followUpDateForm">
+                    <div class="mb-3">
+                        <label class="form-label">Keyingi qo'ng'iroq sanasi *</label>
+                        <input type="date" class="form-control" id="followUpDateInput" required>
+                        <small class="text-muted">Keyingi qo'ng'iroq qilish sanasini tanlang</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Vaqt *</label>
+                        <input type="time" class="form-control" id="followUpTimeInput" value="10:00" required>
+                        <small class="text-muted">Qo'ng'iroq qilish vaqtini belgilang (24 soatlik format)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Izoh (ixtiyoriy)</label>
+                        <textarea class="form-control" id="followUpNotesInput" rows="3"
+                            placeholder="Keyingi qo'ng'iroq haqida qo'shimcha ma'lumot..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="ri-close-line"></i> Bekor qilish
+                </button>
+                <button type="button" class="btn btn-primary" id="saveFollowUpBtn">
+                    <i class="ri-save-line"></i> Saqlash
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Audio player modal -->
+<div class="modal fade" id="audioModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Audio yozuv</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="audioContent">
+                <!-- Audio player bu yerga yuklanadi -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- O'chirish tasdiqlash modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Tasdiqlash</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Haqiqatan ham bu leadni o'chirmoqchimisiz?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">O'chirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stage Management Modal -->
+<div class="modal fade" id="stageManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bosqichlarni boshqarish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <button class="btn btn-primary mb-3" onclick="openCreateStageModal()">
+                    <i class="ri-add-line me-1"></i>Yangi bosqich yaratish
+                </button>
+                <div id="stageListContainer">
+                    <!-- Bosqichlar ro'yxati bu yerga yuklanadi -->
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                {# <th>Tartib</th> #} <!-- Tartib ustuni olib tashlandi -->
+                                <th>Nomi</th>
+                                <th>Kalit</th>
+                                <th>Rang</th>
+                                <th>Tavsif</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stage in stages_all %} {# Use stages_all here to show all stages in management modal #}
+                            <tr>
+                                {# <td>{{ stage.order }}</td> #} <!-- Tartib maydoni olib tashlandi -->
+                                <td>{{ stage.name }}</td>
+                                <td><span class="badge bg-info">{{ stage.key }}</span></td>
+                                <td><span style="display: inline-block; width: 20px; height: 20px; background-color: {{ stage.color }}; border-radius: 4px; vertical-align: middle; margin-right: 5px;"></span>{{ stage.color }}</td>
+                                <td>{{ stage.description|truncatechars:50 }}</td>
+                                <td>
+                                    {% if not stage.is_system_stage %}
+                                    <button class="btn btn-sm btn-info me-2" onclick="openEditStageModal({{ stage.id }})">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteStageConfirm({{ stage.id }})">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Tizim</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Stage Modal -->
+<div class="modal fade" id="createEditStageModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createEditStageModalTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="createEditStageContent">
+                <!-- Stage form bu yerga yuklanadi -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Django contextdan admin flagini olish
+    const IS_ADMIN = {{ is_admin|lower }};
+
+    // Drag and Drop funksiyalari
+    let draggedElement = null; // For lead cards
+    let deleteLeadId = null;
+    let leadDragPlaceholder = null; // For lead cards
+    let isDraggedLeadNameMissing = false;
+    let pendingFollowUpLead = null; // Follow-up modal uchun
+    let deleteStageId = null; // Stage o'chirish uchun
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Lead card drag events
+        document.querySelectorAll('.lead-card[draggable="true"]').forEach(card => {
+            card.addEventListener('dragstart', handleLeadDragStart);
+            card.addEventListener('dragend', handleLeadDragEnd);
+        });
+
+        // Lead card drop zones
+        document.querySelectorAll('.drop-zone').forEach(zone => {
+            zone.addEventListener('dragover', handleLeadDragOver);
+            zone.addEventListener('drop', handleLeadDrop);
+            zone.addEventListener('dragenter', handleLeadDragEnter);
+            zone.addEventListener('dragleave', handleLeadDragLeave);
+        });
+
+        // Placeholder yaratish
+        createLeadDragPlaceholder();
+
+        // Follow-up modal event listeners
+        setupFollowUpModal();
+
+        // Stage delete confirm modal event listener
+        document.getElementById('confirmDeleteStageBtn').addEventListener('click', function() {
+            if (deleteStageId) {
+                deleteStage(deleteStageId);
+            }
+        });
+    });
+
+    function createLeadDragPlaceholder() {
+        leadDragPlaceholder = document.createElement('div');
+        leadDragPlaceholder.className = 'drag-placeholder';
+        leadDragPlaceholder.innerHTML = `
+            <div class="text-center">
+                <i class="ri-drag-drop-line" style="font-size: 18px; margin-bottom: 4px; display: block;"></i>
+                <div style="font-size: 11px;">Bu yerga</div>
+            </div>
+        `;
+    }
+
+    // --- Lead Card Drag & Drop Functions ---
+    function handleLeadDragStart(e) {
+        if (!IS_ADMIN) {
+            e.preventDefault();
+            showToast('Sizda leadlarni sudrab o\'tkazish huquqi yo\'q.', 'error');
+            return;
+        }
+        e.stopPropagation(); // Hodisaning yuqoriga tarqalishini to'xtatish
+
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
+
+        const leadName = draggedElement.dataset.clientName;
+        isDraggedLeadNameMissing = (leadName === 'Noma\'lum mijoz' || leadName === '' || leadName.includes('Noma\'lum'));
+
+        setTimeout(() => {
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                if (zone !== this.closest('.drop-zone')) {
+                    const placeholder = leadDragPlaceholder.cloneNode(true);
+                    zone.insertBefore(placeholder, zone.firstChild);
+                    setTimeout(() => placeholder.classList.add('active'), 10);
+                }
+            });
+        }, 10);
+    }
+
+    function handleLeadDragEnd(e) {
+        this.classList.remove('dragging');
+
+        document.querySelectorAll('.drag-placeholder').forEach(placeholder => {
+            placeholder.classList.remove('active');
+            setTimeout(() => {
+                if (placeholder.parentNode) {
+                    placeholder.parentNode.removeChild(placeholder);
+                }
+            }, 300);
+        });
+
+        document.querySelectorAll('.kanban-column').forEach(col => {
+            col.classList.remove('drag-target', 'invalid-drop-target');
+            const warning = col.querySelector('.drop-zone-warning');
+            if (warning) warning.classList.remove('active');
+        });
+
+        draggedElement = null;
+        isDraggedLeadNameMissing = false;
+    }
+
+    function handleLeadDragOver(e) {
+        if (!IS_ADMIN) {
+            e.dataTransfer.dropEffect = 'none';
+            return;
+        }
+
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        const targetStage = this.dataset.stage;
+        if ((targetStage === 'converted' && isDraggedLeadNameMissing) || targetStage === 'follow_up') {
+            e.dataTransfer.dropEffect = 'none';
+        } else {
+            e.dataTransfer.dropEffect = 'move';
+        }
+        return false;
+    }
+
+    function handleLeadDragEnter(e) {
+        if (!IS_ADMIN) return;
+
+        const targetColumn = this.closest('.kanban-column');
+        const targetStage = this.dataset.stage;
+
+        if (targetStage === 'converted' && isDraggedLeadNameMissing) {
+            targetColumn.classList.add('invalid-drop-target');
+            const warning = this.querySelector('.drop-zone-warning');
+            if (warning) {
+                warning.innerHTML = '<i class="ri-error-warning-line me-1"></i>Ismi kiritilmagan leadni mijozga aylantirib bo\'lmaydi!';
+                warning.classList.add('active');
+            }
+        } else if (targetStage === 'follow_up') {
+            targetColumn.classList.add('invalid-drop-target');
+            const warning = this.querySelector('.drop-zone-warning');
+            if (warning) {
+                warning.innerHTML = '<i class="ri-error-warning-line me-1"></i>Bu bo\'limga leadlar qo\'shib bo\'lmaydi.<br>Bu bo\'limda leadlar bog\'lanish sanasiga qarab avtomatik ko\'rsatiladi.';
+                warning.classList.add('active');
+            }
+        } else {
+            this.classList.add('drag-over');
+            targetColumn.classList.add('drag-target');
+        }
+    }
+
+    function handleLeadDragLeave(e) {
+        if (!IS_ADMIN) return;
+
+        const targetColumn = this.closest('.kanban-column');
+        if (!this.contains(e.relatedTarget)) {
+            this.classList.remove('drag-over');
+            targetColumn.classList.remove('drag-target', 'invalid-drop-target');
+            const warning = this.querySelector('.drop-zone-warning');
+            if (warning) warning.classList.remove('active');
+        }
+    }
+
+    function handleLeadDrop(e) {
+        if (!IS_ADMIN) {
+            e.preventDefault();
+            return;
+        }
+
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+
+        this.classList.remove('drag-over');
+        this.closest('.kanban-column').classList.remove('drag-target', 'invalid-drop-target');
+        const warning = this.querySelector('.drop-zone-warning');
+        if (warning) warning.classList.remove('active');
+
+        if (draggedElement !== null) {
+            const leadId = draggedElement.dataset.leadId;
+            const newStage = this.dataset.stage;
+            const currentStage = draggedElement.closest('.drop-zone').dataset.stage;
+
+            if (newStage !== currentStage) {
+                if (newStage === 'converted' && isDraggedLeadNameMissing) {
+                    showToast('Ismi kiritilmagan leadni mijozga aylantirib bo\'lmaydi!', 'error');
+                    return false;
+                }
+
+                if (newStage === 'follow_up') {
+                    showToast('Bu bo\'limga leadlar qo\'shib bo\'lmaydi. Bu bo\'limda leadlar bog\'lanish sanasiga qarab avtomatik ko\'rsatiladi.', 'error');
+                    return false;
+                }
+
+                const placeholder = this.querySelector('.drag-placeholder');
+                if (placeholder) {
+                    const newLeadElement = draggedElement.cloneNode(true);
+                    newLeadElement.classList.remove('dragging');
+
+                    newLeadElement.addEventListener('dragstart', handleLeadDragStart);
+                    newLeadElement.addEventListener('dragend', handleLeadDragEnd);
+                    newLeadElement.onclick = function () { openLeadEdit(leadId); };
+
+                    placeholder.parentNode.replaceChild(newLeadElement, placeholder);
+
+                    draggedElement.style.opacity = '0';
+                    draggedElement.style.transform = 'scale(0.8)';
+                    setTimeout(() => {
+                        if (draggedElement.parentNode) {
+                            draggedElement.parentNode.removeChild(draggedElement);
+                        }
+                    }, 200);
+
+                    updateLeadStage(leadId, newStage); // Sahifa yangilanadi
+                }
+            }
+        }
+
+        return false;
+    }
+
+    function showFollowUpDateModal(leadId, leadElement) {
+        pendingFollowUpLead = {
+            id: leadId,
+            element: leadElement
+        };
+
+        // Bugungi sanani default qilib qo'yish
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        document.getElementById('followUpDateInput').value = tomorrow.toISOString().split('T')[0];
+        document.getElementById('followUpTimeInput').value = '10:00';
+        document.getElementById('followUpNotesInput').value = '';
+
+        const modal = new bootstrap.Modal(document.getElementById('followUpDateModal'));
+        modal.show();
+    }
+
+    function setupFollowUpModal() {
+        const saveBtn = document.getElementById('saveFollowUpBtn');
+        const modal = document.getElementById('followUpDateModal');
+
+        saveBtn.addEventListener('click', function () {
+            const date = document.getElementById('followUpDateInput').value;
+            const time = document.getElementById('followUpTimeInput').value;
+            const notes = document.getElementById('followUpNotesInput').value;
+
+            if (!date || !time) {
+                showToast('Sana va vaqt kiritilishi shart!', 'error');
+                return;
+            }
+
+            if (!pendingFollowUpLead) {
+                showToast('Xatolik: Lead ma\'lumotlari topilmadi', 'error');
+                return;
+            }
+
+            // Loading holatini ko'rsatish
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="ri-loader-4-line"></i> Saqlanmoqda...';
+
+            // Follow-up ma'lumotlarini saqlash
+            saveFollowUpDate(pendingFollowUpLead.id, date, time, notes)
+                .then(() => {
+                    bootstrap.Modal.getInstance(modal).hide();
+                    showToast('Keyingi qo\'ng\'iroq sanasi belgilandi va Keyingi aloqa bo\'limiga o\'tkazildi', 'success');
+                    location.reload(); // Sahifani yangilash
+                })
+                .catch(error => {
+                    console.error('Error saving follow-up date:', error);
+                    showToast('Xatolik: ' + error.message, 'error');
+                })
+                .finally(() => {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="ri-save-line"></i> Saqlash';
+                    pendingFollowUpLead = null;
+                });
+        });
+
+        // Modal yopilganda pending leadni tozalash
+        modal.addEventListener('hidden.bs.modal', function () {
+            if (pendingFollowUpLead) {
+                pendingFollowUpLead = null;
+            }
+        });
+    }
+
+    function saveFollowUpDate(leadId, date, time, notes) {
+        return fetch('{% url "update_lead_stage" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `lead_id=${leadId}&new_stage=follow_up&follow_up_date=${date}&follow_up_time=${time}&notes=${encodeURIComponent(notes)}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Server xatosi'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    throw new Error(data.message || 'Server xatosi');
+                }
+                return data;
+            });
+    }
+
+    function updateLeadStage(leadId, newStage) { // leadElement argumenti olib tashlandi
+        // Drag-and-drop orqali bosqich o'zgarganda sahifani yangilash
+        // Bu funksiya faqat adminlar uchun ishlaydi va sahifani yangilaydi
+        fetch('{% url "update_lead_stage" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `lead_id=${leadId}&new_stage=${newStage}`
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Server xatosi'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast('Lead bosqichi yangilandi', 'success');
+                    location.reload(); // Sahifani yangilash
+                } else {
+                    showToast('Xatolik: ' + data.message, 'error');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Xatolik yuz berdi: ' + error.message, 'error');
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            });
+    }
+
+    // Bu funksiya endi updateLeadStage ichida ishlatilmaydi, chunki sahifa yangilanadi.
+    // Lekin quick add va lead editdan keyin lead kartasini yangilash uchun kerak bo'lishi mumkin.
+    function updateLeadCardAppearance(leadElement, stage, data) {
+        const statusElement = leadElement.querySelector('.lead-status');
+        const nameElement = leadElement.querySelector('.lead-name');
+        const phoneElement = leadElement.querySelector('.lead-phone');
+        const followUpDateElement = leadElement.querySelector('.follow-up-date');
+        const notesElement = leadElement.querySelector('.lead-notes');
+        const operatorElement = leadElement.querySelector('.lead-operator');
+        const durationElement = leadElement.querySelector('.lead-card .follow-up-date i.ri-time-line')?.parentElement;
+        const audioButton = leadElement.querySelector('.btn-audio');
+
+        if (nameElement && data.client_name !== undefined) {
+            nameElement.textContent = data.client_name || "Noma'lum mijoz";
+            leadElement.dataset.clientName = data.client_name || '';
+        }
+        if (phoneElement && data.phone_number !== undefined) {
+            phoneElement.innerHTML = `<i class="ri-phone-line"></i> ${data.phone_number}`;
+            leadElement.dataset.phoneNumber = data.phone_number;
+        }
+        if (operatorElement && data.operator_name !== undefined) {
+            operatorElement.innerHTML = `<i class="ri-user-line"></i> ${data.operator_name}`;
+            leadElement.dataset.operatorName = data.operator_name;
+        }
+        if (notesElement && data.notes !== undefined) {
+            notesElement.textContent = data.notes ? data.notes.substring(0, 50) + (data.notes.length > 50 ? '...' : '') : '';
+            notesElement.style.display = data.notes ? 'block' : 'none';
+            leadElement.dataset.notes = data.notes;
+        }
+        if (data.created_at !== undefined) {
+            leadElement.querySelector('.lead-meta span:last-child').textContent = data.created_at;
+        }
+        if (data.duration_display !== undefined) {
+            if (durationElement) {
+                durationElement.innerHTML = `<i class="ri-time-line"></i> Davomiylik: ${data.duration_display}`;
+                durationElement.style.display = data.duration_display === '-' ? 'none' : 'block';
+            } else if (data.duration_display !== '-') {
+                const newDurationDiv = document.createElement('div');
+                newDurationDiv.className = 'follow-up-date';
+                newDurationDiv.innerHTML = `<i class="ri-time-line"></i> Davomiylik: ${data.duration_display}`;
+                // follow-up-date dan oldin qo'shish
+                if (followUpDateElement) {
+                    leadElement.insertBefore(newDurationDiv, followUpDateElement);
+                } else {
+                    // Agar follow-up-date bo'lmasa, notes dan oldin yoki oxiriga
+                    const existingNotes = leadElement.querySelector('.lead-notes');
+                    if (existingNotes) {
+                        leadElement.insertBefore(newDurationDiv, existingNotes);
+                    } else {
+                        leadElement.appendChild(newDurationDiv);
+                    }
+                }
+            }
+            leadElement.dataset.durationDisplay = data.duration_display;
+        }
+        if (data.audio_recording_url !== undefined) {
+            if (audioButton) {
+                audioButton.style.display = data.audio_recording_url ? 'flex' : 'none';
+            } else if (data.audio_recording_url) {
+                const newAudioButton = document.createElement('button');
+                newAudioButton.className = 'btn-audio';
+                newAudioButton.setAttribute('onclick', `event.stopPropagation(); playAudio(${data.lead_id})`);
+                newAudioButton.setAttribute('title', 'Audio eshitish');
+                newAudioButton.innerHTML = '<i class="ri-volume-up-line"></i>';
+                leadElement.querySelector('.lead-actions').prepend(newAudioButton);
+            }
+            leadElement.dataset.audioUrl = data.audio_recording_url || '';
+        }
+
+
+        if (statusElement) {
+            statusElement.className = 'lead-status';
+            let statusText = '';
+            let newCallStatus = data.new_call_status || stage; // Agar data.new_call_status bo'lmasa, stage ni ishlat
+
+            switch (newCallStatus) {
+                case 'answered': statusText = 'Javob berdi'; statusClass = 'status-answered'; break;
+                case 'not_answered': statusText = 'Javob bermadi'; statusClass = 'status-not_answered'; break;
+                case 'client_answered': statusText = 'Mijoz javob berdi'; statusClass = 'status-client_answered'; break;
+                case 'client_not_answered': statusText = 'Mijoz javob bermadi'; statusClass = 'status-client_not_answered'; break;
+                case 'follow_up': statusText = 'Keyingi aloqa'; statusClass = 'status-answered'; break; // Yoki boshqa rang
+                case 'converted': statusText = 'Mijozga aylangan'; statusClass = 'status-answered'; break; // Yoki boshqa rang
+                default: statusText = 'Noma\'lum holat'; statusClass = 'status-null'; break;
+            }
+            statusElement.textContent = statusText;
+        }
+
+        if (followUpDateElement) {
+            if (data.new_follow_up_date) {
+                followUpDateElement.innerHTML = `<i class="ri-calendar-line"></i> Keyingi: ${formatDate(data.new_follow_up_date)}`;
+                followUpDateElement.style.display = 'block';
+            } else {
+                followUpDateElement.style.display = 'none';
+            }
+            leadElement.dataset.followUpDate = data.new_follow_up_date || '';
+        } else if (data.new_follow_up_date) {
+            const newFollowUpDiv = document.createElement('div');
+            newFollowUpDiv.className = 'follow-up-date';
+            newFollowUpDiv.innerHTML = `<i class="ri-calendar-line"></i> Keyingi: ${formatDate(data.new_follow_up_date)}`;
+            leadElement.appendChild(newFollowUpDiv);
+            leadElement.dataset.followUpDate = data.new_follow_up_date;
+        }
+        // Update the stage key dataset
+        leadElement.dataset.stageKey = data.new_stage_key || '';
+    }
+
+    function formatDate(datetimeString) {
+        if (!datetimeString) return '';
+        const date = new Date(datetimeString);
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day}.${month} ${hours}:${minutes}`;
+    }
+
+    function updateColumnCounts() {
+        document.querySelectorAll('.kanban-column').forEach(column => {
+            const count = column.querySelectorAll('.lead-card').length;
+            const countElement = column.querySelector('.kanban-count');
+            if (countElement) {
+                countElement.textContent = count;
+
+                countElement.style.transform = 'scale(1.2)';
+                countElement.style.backgroundColor = '#007bff';
+                setTimeout(() => {
+                    countElement.style.transform = 'scale(1)';
+                    countElement.style.backgroundColor = '#6c757d';
+                    countElement.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        countElement.style.transition = '';
+                    }, 300);
+                }, 200);
+            }
+        });
+    }
+
+    // Follow-up sana filtri
+    function toggleFollowUpFilter() {
+        const controls = document.getElementById('followUpFilterControls');
+        controls.classList.toggle('active');
+        if (controls.classList.contains('active')) {
+            document.getElementById('followUpDateFilter').focus();
+        }
+    }
+
+    function filterFollowUpByDate(selectedDate) {
+        const todaySection = document.getElementById('follow-up-today');
+        const upcomingSection = document.getElementById('follow-up-upcoming');
+
+        let todayCount = 0;
+        let upcomingCount = 0;
+
+        if (todaySection) {
+            todaySection.querySelectorAll('.lead-card').forEach(card => {
+                const followUpDate = card.dataset.followUpDate;
+                if (followUpDate) {
+                    const cardDate = followUpDate.split(' ')[0];
+                    if (cardDate === selectedDate) {
+                        card.style.display = 'block';
+                        todayCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            todaySection.querySelector('.follow-up-section-title').innerHTML = `<i class="ri-calendar-today-line me-1"></i>Bugun bog'lanish kerak (${todayCount})`;
+        }
+
+        if (upcomingSection) {
+            upcomingSection.querySelectorAll('.lead-card').forEach(card => {
+                const followUpDate = card.dataset.followUpDate;
+                if (followUpDate) {
+                    const cardDate = followUpDate.split(' ')[0];
+                    if (cardDate === selectedDate) {
+                        card.style.display = 'block';
+                        upcomingCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+            upcomingSection.querySelector('.follow-up-section-title').innerHTML = `<i class="ri-calendar-event-line me-1"></i>Keyingi kunlar (${upcomingCount})`;
+        }
+
+        showToast(`${selectedDate} sanasi uchun leadlar filterlandi`, 'info');
+    }
+
+    function clearFollowUpFilter() {
+        document.getElementById('followUpDateFilter').value = '';
+        filterFollowUpByDate(''); // Barcha leadlarni ko'rsatish
+        showToast('Sana filtri tozalandi', 'info');
+        toggleFollowUpFilter(); // Filterni yopish
+    }
+
+    // Yangi filter funksiyasi (server-side)
+    function applyFilter(filterType, value) {
+        const url = new URL(window.location.href);
+        if (value === 'all' || (filterType === 'date' && value === 'today')) {
+            url.searchParams.delete(filterType);
+            if (filterType === 'date' && value === 'today') {
+                url.searchParams.set('date', 'today'); // Default holatni aniq belgilash
+            }
+        } else {
+            url.searchParams.set(filterType, value);
+        }
+        window.location.href = url.toString();
+    }
+
+    // Tez qo'shish funksiyalari
+    function showQuickAdd(stage) {
+        document.querySelectorAll('.quick-add-form').forEach(form => {
+            form.classList.remove('active');
+        });
+
+        document.getElementById(`quick-form-${stage}`).classList.add('active');
+
+        setTimeout(() => {
+            document.getElementById(`name-${stage}`).focus();
+        }, 100);
+    }
+
+    function cancelQuickAdd(stage) {
+        document.getElementById(`quick-form-${stage}`).classList.remove('active');
+        document.getElementById(`name-${stage}`).value = '';
+        document.getElementById(`phone-${stage}`).value = '';
+        document.getElementById(`notes-${stage}`).value = '';
+    }
+
+    function saveQuickLead(stage) {
+        const name = document.getElementById(`name-${stage}`).value.trim();
+        const phone = document.getElementById(`phone-${stage}`).value.trim();
+        const notes = document.getElementById(`notes-${stage}`).value.trim();
+
+        if (!phone) {
+            showToast('Telefon raqami kiritilishi shart', 'error');
+            document.getElementById(`phone-${stage}`).focus();
+            return;
+        }
+
+        const phoneRegex = /^\+998\d{9}$/;
+        if (!phoneRegex.test(phone)) {
+            showToast('Telefon raqam +998XXXXXXXXX formatida bo\'lishi kerak', 'error');
+            document.getElementById(`phone-${stage}`).focus();
+            return;
+        }
+
+        const saveBtn = event.target;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="ri-loader-4-line"></i> Saqlanmoqda...';
+
+        fetch('{% url "lead_quick_create" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: `client_name=${encodeURIComponent(name)}&phone_number=${encodeURIComponent(phone)}&notes=${encodeURIComponent(notes)}&stage=${stage}`
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Lead muvaffaqiyatli yaratildi', 'success');
+                    cancelQuickAdd(stage);
+                    location.reload(); // Sahifani yangilash
+                } else {
+                    showToast('Xatolik: ' + data.message, 'error');
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="ri-save-line"></i> Saqlash';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Xatolik yuz berdi', 'error');
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="ri-save-line"></i> Saqlash';
+            });
+    }
+
+    function createLeadCardElement(data) {
+        const leadCard = document.createElement('div');
+        leadCard.className = 'lead-card';
+        leadCard.setAttribute('draggable', IS_ADMIN ? 'true' : 'false');
+        leadCard.dataset.leadId = data.lead_id;
+        leadCard.dataset.clientName = data.client_name || '';
+        leadCard.dataset.phoneNumber = data.phone_number;
+        leadCard.dataset.callStatus = data.call_status || 'null';
+        leadCard.dataset.createdAt = data.created_at;
+        leadCard.dataset.operatorName = data.operator_name;
+        leadCard.dataset.notes = data.notes || '';
+        leadCard.dataset.durationDisplay = data.duration_display || '-';
+        leadCard.dataset.audioUrl = data.audio_recording_url || '';
+        leadCard.dataset.followUpDate = data.follow_up_date || '';
+        leadCard.dataset.stageKey = data.stage_key || ''; // Yangi stage_key
+
+        leadCard.onclick = function () { openLeadEdit(data.lead_id); };
+
+        let statusText = '';
+        let statusClass = 'status-null';
+        switch (data.call_status) {
+            case 'answered': statusText = 'Javob berdi'; statusClass = 'status-answered'; break;
+            case 'not_answered': statusText = 'Javob bermadi'; statusClass = 'status-not_answered'; break;
+            case 'client_answered': statusText = 'Mijoz javob berdi'; statusClass = 'status-client_answered'; break;
+            case 'client_not_answered': statusText = 'Mijoz javob bermadi'; statusClass = 'status-client_not_answered'; break;
+            default: statusText = 'Qo\'ng\'iroq qilinmagan'; statusClass = 'status-null'; break;
+        }
+
+        leadCard.innerHTML = `
+            <div class="lead-actions">
+                ${data.audio_recording_url ? `<button class="btn-audio" onclick="event.stopPropagation(); playAudio(${data.lead_id})" title="Audio eshitish"><i class="ri-volume-up-line"></i></button>` : ''}
+                <button class="btn-delete" onclick="event.stopPropagation(); deleteLeadConfirm(${data.lead_id})" title="O'chirish"><i class="ri-delete-bin-line"></i></button>
+            </div>
+            <div class="lead-name">${data.client_name || "Noma'lum mijoz"}</div>
+            <div class="lead-phone"><i class="ri-phone-line"></i> ${data.phone_number}</div>
+            <div class="lead-meta">
+                <span class="lead-status ${statusClass}">${statusText}</span>
+                <span>${data.created_at}</span>
+            </div>
+            ${data.duration_display && data.duration_display !== '-' ? `<div class="follow-up-date"><i class="ri-time-line"></i> Davomiylik: ${data.duration_display}</div>` : ''}
+            ${data.follow_up_date ? `<div class="follow-up-date"><i class="ri-calendar-line"></i> Keyingi: ${formatDate(data.follow_up_date)}</div>` : ''}
+            ${data.notes ? `<div class="lead-notes">${data.notes.substring(0, 50)}${data.notes.length > 50 ? '...' : ''}</div>` : ''}
+            <div class="lead-operator"><i class="ri-user-line"></i> ${data.operator_name}</div>
+        `;
+
+        // Drag event listenerlarni yangi elementga bog'lash
+        leadCard.addEventListener('dragstart', handleLeadDragStart);
+        leadCard.addEventListener('dragend', handleLeadDragEnd);
+
+        return leadCard;
+    }
+
+
+    // Lead tahrirlash
+    function openLeadEdit(leadId) {
+        fetch(`/leads/${leadId}/edit/?from_kanban=1`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('leadEditContent').innerHTML = html;
+                new bootstrap.Modal(document.getElementById('leadEditModal')).show();
+                // Modal yuklangandan keyin form submit eventini tinglash
+                const leadEditForm = document.getElementById('leadEditForm');
+                if (leadEditForm) {
+                    leadEditForm.addEventListener('submit', handleLeadEditSubmit);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Lead ma\'lumotlarini yuklashda xatolik', 'error');
+            });
+    }
+
+    // Lead tahrirlash modalidan form submitini ushlash
+    function handleLeadEditSubmit(event) {
+        event.preventDefault(); // Standart form submitini to'xtatish
+
+        const form = event.target;
+        const formData = new FormData(form);
+        const leadId = form.dataset.leadId; // lead_edit.html dan keladi
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="ri-loader-4-line"></i> Saqlanmoqda...';
+        }
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest' // AJAX so'rov ekanligini bildirish
+            },
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.message || 'Server xatosi'); });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('leadEditModal')).hide();
+                    location.reload(); // Sahifani yangilash
+                } else {
+                    showToast('Xatolik: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Xatolik yuz berdi: ' + error.message, 'error');
+            })
+            .finally(() => {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="ri-save-line"></i> Saqlash';
+                }
+            });
+    }
+
+
+    // Audio eshitish
+    function playAudio(leadId) {
+        fetch(`/leads/${leadId}/detail/?from_kanban=1`)
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const audioUrl = doc.querySelector('[data-audio-url]')?.getAttribute('data-audio-url');
+
+                if (audioUrl) {
+                    const audioContent = `
+            <div class="audio-player">
+                <audio controls autoplay style="width: 100%;" controlsList="nodownload noremoteplayback">
+                    <source src="${audioUrl}" type="audio/mpeg">
+                    <source src="${audioUrl}" type="audio/wav">
+                    <source src="${audioUrl}" type="audio/ogg">
+                    Brauzeringiz audio faylni qo'llab-quvvatlamaydi.
+                </audio>
+                <div class="audio-info">
+                    <small class="text-muted">Lead #${leadId} - Audio yozuv</small>
+                </div>
+            </div>
+        `;
+                    document.getElementById('audioContent').innerHTML = audioContent;
+                    new bootstrap.Modal(document.getElementById('audioModal')).show();
+                } else {
+                    showToast('Audio fayl topilmadi', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Audio faylni yuklashda xatolik', 'error');
+            });
+    }
+
+    // Lead o'chirish
+    function deleteLeadConfirm(leadId) {
+        deleteLeadId = leadId;
+        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    }
+
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+        if (deleteLeadId) {
+            fetch(`/leads/${deleteLeadId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Lead o\'chirildi', 'success');
+                        bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+                        location.reload();
+                    } else {
+                        showToast('Xatolik: ' + data.message, 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('Xatolik yuz berdi', 'error');
+                });
+        }
+    });
+
+    // Toast xabarlar
+    function showToast(message, type = 'info') {
+        // Mavjud toastlarni olib tashlash
+        const existingToasts = document.querySelectorAll('.toast-custom');
+        existingToasts.forEach(toast => toast.remove());
+
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-custom';
+        toastContainer.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInRight 0.3s ease-out;
+    font-size: 14px;
+    line-height: 1.4;
+`;
+
+        let borderColor, iconClass, iconColor;
+        switch (type) {
+            case 'success':
+                borderColor = '#28a745';
+                iconClass = 'ri-check-circle-line';
+                iconColor = '#28a745';
+                break;
+            case 'error':
+                borderColor = '#dc3545';
+                iconClass = 'ri-error-warning-line';
+                iconColor = '#dc3545';
+                break;
+            case 'warning':
+                borderColor = '#ffc107';
+                iconClass = 'ri-alert-line';
+                iconColor = '#ffc107';
+                break;
+            default:
+                borderColor = '#17a2b8';
+                iconClass = 'ri-information-line';
+                iconColor = '#17a2b8';
+        }
+
+        toastContainer.style.borderLeftColor = borderColor;
+
+        toastContainer.innerHTML = `
+    <i class="${iconClass}" style="color: ${iconColor}; font-size: 18px; flex-shrink: 0;"></i>
+    <span style="flex: 1; color: #333;">${message}</span>
+    <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #999; font-size: 16px; cursor: pointer; padding: 0; margin-left: 8px;">
+        <i class="ri-close-line"></i>
+    </button>
+`;
+
+        // CSS animatsiyasini qo'shish
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+    `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(toastContainer);
+
+        // 5 soniyadan keyin avtomatik olib tashlash
+        setTimeout(() => {
+            if (toastContainer.parentElement) {
+                toastContainer.style.animation = 'slideOutRight 0.3s ease-in';
+                setTimeout(() => {
+                    if (toastContainer.parentElement) {
+                        toastContainer.remove();
+                    }
+                }, 300);
+            }
+        }, 5000);
+    }
+
+    // Telefon raqamini formatlash
+    document.addEventListener('input', function (e) {
+        if (e.target.id && e.target.id.includes('phone-')) {
+            let value = e.target.value.replace(/\D/g, '');
+
+            if (value.length > 0 && !value.startsWith('998')) {
+                if (value.startsWith('8')) {
+                    value = '998' + value.substring(1);
+                } else {
+                    value = '998' + value;
+                }
+            }
+
+            if (value.length > 12) {
+                value = value.substring(0, 12);
+            }
+
+            e.target.value = value.length > 0 ? '+' + value : '';
+        }
+    });
+
+    // Escape tugmasi bilan formalarni yopish
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.quick-add-form.active').forEach(form => {
+                const stage = form.id.replace('quick-form-', '');
+                cancelQuickAdd(stage);
+            });
+        }
+    });
+
+    // Enter tugmasi bilan saqlash
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.closest('.quick-add-form')) {
+            e.preventDefault();
+            const form = e.target.closest('.quick-add-form');
+            const stage = form.id.replace('quick-form-', '');
+            saveQuickLead(stage);
+        }
+    });
+
+    // Stage Management funksiyalari
+    function openStageManagementModal() {
+        const modal = new bootstrap.Modal(document.getElementById('stageManagementModal'));
+        modal.show();
+    }
+
+    function openCreateStageModal() {
+        fetch('{% url "create_lead_stage" %}')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('createEditStageContent').innerHTML = html;
+                document.getElementById('createEditStageModalTitle').textContent = 'Yangi bosqich yaratish';
+                const modal = new bootstrap.Modal(document.getElementById('createEditStageModal'));
+                modal.show();
+                // Form submit eventini tinglash
+                document.getElementById('stageForm').addEventListener('submit', handleStageFormSubmit);
+            })
+            .catch(error => {
+                console.error('Error loading create stage form:', error);
+                showToast('Bosqich yaratish formasini yuklashda xatolik', 'error');
+            });
+    }
+
+    function openEditStageModal(stageId) {
+        fetch(`/leads/stages/edit/${stageId}/`)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('createEditStageContent').innerHTML = html;
+                document.getElementById('createEditStageModalTitle').textContent = 'Bosqichni tahrirlash';
+                const modal = new bootstrap.Modal(document.getElementById('createEditStageModal'));
+                modal.show();
+                // Form submit eventini tinglash
+                document.getElementById('stageForm').addEventListener('submit', handleStageFormSubmit);
+            })
+            .catch(error => {
+                console.error('Error loading edit stage form:', error);
+                showToast('Bosqichni tahrirlash formasini yuklashda xatolik', 'error');
+            });
+    }
+
+    function handleStageFormSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        const submitBtn = form.querySelector('button[type="submit"]');
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ri-loader-4-line"></i> Saqlanmoqda...';
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('createEditStageModal')).hide();
+                    location.reload(); // Sahifani yangilash
+                } else {
+                    showToast('Xatolik: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting stage form:', error);
+                showToast('Xatolik yuz berdi: ' + error.message, 'error');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="ri-save-line"></i> Saqlash';
+            });
+    }
+
+    function deleteStageConfirm(stageId) {
+        deleteStageId = stageId;
+        const modal = new bootstrap.Modal(document.getElementById('deleteStageConfirmModal'));
+        modal.show();
+    }
+
+    function deleteStage(stageId) {
+        fetch(`/leads/stages/delete/${stageId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('deleteStageConfirmModal')).hide();
+                    location.reload(); // Sahifani yangilash
+                } else {
+                    showToast('Xatolik: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting stage:', error);
+                showToast('Xatolik yuz berdi: ' + error.message, 'error');
+            });
+    }
+
+    <!-- Adding JavaScript functions for phone number search -->
+// Phone number search functionality
+function searchByPhone(stageKey, searchValue) {
+    const column = document.querySelector(`[data-stage="${stageKey}"]`);
+    const leadCards = column.querySelectorAll('.lead-card');
+    const countElement = document.getElementById(`search-count-${stageKey}`);
+    
+    // Clean search value - remove spaces and special characters for better matching
+    const cleanSearchValue = searchValue.replace(/[\s\-$$$$\+]/g, '').toLowerCase();
+    
+    let visibleCount = 0;
+    let totalCount = leadCards.length;
+    
+    leadCards.forEach(card => {
+        const phoneNumber = card.getAttribute('data-phone-number') || '';
+        const cleanPhoneNumber = phoneNumber.replace(/[\s\-$$$$\+]/g, '').toLowerCase();
+        
+        if (cleanSearchValue === '' || cleanPhoneNumber.includes(cleanSearchValue)) {
+            card.classList.remove('hidden-by-search');
+            visibleCount++;
+        } else {
+            card.classList.add('hidden-by-search');
+        }
+    });
+    
+    // Update search results count
+    if (searchValue.trim() !== '') {
+        countElement.style.display = 'block';
+        countElement.textContent = `${visibleCount} / ${totalCount} natija topildi`;
+        
+        // Update kanban count badge
+        const countBadge = column.querySelector('.kanban-count');
+        if (countBadge) {
+            countBadge.textContent = visibleCount;
+            countBadge.style.backgroundColor = visibleCount > 0 ? '#28a745' : '#dc3545';
+        }
+    } else {
+        countElement.style.display = 'none';
+        
+        // Reset kanban count badge
+        const countBadge = column.querySelector('.kanban-count');
+        if (countBadge) {
+            countBadge.textContent = totalCount;
+            countBadge.style.backgroundColor = '#6c757d';
+        }
+    }
+}
+
+// Clear search function for individual columns
+function clearColumnSearch(stageKey) {
+    const searchInput = document.querySelector(`input[data-stage="${stageKey}"]`);
+    if (searchInput) {
+        searchInput.value = '';
+        searchByPhone(stageKey, '');
+    }
+}
+
+// Clear all searches function
+function clearAllSearches() {
+    const searchInputs = document.querySelectorAll('.phone-search-input');
+    searchInputs.forEach(input => {
+        const stageKey = input.getAttribute('data-stage');
+        input.value = '';
+        searchByPhone(stageKey, '');
+    });
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl+F to focus first search input
+    if (e.ctrlKey && e.key === 'f') {
+        e.preventDefault();
+        const firstSearchInput = document.querySelector('.phone-search-input');
+        if (firstSearchInput) {
+            firstSearchInput.focus();
+        }
+    }
+    
+    // Escape to clear all searches
+    if (e.key === 'Escape') {
+        clearAllSearches();
+    }
+});
+</script>
+
+<!-- Stage Delete Confirmation Modal (Add this to your HTML) -->
+<div class="modal fade" id="deleteStageConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bosqichni o'chirish</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Haqiqatan ham bu bosqichini o'chirmoqchimisiz? Bu bosqichdagi barcha leadlar "JAVOB BERILMADI" bosqichiga o'tkaziladi.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteStageBtn">O'chirish</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

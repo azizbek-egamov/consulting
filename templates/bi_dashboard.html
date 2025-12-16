@@ -1,0 +1,599 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}BI Dashboard{% endblock %}
+
+{% block item %}
+<style>
+    .chart-container {
+        width: 100%;
+        height: 400px;
+        margin-bottom: 30px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background-color: #fff;
+        padding: 15px;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .filter-group {
+        margin-bottom: 15px;
+    }
+    .filter-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+    .filter-group select,
+    .filter-group input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .filter-group button {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .filter-group button:hover {
+        background-color: #0056b3;
+    }
+    .chart-title {
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        color: #333;
+        font-weight: 600;
+    }
+    .section-heading {
+        margin-top: 40px;
+        margin-bottom: 25px;
+        font-size: 2em;
+        color: #333;
+        text-align: center;
+        font-weight: 700;
+        border-bottom: 2px solid #4e73df;
+        padding-bottom: 10px;
+    }
+</style>
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                BI Dashboard
+            </li>
+        </ol>
+    </div>
+
+    <div class="container-fluid">
+        <div class="filter-section">
+            <form method="GET" action="{% url 'bi_dashboard' %}">
+                <div class="row">
+                    <div class="col-md-3 filter-group">
+                        <label for="start_date">Boshlanish sanasi:</label>
+                        <input type="date" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3 filter-group">
+                        <label for="end_date">Tugash sanasi:</label>
+                        <input type="date" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-3 filter-group">
+                        <label for="city_id">Shahar:</label>
+                        <select id="city_id" name="city" class="form-control">
+                            <option value="">Barcha shaharlar</option>
+                            {% for city in all_cities %}
+                                <option value="{{ city.id }}" {% if selected_city_id == city.id %}selected{% endif %}>{{ city.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 filter-group">
+                        <label for="building_id">Bino:</label>
+                        <select id="building_id" name="building" class="form-control">
+                            <option value="">Barcha binolar</option>
+                            {% for building in all_buildings %}
+                                <option value="{{ building.id }}" {% if selected_building_id == building.id %}selected{% endif %}>{{ building.name }} ({{ building.city.name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 filter-group">
+                        <label for="status">Shartnoma holati:</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="">Barcha holatlar</option>
+                            {% for status_code, status_name in all_contract_statuses %}
+                                <option value="{{ status_code }}" {% if selected_contract_status == status_code %}selected{% endif %}>{{ status_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 filter-group">
+                        <label for="lead_stage">Lead bosqichi:</label>
+                        <select id="lead_stage" name="lead_stage" class="form-control">
+                            <option value="">Barcha bosqichlar</option>
+                            {% for stage in all_lead_stages %}
+                                <option value="{{ stage.id }}" {% if selected_lead_stage_id == stage.id %}selected{% endif %}>{{ stage.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 filter-group">
+                        <label for="expense_type">Chiqim turi:</label>
+                        <select id="expense_type" name="expense_type" class="form-control">
+                            <option value="">Barcha turlar</option>
+                            {% for type in all_expense_types %}
+                                <option value="{{ type.id }}" {% if selected_expense_type_id == type.id %}selected{% endif %}>{{ type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 filter-group d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">Filtrlash</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">1. Kunlik shartnoma yaratish</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="dailyContractsChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">2. Shartnomalar holati bo'yicha taqsimot</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="contractStatusPieChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">3. Umumiy tushum vaqt bo'yicha</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenueOverTimeChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">4. Shaharlar bo'yicha tushum</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenueByCityChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">5. Binolar bo'yicha tushum</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenueByBuildingChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">6. Qarzdorlik holati bo'yicha taqsimot</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="debtStatusPieChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">7. Binolar bo'yicha xonadonlar holati</h6> {# Updated Chart Title #}
+                    </div>
+                    <div class="card-body">
+                        <div id="homesSoldByBuildingChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-heading">Chiqimlar Statistikasi</h2>
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">8. Umumiy chiqimlar vaqt bo'yicha</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="totalExpensesOverTimeChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">9. Chiqimlar turi bo'yicha taqsimot</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="expensesByTypeChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">10. Binolar bo'yicha chiqimlar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="expensesByBuildingChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-heading">Leadlar Statistikasi</h2>
+        <div class="row">
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">11. Leadlar yaratilishi vaqt bo'yicha</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="leadsCreatedOverTimeChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">12. Leadlar bosqich bo'yicha taqsimot</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="leadsByStageChart" class="chart-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock item %}
+
+{% block scripts %}
+{{ block.super }} {# Keep existing scripts from base.html #}
+<!-- ECharts CDN -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    // Ma'lumotlarni Django contextidan olish
+    const dailyContractDates = JSON.parse('{{ daily_contract_dates|escapejs }}');
+    const dailyContractCounts = JSON.parse('{{ daily_contract_counts|escapejs }}');
+    const statusPieData = JSON.parse('{{ status_pie_data|escapejs }}');
+    const revenueDates = JSON.parse('{{ revenue_dates|escapejs }}');
+    const revenueAmounts = JSON.parse('{{ revenue_amounts|escapejs }}');
+    const cityNames = JSON.parse('{{ city_names|escapejs }}');
+    const cityRevenues = JSON.parse('{{ city_revenues|escapejs }}');
+    const buildingNames = JSON.parse('{{ building_names|escapejs }}');
+    const buildingRevenues = JSON.parse('{{ building_revenues|escapejs }}');
+    const debtPieData = JSON.parse('{{ debt_pie_data|escapejs }}');
+
+    const buildingHomesNamesDetailed = JSON.parse('{{ building_homes_names_detailed|escapejs }}');
+    const buildingHomesSoldCountsDetailed = JSON.parse('{{ building_homes_sold_counts_detailed|escapejs }}');
+    const buildingHomesTotalCountsDetailed = JSON.parse('{{ building_homes_total_counts_detailed|escapejs }}');
+    const buildingHomesUnsoldCountsDetailed = JSON.parse('{{ building_homes_unsold_counts_detailed|escapejs }}');
+    const buildingHomesPercentagesDetailed = JSON.parse('{{ building_homes_percentages_detailed|escapejs }}');
+
+    const expenseDates = JSON.parse('{{ expense_dates|escapejs }}');
+    const expenseAmounts = JSON.parse('{{ expense_amounts|escapejs }}');
+    const expenseTypeNames = JSON.parse('{{ expense_type_names|escapejs }}');
+    const expenseTypeAmounts = JSON.parse('{{ expense_type_amounts|escapejs }}');
+    const expenseBuildingNames = JSON.parse('{{ expense_building_names|escapejs }}');
+    const expenseBuildingAmounts = JSON.parse('{{ expense_building_amounts|escapejs }}');
+
+    const leadCreatedDates = JSON.parse('{{ lead_created_dates|escapejs }}');
+    const leadCreatedCounts = JSON.parse('{{ lead_created_counts|escapejs }}');
+    const leadStageNames = JSON.parse('{{ lead_stage_names|escapejs }}');
+    const leadStageCounts = JSON.parse('{{ lead_stage_counts|escapejs }}');
+
+
+    // Helper function to format numbers with space as thousands separator
+    function formatNumberWithSpace(value) {
+        return value.toLocaleString('uz-UZ').replace(/,/g, ' ');
+    }
+
+    // Helper function to initialize and resize charts
+    function initChart(elementId, option) {
+        const chartDom = document.getElementById(elementId);
+        if (!chartDom) return null;
+        const myChart = echarts.init(chartDom);
+        myChart.setOption(option);
+        window.addEventListener('resize', () => myChart.resize());
+        return myChart;
+    }
+
+    // 1. Kunlik shartnoma yaratish (Line Chart)
+    const dailyContractsChart = initChart('dailyContractsChart', {
+        title: { text: 'Kunlik shartnoma yaratish', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: dailyContractDates },
+        yAxis: { type: 'value', name: 'Shartnomalar soni' },
+        series: [{
+            name: 'Shartnomalar',
+            type: 'line',
+            smooth: true,
+            data: dailyContractCounts,
+            itemStyle: { color: '#4e73df' }
+        }]
+    });
+
+    // 2. Shartnomalar holati bo'yicha taqsimot (Pie Chart)
+    const contractStatusPieChart = initChart('contractStatusPieChart', {
+        title: { text: 'Shartnomalar holati bo\'yicha taqsimot', left: 'center' },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+        legend: { orient: 'vertical', left: 'left', top: 'bottom' },
+        series: [{
+            name: 'Shartnoma holati',
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '50%'],
+            data: statusPieData,
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }]
+    });
+
+    // 3. Umumiy tushum vaqt bo'yicha (Line Chart)
+    const revenueOverTimeChart = initChart('revenueOverTimeChart', {
+        title: { text: 'Umumiy tushum vaqt bo\'yicha', left: 'center' },
+        tooltip: { trigger: 'axis', formatter: function(params) {
+            let value = params[0].value;
+            return params[0].name + '<br/>Tushum: ' + formatNumberWithSpace(value) + ' so\'m';
+        }},
+        xAxis: { type: 'category', data: revenueDates },
+        yAxis: { type: 'value', name: 'Tushum (so\'m)' },
+        series: [{
+            name: 'Tushum',
+            type: 'line',
+            smooth: true,
+            data: revenueAmounts,
+            itemStyle: { color: '#1cc88a' }
+        }]
+    });
+
+    // 4. Shaharlar bo'yicha tushum (Bar Chart)
+    const revenueByCityChart = initChart('revenueByCityChart', {
+        title: { text: 'Shaharlar bo\'yicha tushum', left: 'center' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(params) {
+            let value = params[0].value;
+            return params[0].name + '<br/>Tushum: ' + formatNumberWithSpace(value) + ' so\'m';
+        }},
+        xAxis: { type: 'category', data: cityNames, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: 'Tushum (so\'m)' },
+        series: [{
+            name: 'Tushum',
+            type: 'bar',
+            data: cityRevenues,
+            itemStyle: { color: '#f6c23e' }
+        }]
+    });
+
+    // 5. Binolar bo'yicha tushum (Bar Chart)
+    const revenueByBuildingChart = initChart('revenueByBuildingChart', {
+        title: { text: 'Binolar bo\'yicha tushum', left: 'center' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(params) {
+            let value = params[0].value;
+            return params[0].name + '<br/>Tushum: ' + formatNumberWithSpace(value) + ' so\'m';
+        }},
+        xAxis: { type: 'category', data: buildingNames, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: 'Tushum (so\'m)' },
+        series: [{
+            name: 'Tushum',
+            type: 'bar',
+            data: buildingRevenues,
+            itemStyle: { color: '#36b9cc' }
+        }]
+    });
+
+    // 6. Qarzdorlik holati bo'yicha taqsimot (Pie Chart)
+    const debtStatusPieChart = initChart('debtStatusPieChart', {
+        title: { text: 'Qarzdorlik holati bo\'yicha taqsimot', left: 'center' },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+        legend: { orient: 'vertical', left: 'left', top: 'bottom' },
+        series: [{
+            name: 'Qarzdorlik holati',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+                show: false,
+                position: 'center'
+            },
+            emphasis: {
+                label: {
+                    show: true,
+                    fontSize: 20,
+                    fontWeight: 'bold'
+                }
+            },
+            labelLine: { show: false },
+            data: debtPieData
+        }]
+    });
+
+    // 7. Binolar bo'yicha xonadonlar holati (Bar Chart with detailed info)
+    const homesSoldByBuildingChart = initChart('homesSoldByBuildingChart', {
+        title: { text: 'Binolar bo\'yicha xonadonlar holati', left: 'center' },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: { type: 'shadow' },
+            formatter: function(params) {
+                const index = params[0].dataIndex;
+                const buildingName = buildingHomesNamesDetailed[index];
+                const totalHomes = buildingHomesTotalCountsDetailed[index];
+                const soldHomes = buildingHomesSoldCountsDetailed[index];
+                const unsoldHomes = buildingHomesUnsoldCountsDetailed[index];
+                const percentage = buildingHomesPercentagesDetailed[index];
+
+                return `${buildingName}<br/>` +
+                       `Jami xonadonlar: ${totalHomes}<br/>` +
+                       `Sotilgan xonadonlar: ${soldHomes}<br/>` +
+                       `Sotilmagan xonadonlar: ${unsoldHomes}<br/>` +
+                       `Bandlik foizi: ${percentage}%`;
+            }
+        },
+        xAxis: { type: 'category', data: buildingHomesNamesDetailed, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: 'Xonadonlar soni' },
+        series: [{
+            name: 'Sotilgan xonadonlar',
+            type: 'bar',
+            data: buildingHomesSoldCountsDetailed,
+            itemStyle: { color: '#8A2BE2' }
+        }]
+    });
+
+    // 8. Umumiy chiqimlar vaqt bo'yicha (Line Chart)
+    const totalExpensesOverTimeChart = initChart('totalExpensesOverTimeChart', {
+        title: { text: 'Umumiy chiqimlar vaqt bo\'yicha', left: 'center' },
+        tooltip: { trigger: 'axis', formatter: function(params) {
+            let value = params[0].value;
+            return params[0].name + '<br/>Chiqim: ' + formatNumberWithSpace(value) + ' so\'m';
+        }},
+        xAxis: { type: 'category', data: expenseDates },
+        yAxis: { type: 'value', name: 'Chiqim (so\'m)' },
+        series: [{
+            name: 'Chiqim',
+            type: 'line',
+            smooth: true,
+            data: expenseAmounts,
+            itemStyle: { color: '#FF5733' }
+        }]
+    });
+
+    // 9. Chiqimlar turi bo'yicha taqsimot (Pie Chart)
+    const expensesByTypeChart = initChart('expensesByTypeChart', {
+        title: { text: 'Chiqimlar turi bo\'yicha taqsimot', left: 'center' },
+        tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+        legend: { orient: 'vertical', left: 'left', top: 'bottom' },
+        series: [{
+            name: 'Chiqim turi',
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '50%'],
+            data: expenseTypeNames.map((name, index) => ({
+                name: name,
+                value: expenseTypeAmounts[index]
+            })),
+            emphasis: {
+                itemStyle: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }]
+    });
+
+    // 10. Binolar bo'yicha chiqimlar (Bar Chart)
+    const expensesByBuildingChart = initChart('expensesByBuildingChart', {
+        title: { text: 'Binolar bo\'yicha chiqimlar', left: 'center' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: function(params) {
+            let value = params[0].value;
+            return params[0].name + '<br/>Chiqim: ' + formatNumberWithSpace(value) + ' so\'m';
+        }},
+        xAxis: { type: 'category', data: expenseBuildingNames, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: 'Chiqim (so\'m)' },
+        series: [{
+            name: 'Chiqim',
+            type: 'bar',
+            data: expenseBuildingAmounts,
+            itemStyle: { color: '#DAA520' }
+        }]
+    });
+
+    // 11. Leadlar yaratilishi vaqt bo'yicha (Line Chart)
+    const leadsCreatedOverTimeChart = initChart('leadsCreatedOverTimeChart', {
+        title: { text: 'Leadlar yaratilishi vaqt bo\'yicha', left: 'center' },
+        tooltip: { trigger: 'axis' },
+        xAxis: { type: 'category', data: leadCreatedDates },
+        yAxis: { type: 'value', name: 'Leadlar soni' },
+        series: [{
+            name: 'Leadlar',
+            type: 'line',
+            smooth: true,
+            data: leadCreatedCounts,
+            itemStyle: { color: '#6A5ACD' }
+        }]
+    });
+
+    // 12. Leadlar bosqich bo'yicha taqsimot (Bar Chart)
+    const leadsByStageChart = initChart('leadsByStageChart', {
+        title: { text: 'Leadlar bosqich bo\'yicha taqsimot', left: 'center' },
+        tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+        xAxis: { type: 'category', data: leadStageNames, axisLabel: { rotate: 45 } },
+        yAxis: { type: 'value', name: 'Leadlar soni' },
+        series: [{
+            name: 'Leadlar',
+            type: 'bar',
+            data: leadStageCounts,
+            itemStyle: { color: '#20B2AA' }
+        }]
+    });
+
+    // Make charts responsive (ensure all chart instances are listed)
+    window.addEventListener('resize', function() {
+        if (dailyContractsChart) dailyContractsChart.resize();
+        if (contractStatusPieChart) contractStatusPieChart.resize();
+        if (revenueOverTimeChart) revenueOverTimeChart.resize();
+        if (revenueByCityChart) revenueByCityChart.resize();
+        if (revenueByBuildingChart) revenueByBuildingChart.resize();
+        if (debtStatusPieChart) debtStatusPieChart.resize();
+        if (homesSoldByBuildingChart) homesSoldByBuildingChart.resize();
+        if (totalExpensesOverTimeChart) totalExpensesOverTimeChart.resize();
+        if (expensesByTypeChart) expensesByTypeChart.resize();
+        if (expensesByBuildingChart) expensesByBuildingChart.resize();
+        if (leadsCreatedOverTimeChart) leadsCreatedOverTimeChart.resize();
+        if (leadsByStageChart) leadsByStageChart.resize();
+    });
+</script>
+{% endblock scripts %}

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hisobga kirish - Major Consulting</title>
+
+    <!-- Meta -->
+    <meta name="description" content="Marketplace for Bootstrap Admin Dashboards">
+    <meta property="og:title" content="Admin Templates - Dashboard Templates">
+    <meta property="og:description" content="Marketplace for Bootstrap Admin Dashboards">
+    <meta property="og:type" content="Website">
+
+    <!-- *************
+			************ CSS Files *************
+		************* -->
+    <link rel="stylesheet" href="{% static 'fonts/remix/remixicon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.min.css' %}">
+
+    <!-- *************
+			************ JS Files *************
+		************* -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  </head>
+
+  <body class="login-bg">
+
+    <!-- Container starts -->
+    <div class="container">
+
+      <!-- Auth wrapper starts -->
+      <div class="auth-wrapper">
+
+        <!-- Form starts -->
+        <form method="POST">
+            {% csrf_token %}
+          <div class="auth-box">
+            <a href="/" class="auth-logo mb-4 d-inline-block text-center" style="width: 100%;">
+              <img src="{% static 'images/logo-uzun.png' %}" alt="" style="width: 340px; max-width: 100%; height: auto; object-fit: contain; display: inline-block;">
+            </a>
+
+            <h4 class="mb-4">Hisobga kirish</h4>
+            {% if error %}
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 rounded-3 shadow-sm border-0">
+              <i class="ri-error-warning-line fs-5"></i>
+              <span class="m-0 small">{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+              <label class="form-label" for="user">Foydalanuvchi nomi <span class="text-danger">*</span></label>
+              <input type="text" id="user" name="username" value="{{userr}}" class="form-control" placeholder="Foydalanuvchi nomini kiriting" required>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label" for="pwd">Parol <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password" id="pwd" name="password" value="{{pass}}" class="form-control" placeholder="Parolni kiriting" required>
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                  <i class="ri-eye-line text-primary"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-3 d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Kirish</button>
+            </div>
+
+          </div>
+
+        </form>
+        <!-- Form ends -->
+
+      </div>
+      <!-- Auth wrapper ends -->
+
+    </div>
+    <!-- Container ends -->
+
+    <script>
+      // Parolni ko'rsatish va yashirish funksiyasini yaratish
+      const togglePassword = document.getElementById('togglePassword');
+      const passwordField = document.getElementById('pwd');
+
+      togglePassword.addEventListener('click', function (e) {
+        // Parol maydonining turini o'zgartiradi
+        const type = passwordField.type === 'password' ? 'text' : 'password';
+        passwordField.type = type;
+
+        // Ikonkani o'zgartiradi (ko'rinishga qarab)
+        this.innerHTML = type === 'password' 
+          ? '<i class="ri-eye-line text-primary"></i>' 
+          : '<i class="ri-eye-off-line text-primary"></i>';
+      });
+    </script>
+
+  </body>
+
+</html>

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lead ni Mijozga Aylantirish{% endblock title %}
+
+{% block item %}
+<div class="app-body">
+    {% include 'messages.html' %}
+    <div class="row gx-3">
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Lead ni Mijozga Aylantirish</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Lead ma'lumotlari -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">Lead Ma'lumotlari</h6>
+                        <p class="mb-1"><strong>Telefon:</strong> {{ lead.phone_number }}</p>
+                        <p class="mb-1"><strong>Ism:</strong> {{ lead.client_name|default:"Noma'lum" }}</p>
+                        <p class="mb-0"><strong>Holat:</strong> {{ lead.get_call_status_display }}</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">To'liq ismi <span class="text-danger">*</span></label>
+                                <input type="text" name="full_name" class="form-control" 
+                                       value="{{ lead.client_name|default:'' }}" required>
+                            </div>
+
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success">
+                                <i class="ri-user-add-line me-1"></i>Mijozga Aylantirish
+                            </button>
+                            <a href="{% url 'lead_detail' lead.id %}" class="btn btn-secondary">
+                                <i class="ri-arrow-left-line me-1"></i>Orqaga
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock item %}

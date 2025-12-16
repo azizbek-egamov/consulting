@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Foydalanuvchilar Statistikasi{% endblock %}
+
+{% block item %}
+<div class="app-container">
+    <div class="app-hero-header d-flex align-items-center justify-content-between">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item">
+                BI
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">Foydalanuvchilar statistikasi</li>
+        </ol>
+    </div>
+
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <!-- Filtrlar -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Filtrlar</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{% url 'bi_users' %}">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">Boshlanish sanasi:</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">Tugash sanasi:</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Filtrlash</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Umumiy statistika kartalar -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Jami foydalanuvchilar</p>
+                        <h4 class="mb-0">{{ total_users }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Jami shartnomalar</p>
+                        <h4 class="mb-0">{{ total_contracts }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">Umumiy summa</p>
+                        <h4 class="mb-0">{{ total_amount|intcomma }} so'm</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card shadow-sm border-0 h-100">
+                    <div class="card-body">
+                        <p class="text-muted mb-1">To'langan summa</p>
+                        <h4 class="mb-0">{{ total_paid|intcomma }} so'm</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grafiklar -->
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Foydalanuvchilar bo'yicha shartnomalar soni</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="userContractsChart" style="width: 100%; height: 320px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Kunlik shartnomalar yaratilishi (foydalanuvchilar bo'yicha)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="dailyUserContractsChart" style="width: 100%; height: 360px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Foydalanuvchilar bo'yicha o'rtacha shartnoma summasi</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="userAvgAmountChart" style="width: 100%; height: 320px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Foydalanuvchilar bo'yicha to'lovlar</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="userPaymentsChart" style="width: 100%; height: 320px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Shartnomalar ulushi (foydalanuvchilar)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="userContractsShareChart" style="width: 100%; height: 320px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lightTheme = {
+            textColor: '#333333',
+            labelColor: '#666666',
+            gridColor: '#e0e0e0',
+            tooltipBg: '#ffffff',
+            tooltipBorder: '#dddddd'
+        };
+        // Chart 1: Foydalanuvchilar bo'yicha shartnomalar soni
+        var userContractsChart = echarts.init(document.getElementById('userContractsChart'));
+        var userNames = {{ user_names|safe }};
+        var userContractsCounts = {{ user_contracts_counts|safe }};
+        
+        if (userNames && userContractsCounts) {
+            userContractsChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Foydalanuvchilar bo\'yicha shartnomalar soni', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                grid: { left: '5%', right: '5%', bottom: '8%', top: '10%', containLabel: true },
+                xAxis: { type: 'category', data: userNames, axisLabel: { rotate: 45, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+                yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+                series: [{
+                    name: 'Shartnomalar soni',
+                    type: 'bar',
+                    data: userContractsCounts,
+                    itemStyle: { color: '#4a6cf7' },
+                    barWidth: '25%',
+                    barCategoryGap: '50%'
+                }]
+            });
+        }
+
+        // Chart 5: Contracts share (pie)
+        var userContractsShareChart = echarts.init(document.getElementById('userContractsShareChart'));
+        if (userNames && userContractsCounts) {
+            userContractsShareChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Shartnomalar ulushi', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                legend: { bottom: 10, type: 'scroll', textStyle: { color: lightTheme.textColor } },
+                series: [{
+                    name: 'Shartnomalar',
+                    type: 'pie',
+                    radius: ['35%', '60%'],
+                    avoidLabelOverlap: true,
+                    itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: false, position: 'center' },
+                    emphasis: { label: { show: true, fontSize: 16, fontWeight: 'bold' } },
+                    data: userNames.map(function(name, idx) {
+                        return { name: name, value: userContractsCounts[idx] || 0 };
+                    })
+                }]
+            });
+        }
+
+        // Chart 2: Kunlik shartnomalar (multi-line)
+        var dailyUserContractsChart = echarts.init(document.getElementById('dailyUserContractsChart'));
+        var dailyDates = {{ daily_dates|safe }};
+        var multiLineSeries = {{ multi_line_series|safe }};
+        
+        if (dailyDates && multiLineSeries) {
+            dailyUserContractsChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Kunlik shartnomalar yaratilishi', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'axis', backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                legend: { data: multiLineSeries.map(s => s.name), top: 30, textStyle: { color: lightTheme.textColor } },
+                grid: { left: '5%', right: '5%', bottom: '10%', top: '15%', containLabel: true },
+                xAxis: { type: 'category', boundaryGap: false, data: dailyDates, axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+                yAxis: { type: 'value', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+                series: multiLineSeries.map(s => ({
+                    name: s.name,
+                    type: 'line',
+                    data: s.data,
+                    smooth: true,
+                    lineStyle: { width: 1.5 },
+                    symbolSize: 4,
+                    symbol: 'circle'
+                }))
+            });
+        }
+
+        // Chart 3: O'rtacha summa
+        var userAvgAmountChart = echarts.init(document.getElementById('userAvgAmountChart'));
+        var userAvgNames = {{ user_avg_names|safe }};
+        var userAvgAmounts = {{ user_avg_amounts|safe }};
+        
+        if (userAvgNames && userAvgAmounts) {
+            userAvgAmountChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'O\'rtacha shartnoma summasi', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                grid: { left: '8%', right: '4%', bottom: '10%', top: '12%', containLabel: true },
+                xAxis: { type: 'category', data: userAvgNames, axisLabel: { rotate: 45, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+                yAxis: { type: 'value', name: 'Summa (so\'m)', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+                series: [{
+                    name: 'O\'rtacha summa',
+                    type: 'bar',
+                    data: userAvgAmounts,
+                    itemStyle: { color: '#10b981' },
+                    barWidth: '25%',
+                    barCategoryGap: '50%'
+                }]
+            });
+        }
+
+        // Chart 4: To'lovlar
+        var userPaymentsChart = echarts.init(document.getElementById('userPaymentsChart'));
+        var userTotalAmounts = {{ user_total_amounts|safe }};
+        var userPaidAmounts = {{ user_paid_amounts|safe }};
+        
+        if (userNames && userTotalAmounts && userPaidAmounts) {
+            userPaymentsChart.setOption({
+                backgroundColor: 'transparent',
+                textStyle: { color: lightTheme.textColor },
+                title: { text: 'Foydalanuvchilar bo\'yicha to\'lovlar', left: 'center', textStyle: { color: lightTheme.textColor } },
+                tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, backgroundColor: lightTheme.tooltipBg, borderColor: lightTheme.tooltipBorder, textStyle: { color: lightTheme.textColor } },
+                legend: { data: ['Umumiy summa', 'To\'langan'], top: 30, textStyle: { color: lightTheme.textColor } },
+                grid: { left: '8%', right: '4%', bottom: '10%', top: '18%', containLabel: true },
+                xAxis: { type: 'category', data: userNames, axisLabel: { rotate: 45, color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } } },
+                yAxis: { type: 'value', name: 'Summa (so\'m)', axisLabel: { color: lightTheme.labelColor }, axisLine: { lineStyle: { color: lightTheme.gridColor } }, splitLine: { lineStyle: { color: lightTheme.gridColor } } },
+                series: [
+                    {
+                        name: 'Umumiy summa',
+                        type: 'bar',
+                        data: userTotalAmounts,
+                        itemStyle: { color: '#4a6cf7' },
+                        barWidth: '22%',
+                        barCategoryGap: '40%',
+                        barGap: '10%'
+                    },
+                    {
+                        name: 'To\'langan',
+                        type: 'bar',
+                        data: userPaidAmounts,
+                        itemStyle: { color: '#10b981' },
+                        barWidth: '22%'
+                    }
+                ]
+            });
+        }
+
+        // Resize charts on window resize
+        window.addEventListener('resize', function() {
+            userContractsChart.resize();
+            dailyUserContractsChart.resize();
+            userAvgAmountChart.resize();
+            userPaymentsChart.resize();
+        });
+    });
+</script>
+{% endblock item %}
+

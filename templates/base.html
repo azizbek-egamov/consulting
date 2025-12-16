@@ -1,0 +1,569 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}{% endblock title %}</title>
+
+<!-- CSS Files -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="{% static 'fonts/remix/remixicon.css' %}">
+<link rel="stylesheet" href="{% static 'vendor/overlay-scroll/OverlayScrollbars.min.css' %}">
+<link rel="stylesheet" href="{% static 'css/main.min.css' %}">
+
+<!-- Responsive CSS -->
+<style>
+  @media (max-width: 991.98px) {
+    .sidebar-wrapper {
+      position: fixed;
+      top: 0;
+      left: -250px;
+      height: 100vh;
+      width: 250px;
+      background: #fff;
+      z-index: 1031;
+      transition: all 0.3s ease;
+      overflow-y: auto;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .sidebar-wrapper.show {
+      left: 0;
+    }
+    
+    .page-wrapper.nav-open .sidebar-wrapper {
+      left: 0;
+    }
+    
+    .page-wrapper.nav-open .main-container {
+      margin-left: 0;
+    }
+    
+    .toggle-sidebar {
+      display: block !important;
+    }
+    
+    .pin-sidebar {
+      display: none !important;
+    }
+    
+    .app-header {
+      left: 0;
+      width: 100%;
+    }
+     
+    .main-container {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .treeview > a {
+      position: relative;
+    }
+
+    .treeview > a::after {
+      content: '\ea4e';
+      font-family: 'remixicon';
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: transform 0.3s;
+    }
+
+    .treeview.active > a::after {
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    .treeview-menu {
+      display: none;
+      padding-left: 15px;
+    }
+
+    .treeview.active .treeview-menu {
+      display: block;
+    }
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1030;
+  }
+
+  @media (max-width: 991.98px) {
+    .sidebar-overlay.show {
+      display: block;
+    }
+  }
+
+  .sidebar-menu {
+    margin: 0;
+    padding: 15px;
+    list-style: none;
+  }
+
+  .sidebar-menu li {
+    margin-bottom: 5px;
+  }
+
+  .sidebar-menu a {
+    display: block;
+    padding: 10px 15px;
+    color: #333;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: all 0.3s;
+  }
+
+  .sidebar-menu a:hover,
+  .sidebar-menu a.active {
+    background-color: rgba(74, 108, 247, 0.1);
+    color: #4a6cf7;
+  }
+
+  .sidebar-menu .treeview-menu {
+    list-style: none;
+    padding-left: 15px;
+    margin-top: 5px;
+  }
+
+  .sidebar-menu .treeview-menu a {
+    padding: 8px 15px;
+    font-size: 0.9em;
+  }
+
+  .sidebar-menu i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+  }
+</style>
+</head>
+
+
+<body>
+
+
+<!-- Page wrapper starts -->
+<div class="page-wrapper">
+
+  <!-- App header starts -->
+  <header class="app-header d-flex align-items-center">
+
+    <!-- Toggle buttons starts -->
+    <div class="d-flex">
+      <button class="toggle-sidebar">
+        <i class="ri-menu-line"></i>
+      </button>
+      <button class="pin-sidebar">
+        <i class="ri-menu-line"></i>
+      </button>
+    </div>
+    <!-- Toggle buttons ends -->
+
+    <!-- App brand starts -->
+    <div class="app-brand ms-3">
+      <a href="/" class="d-lg-block d-none">
+        <img src="{% static 'images/logo-uzun.png' %}" class="logo">
+      </a>
+      <a href="/" class="d-lg-none d-md-block">
+        <img src="{% static 'images/logo-uzun.png' %}" class="logo">
+      </a>
+    </div>
+    <!-- App brand ends -->
+
+    <!-- App header actions starts -->
+    <div class="header-actions">
+      <!-- Header actions ends -->
+      <!-- Notification icon starts -->
+      <div class="dropdown ms-2">
+        {% comment %} <!-- <a id="notificationSettings" class="dropdown-toggle d-flex align-items-center position-relative" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="ri-notification-3-line fs-5" style="color: white;"></i>
+          <span class="notification-badge position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationCount" style="font-size: 0.6rem; display: none;">
+            0
+          </span>
+        </a> -->
+        <!-- <div class="dropdown-menu dropdown-menu-end shadow-lg" style="min-width: 300px;">
+          <div class="px-3 py-2 border-bottom">
+            <h6 class="mb-0">Bildirishnomalar</h6>
+            <small class="text-muted">Muddati yaqin va o'tib ketgan to'lovlar</small>
+          </div>
+          <div class="notification-list" style="max-height: 300px; overflow-y: auto;">
+            <div class="px-3 py-2 text-center text-muted" id="noNotifications">
+              <i class="ri-notification-off-line fs-4 d-block mb-1"></i>
+              Bildirishnomalar yo'q
+            </div>
+          </div>
+          <div class="px-3 py-2 border-top">
+            <a href="{% url 'notifications' %}" class="btn btn-primary btn-sm w-100">
+              <i class="ri-eye-line me-1"></i>
+              Barchasini ko'rish
+            </a>
+          </div>
+        </div> --> {% endcomment %}
+      </div>
+      <!-- Notification icon ends -->
+
+      <!-- Header user settings starts -->
+      <div class="dropdown ms-2">
+        <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <div class="avatar-box"><img src="{% static 'images/admin.png' %}" alt="admin-logo" width=24></div>
+        </a>
+        <div class="dropdown-menu dropdown-menu-end shadow-lg">
+          <div class="px-3 py-2">
+            <span class="small">Admin</span>
+            <h6 class="m-0">{{request.user.first_name}} {{request.user.last_name}} </h6>
+          </div>
+          <div class="mx-3 my-2 d-grid">
+            <a href="/logout" class="btn btn-danger">Chiqish</a>
+          </div>
+        </div>
+      </div>
+      <!-- Header user settings ends -->
+
+    </div>
+    <!-- App header actions ends -->
+
+  </header>
+  
+  <!-- App header ends -->
+
+  <!-- Main container starts -->
+  <section class="main-container">
+
+    <!-- Sidebar wrapper starts -->
+    <nav id="sidebar" class="sidebar-wrapper">
+
+      <!-- Sidebar profile starts -->
+      <div class="sidebar-profile">
+        <img src="{% static 'images/1077114.png' %}" class="img-shadow img-3x me-3 rounded-5">
+        <div class="m-0">
+          <h5 class="mb-1 profile-name text-nowrap text-truncate">{{request.user.first_name}} {{request.user.last_name}}</h5>
+          <p class="m-0 small profile-name text-nowrap text-truncate">Boshqaruvchi</p>
+        </div>
+      </div>
+      <!-- Sidebar profile ends -->
+
+      <!-- Sidebar menu starts -->
+      <div class="sidebarMenuScroll">
+        <ul class="sidebar-menu">
+          <li class="">
+            <a href="/">
+              <i class="ri-home-6-line"></i>
+              <span class="menu-text">Asosiy</span>
+            </a>
+          </li>
+          
+          <li class="treeview">
+            <a href="javascript:void(0);">
+              <i class="ri-user-3-line"></i>
+              <span class="menu-text">Mijozlar</span>
+            </a>
+            <ul class="treeview-menu">
+              <li>
+                <a href="/client/">Mijozlar ro'yxati</a>
+              </li>
+              {% if request.user.username == "ceoadmin" %}
+              <li>
+                <a href="/client/create/">Mijoz qo'shish</a>
+              </li>
+              {% endif %}
+            </ul>
+          </li>
+          <li class="treeview">
+            <a href="javascript:void(0);">
+              <i class="ri-contract-line"></i>
+              <span class="menu-text">Shartnoma</span>
+            </a>
+            <ul class="treeview-menu">
+              <li>
+                <a href="/contract/">Shartnomalar ro'yxati</a>
+              </li>
+              <li>
+                <a href="/contract/create/">Shartnoma qo'shish</a>
+              </li>
+            </ul>
+          </li>
+         <li class="treeview">
+            <a href="javascript:void(0);">
+              <i class="ri-phone-line"></i>
+              <span class="menu-text">Leadlar</span>
+            </a>
+            <ul class="treeview-menu">
+              <li>
+                <a href="{% url 'leads_kanban' %}">Leadlar jadvali</a>
+              </li>
+            </ul>
+          </li>
+          {% if request.user.username == "ceoadmin" %}
+          <li class="treeview">
+            <a href="javascript:void(0);">
+              <i class="ri-user-settings-line"></i>
+              <span class="menu-text">Foydalanuvchilar</span>
+            </a>
+            <ul class="treeview-menu">
+              <li>
+                <a href="{% url 'user-management' %}">Foydalanuvchilar ro'yxati</a>
+              </li>
+              <li>
+                <a href="{% url 'user-create' %}">Yangi foydalanuvchi</a>
+              </li>
+            </ul>
+          </li>
+          {% endif %}
+          
+          {% if request.user.username == "ceoadmin" %}
+          <li class="treeview">
+            <a href="javascript:void(0);">
+                <i class="ri-bar-chart-box-line"></i>
+                <span class="menu-text">BI</span>
+            </a>
+            <ul class="treeview-menu">
+                <li>
+                    <a href="{% url 'bi_contracts_payments' %}">Shartnomalar va To'lovlar <br> Statistikasi</a>
+                </li>
+                                                <li>
+                    <a href="{% url 'bi_leads' %}">Leadlar Statistikasi</a>
+                </li>
+                {% if request.user.username == "ceoadmin" %}
+                  <li>
+                    <a href="{% url 'bi_users' %}">Foydalanuvchilar Statistikasi</a>
+                  </li>
+                {% endif %}
+            </ul>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+      <!-- Sidebar menu ends -->
+
+    </nav>
+    <!-- Sidebar wrapper ends -->
+
+    <!-- App container starts -->
+    <article class="app-container">
+      {% block item %}{% endblock item %}
+    </article>
+    <!-- App container ends -->
+
+  </section>
+  <!-- Main container ends -->
+
+</div>
+
+<!-- Page wrapper ends -->
+
+<!-- Add this div for overlay -->
+<div class="sidebar-overlay"></div>
+
+<!-- JavaScript Files -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{% static 'vendor/overlay-scroll/jquery.overlayScrollbars.min.js' %}"></script>
+<script src="{% static 'js/validations.js' %}"></script>
+
+<!-- Custom JavaScript -->
+<script>
+  $(document).ready(function() {
+    // Toggle sidebar
+
+
+    // Close sidebar when clicking overlay
+    $('.sidebar-overlay').on('click', function() {
+      $('.sidebar-wrapper').removeClass('show');
+      $('.sidebar-overlay').removeClass('show');
+      $('body').removeClass('overflow-hidden');
+    });
+
+    // Initialize treeview menu
+    $('.treeview > a').on('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var $treeview = $(this).parent();
+      var $submenu = $(this).next('.treeview-menu');
+      
+      // Close other open menus with animation
+      $('.treeview').not($treeview).each(function() {
+        var $this = $(this);
+        if ($this.hasClass('active')) {
+          $this.removeClass('active');
+          $this.find('.treeview-menu')
+            .slideUp(300, 'swing');
+        }
+      });
+      
+      // Toggle current treeview with animation
+      if (!$treeview.hasClass('active')) {
+        $treeview.addClass('active');
+        $submenu.hide().slideDown(400, 'swing');
+      } else {
+        $submenu.slideUp(300, 'swing', function() {
+        $treeview.removeClass('active');
+        });
+      }
+    });
+
+    // Add CSS transition for smoother arrow rotation
+    $('<style>')
+      .text(`
+        .treeview > a::after {
+          transition: transform 0.3s ease-in-out !important;
+        }
+        .treeview-menu {
+          display: none;
+        }
+      `)
+      .appendTo('head');
+
+    // Set active menu item based on current URL
+    var currentUrl = window.location.pathname;
+    var bestMatch = '';
+    var $bestMatchElement = null;
+
+    // Find the best matching menu item
+    $('.sidebar-menu a').each(function() {
+      var menuUrl = $(this).attr('href');
+      // Skip empty or undefined URLs
+      if (!menuUrl || menuUrl === 'javascript:void(0);') {
+        return;
+      }
+      // Check if current URL starts with menu URL and update best match
+      if (currentUrl.startsWith(menuUrl)) {
+        if (menuUrl.length > bestMatch.length) {
+          bestMatch = menuUrl;
+          $bestMatchElement = $(this);
+        }
+      }
+    });
+
+    // Apply active class to the best match
+    if ($bestMatchElement) {
+      $bestMatchElement.addClass('active');
+      // Add active class to parent treeview and show submenu
+      var $parentTreeview = $bestMatchElement.parents('.treeview');
+      if ($parentTreeview.length) {
+        $parentTreeview.addClass('active');
+        var $menu = $bestMatchElement.closest('.treeview-menu');
+        if ($menu.length) {
+          $menu.hide().slideDown(400, 'swing');
+        }
+      }
+    } else if (currentUrl === '/') {
+      // Special case for home page
+      $('.sidebar-menu a[href="/"]').addClass('active');
+      }
+
+    // Pin sidebar functionality
+    $('.pin-sidebar').on('click', function(e) {
+      e.stopPropagation();
+      $('.page-wrapper').toggleClass('pinned');
+      localStorage.setItem('sidebarPinned', $('.page-wrapper').hasClass('pinned'));
+    });
+
+    // Apply saved sidebar state
+    if (localStorage.getItem('sidebarPinned') === 'true') {
+      $('.page-wrapper').addClass('pinned');
+    }
+
+    // Handle window resize
+    $(window).on('resize', function() {
+      if ($(window).width() >= 992) {
+        $('.sidebar-wrapper').removeClass('show');
+        $('.sidebar-overlay').removeClass('show');
+        $('body').removeClass('overflow-hidden');
+      }
+    });
+
+    // Initialize OverlayScrollbars if available
+    if ($.fn.overlayScrollbars) {
+      $('.sidebarMenuScroll').overlayScrollbars({
+        className: 'os-theme-dark',
+        scrollbars: {
+          autoHide: 'leave',
+          autoHideDelay: 100
+        }
+      });
+    }
+  });
+</script>
+
+<!-- Additional scripts -->
+{% block scripts %}{% endblock scripts %}
+
+<!-- <script>
+// Notification functionality
+function loadNotifications() {
+  fetch('/notifications/')
+      .then(response => response.text())
+      .then(html => {
+          // Parse the response to extract notification data
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Count notifications from the parsed HTML
+          const overdueCount = doc.querySelectorAll('.overdue-item').length;
+          const upcomingCount = doc.querySelectorAll('.upcoming-item').length;
+          const totalCount = overdueCount + upcomingCount;
+          
+          // Update notification badge
+          const badge = document.getElementById('notificationCount');
+          const noNotifications = document.getElementById('noNotifications');
+          const notificationList = document.querySelector('.notification-list');
+          
+          if (totalCount > 0) {
+              badge.textContent = totalCount;
+              badge.style.display = 'block';
+              noNotifications.style.display = 'none';
+              
+              // Add quick preview items
+              let previewHtml = '';
+              if (overdueCount > 0) {
+                  previewHtml += `
+                      <div class="px-3 py-2 border-bottom">
+                          <small class="text-danger fw-bold">
+                              <i class="ri-error-warning-line me-1"></i>
+                              ${overdueCount} ta muddati o'tgan
+                          </small>
+                      </div>
+                  `;
+              }
+              if (upcomingCount > 0) {
+                  previewHtml += `
+                      <div class="px-3 py-2 border-bottom">
+                          <small class="text-warning fw-bold">
+                              <i class="ri-time-line me-1"></i>
+                              ${upcomingCount} ta yaqin muddat
+                          </small>
+                      </div>
+                  `;
+              }
+              
+              notificationList.innerHTML = previewHtml + noNotifications.outerHTML;
+          } else {
+              badge.style.display = 'none';
+              noNotifications.style.display = 'block';
+          }
+      })
+      .catch(error => {
+          console.error('Notification loading error:', error);
+      });
+}
+
+// Load notifications on page load
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotifications();
+  
+  // Refresh notifications every 5 minutes
+  setInterval(loadNotifications, 5 * 60 * 1000);
+});
+</script> -->
+</body>
+</html>

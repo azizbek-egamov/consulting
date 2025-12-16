@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+{% block title %}Boshqaruv paneli - Major Consulting{% endblock title %}
+{% block item %}
+{% load static %}
+{% load humanize %}
+{% if request.user.username == 'ceoadmin' %}
+<div class="app-container">
+  <!-- App hero header starts -->
+  <div class="app-hero-header d-flex align-items-center">
+    <!-- Breadcrumb starts -->
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item">
+        <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+        <a href="/">Asosiy</a>
+      </li>
+      <li class="breadcrumb-item text-primary" aria-current="page">
+        Boshqaruv paneli
+      </li>
+    </ol>
+    <!-- Breadcrumb ends -->
+  </div>
+  <!-- App Hero header ends -->
+  <!-- App body starts -->
+  <div class="app-body">
+    {% comment %} {% if pay.date == True %}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert" style="z-index: 1; border-left: 4px solid #ffc107; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+      <div class="d-flex align-items-center">
+        <i class="ri-alert-line fs-4 me-3 text-warning"></i>
+        <div>
+          <strong>Diqaat!</strong> Sayt o'chib qolishidan oldin <a href="https://t.me/pycouz" class="alert-link"><strong>dasturchi</strong></a> bilan aloqaga chiqishingzini so'raymiz. Server {{pay.month}} da to'liq o'chiriladi. Telefon: <code>+99897 202 3012</code>
+        </div>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %} {% endcomment %}
+    
+    <!-- Welcome card -->
+    <div class="row gx-3 mb-4">
+      <div class="col-12">
+        <div class="card welcome-card" style="background: linear-gradient(to right, #4a6cf7, #6a8fff); border: none; border-radius: 15px; overflow: hidden;">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center">
+              <div class="welcome-icon p-3 bg-white me-4" style="box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <img src="{% static 'images/logo-uzun.png' %}" alt="Major Consulting Logo" style="max-width: 200px; height: auto; max-height: 60px; object-fit: contain;">
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 text-white" style="font-size: calc(24px + 8 * ((100vw - 320px) / 1120));">Assalomu alaykum, {{request.user.first_name}} 👋</h4>
+                <p class="text-white opacity-75 mt-2 mb-0">Major Consulting boshqaruv paneliga xush kelibsiz</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Stats cards -->
+    <div class="row gx-3">
+      <div class="col-12 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+        <div class="card mb-3 hover-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="p-2 border border-success rounded-circle me-3" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div class="icon-box md bg-success-subtle rounded-5">
+                  <i class="ri-calendar-line fs-4 text-success"></i>
+                </div>
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 mb-1">{{tushum.kunlik_tushum}} so'm</h4>
+                <p class="m-0 text-muted">Bugungi tushum</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-12 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+        <div class="card mb-3 hover-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="p-2 border border-primary rounded-circle me-3" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div class="icon-box md bg-primary-subtle rounded-5">
+                  <i class="ri-calendar-event-line fs-4 text-primary"></i>
+                </div>
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 mb-1">{{tushum.haftalik_tushum}} so'm</h4>
+                <p class="m-0 text-muted">Haftalik tushum</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-12 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+        <div class="card mb-3 hover-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="p-2 border border-danger rounded-circle me-3" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div class="icon-box md bg-danger-subtle rounded-5">
+                  <i class="ri-calendar-2-fill fs-4 text-danger"></i>
+                </div>
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 mb-1">{{tushum.oylik_tushum}} so'm</h4>
+                <p class="m-0 text-muted">Oylik tushum</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-12 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+        <div class="card mb-3 hover-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="p-2 border border-warning rounded-circle me-3" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div class="icon-box md bg-warning-subtle rounded-5">
+                  <i class="ri-money-dollar-circle-line fs-4 text-warning"></i>
+                </div>
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 mb-1">{{tushum.umumiy}} so'm</h4>
+                <p class="m-0 text-muted">Umumiy savdo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-12 col-xl-6 col-lg-6 col-md-6 col-sm-12">
+        <div class="card mb-3 hover-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="p-2 border border-warning rounded-circle me-3" style="box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div class="icon-box md bg-warning-subtle rounded-5">
+                  <i class="ri-wallet-2-line fs-4 text-warning"></i>
+                </div>
+              </div>
+              <div class="d-flex flex-column">
+                <h4 class="lh-1 mb-1">{{qarz|intcomma}} so'm</h4>
+                <p class="m-0 text-muted">Umumiy qarzlar</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Info cards -->
+    <div class="row gx-3 mt-4">
+      <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card mb-3 info-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex flex-column align-items-center">
+              <div class="icon-box md rounded-5 bg-primary mb-3" style="box-shadow: 0 4px 6px rgba(74, 108, 247, 0.2);">
+                <i class="ri-shield-user-line fs-4 lh-1"></i>
+              </div>
+              <h6 class="text-muted mb-2">Mijozlar</h6>
+              <h2 class="text-primary m-0 fw-bold">{{client_count}}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    
+
+      <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card mb-3 info-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex flex-column align-items-center">
+              <div class="icon-box md rounded-5 bg-primary mb-3" style="box-shadow: 0 4px 6px rgba(74, 108, 247, 0.2);">
+                <i class="ri-psychotherapy-line fs-4 lh-1"></i>
+              </div>
+              <h6 class="text-muted mb-2">Bu oyda mijozlar</h6>
+              <h2 class="text-primary m-0 fw-bold">{{month_client}}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card mb-3 info-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex flex-column align-items-center">
+              <div class="icon-box md rounded-5 bg-primary mb-3" style="box-shadow: 0 4px 6px rgba(74, 108, 247, 0.2);">
+                <i class="ri-contract-line fs-4 lh-1"></i>
+              </div>
+              <h6 class="text-muted mb-2">Faol shartnomalar</h6>
+              <h2 class="text-primary m-0 fw-bold">{{contract}}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-sm-6 col-12">
+        <div class="card mb-3 info-card" style="border-radius: 12px; transition: all 0.3s ease; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-body">
+            <div class="d-flex flex-column align-items-center">
+              <div class="icon-box md rounded-5 bg-primary mb-3" style="box-shadow: 0 4px 6px rgba(74, 108, 247, 0.2);">
+                <i class="ri-contract-line fs-4 lh-1"></i>
+              </div>
+              <h6 class="text-muted mb-2">Tugatilgan shartnomalar</h6>
+              <h2 class="text-primary m-0 fw-bold">{{contract_f}}</h2>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row gx-3 mt-4">
+      <!-- Expense Statistics -->
+      
+      <div class="col-xxl-4 col-sm-6">
+        <div class="card mb-3" style="border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-header bg-white" style="border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 12px 12px 0 0;">
+            <h5 class="card-title mb-0">
+              <i class="ri-user-add-line me-2 text-primary"></i>
+              Haftalik mijozlar
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="week_client" style="height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xxl-4 col-sm-6">
+        <div class="card mb-3" style="border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-header bg-white" style="border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 12px 12px 0 0;">
+            <h5 class="card-title mb-0">
+              <i class="ri-question-answer-line me-2 text-primary"></i>
+              Mijozlar qayerdan eshitgan
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="kuzatuv" style="height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xxl-4 col-sm-6">
+        <div class="card mb-3" style="border-radius: 12px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+          <div class="card-header bg-white" style="border-bottom: 1px solid rgba(0,0,0,0.05); border-radius: 12px 12px 0 0;">
+            <h5 class="card-title mb-0">
+              <i class="ri-money-dollar-circle-line me-2 text-primary"></i>
+              Qarzdorlar
+            </h5>
+          </div>
+          <div class="card-body">
+            <div id="debt" style="height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    
+  </div>
+  <!-- App body ends -->
+</div>
+<style>
+  .hover-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+  }
+  
+  .info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+  }
+  
+  .info-card:hover .icon-box {
+    transform: scale(1.1);
+  }
+  
+  .icon-box {
+    transition: all 0.3s ease;
+  }
+  
+  .list-group-item:hover {
+    background-color: #f8f9ff;
+    transform: translateX(5px);
+  }
+</style>
+
+<!-- Include ECharts library -->
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<script>
+  // Initialize ECharts instances after the DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    // Debug logging for expense data
+    console.log('Expense Data:', {{expense_data|default:'undefined'|safe}});
+    
+    // Initialize expense data
+    const expenseData = {{expense_data|default:'null'|safe}};
+    const heardLabels = {{ heard_labels|default:"[]"|safe }};
+    const heardCounts = {{ heard_counts|default:"[]"|safe }};
+    const heardData = (heardLabels && heardLabels.length ? heardLabels : ["Ma'lumot yo'q"]).map(function(label, idx) {
+      return {
+        value: heardCounts && heardCounts[idx] ? heardCounts[idx] : 0,
+        name: label
+      };
+    });
+    
+    // Initialize all charts
+    var charts = {
+      debt: {
+        element: document.getElementById('debt'),
+        option: {
+          tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+          },
+          legend: {
+            orient: 'horizontal',
+            bottom: 'bottom',
+            data: ["Qarzdorlar", "To'liq to'laganlar"]
+          },
+          series: [{
+            name: 'Qarzdorlar',
+            type: 'pie',
+            radius: ['40%', '70%'],
+            avoidLabelOverlap: false,
+            itemStyle: {
+              borderRadius: 10,
+              borderColor: '#fff',
+              borderWidth: 2
+            },
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: '18',
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
+            data: [
+              { value: {{debtors.debtor}}, name: 'Qarzdorlar', itemStyle: { color: '#E4405F' } },
+              { value: {{debtors.nodebtor}}, name: "To'liq to'laganlar", itemStyle: { color: '#4a6cf7' } }
+            ]
+          }]
+        }
+      },
+      kuzatuv: {
+        element: document.getElementById('kuzatuv'),
+        option: {
+          tooltip: {
+            trigger: 'item',
+            formatter: '{a} <br/>{b}: {c} ({d}%)'
+          },
+          legend: {
+            orient: 'horizontal',
+            bottom: 'bottom',
+            data: heardLabels && heardLabels.length ? heardLabels : ["Ma'lumot yo'q"],
+            textStyle: {
+              fontSize: 12
+            }
+          },
+          series: [{
+            name: 'Mijozlar qayerdan eshitgan',
+            type: 'pie',
+            radius: '70%',
+            center: ['50%', '45%'],
+            data: heardData
+          }]
+        }
+      },
+      week_client: {
+        element: document.getElementById('week_client'),
+        option: {
+          tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+              type: 'shadow'
+            }
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '3%',
+            containLabel: true
+          },
+          xAxis: {
+            type: 'category',
+            data: {{week_list|safe}},
+            axisLabel: {
+              interval: 0
+            }
+          },
+          yAxis: {
+            type: 'value'
+          },
+          series: [{
+            name: 'Mijozlar',
+            type: 'bar',
+            data: {{week_client|safe}},
+            itemStyle: {
+              color: function(params) {
+                var colorList = [
+                  '#4a6cf7', '#5a7cf8', '#6a8cf9', '#7a9cfa', '#8aacfb', '#9abcfc', '#aaccfd'
+                ];
+                return colorList[params.dataIndex % colorList.length];
+              },
+              borderRadius: [5, 5, 0, 0]
+            },
+            label: {
+              show: true,
+              position: 'top'
+            }
+          }]
+        }
+      }
+    };
+
+    
+
+    // Initialize all charts
+    var chartInstances = {};
+    Object.keys(charts).forEach(function(chartName) {
+      var chart = charts[chartName];
+      if (chart.element) {
+        chartInstances[chartName] = echarts.init(chart.element);
+        chartInstances[chartName].setOption(chart.option);
+      }
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      Object.values(chartInstances).forEach(function(chart) {
+        chart.resize();
+      });
+    });
+  });
+</script>
+{% else %}
+<style>
+  .app-container {
+    background-image: url("{% static "images/big-ben-westminster-bridge-sunset-london-uk.jpg" %}") !important;
+    background-size: cover;
+    background-position: center;
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+  
+  .app-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.6));
+    z-index: 1;
+  }
+  
+  .welcome-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 2;
+    width: 80%;
+    max-width: 600px;
+  }
+  
+  .welcome-message h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  
+  .welcome-message p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  }
+  
+  .welcome-message .btn {
+    padding: 0.75rem 2rem;
+    font-weight: 500;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+  }
+  
+  .welcome-message .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  }
+</style>
+  <div class="app-container">
+    {% include 'messages.html' %}
+    <div class="welcome-message">
+      <h1>Major Consulting</h1>
+      <p>Boshqaruv tizimiga xush kelibsiz</p>
+      {% if request.user.is_authenticated %}
+      {% else %}
+        <a href="/login" class="btn btn-primary">
+          <i class="ri-login-circle-line me-2"></i> Tizimga kirish
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+{% endblock item %}

@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Mijozlar ro'yxati - Major Consulting{% endblock title %}
+
+{% block item %}
+<style>
+    /* Table styles */
+    .table-container {
+        overflow-y: auto;
+        max-height: 80vh;
+        position: relative;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    th, td {
+        padding: 8px 12px;
+        text-align: left;
+    }
+    
+    thead th {
+        position: sticky;
+        top: 0;
+        background: #f1f1f1;
+        z-index: 2;
+    }
+    
+    /* Badge styles */
+    .source-badge {
+        font-size: 0.8rem;
+        padding: 0.35em 0.65em;
+    }
+    
+    /* Pagination styles */
+    .pagination .page-link {
+        color: #0d6efd;
+        background-color: #fff;
+        border-color: #dee2e6;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .pagination .page-item.disabled .page-link {
+        color: #6c757d;
+        pointer-events: none;
+    }
+    
+    /* Animation */
+    .fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Source icon colors */
+    .source-icon-telegram { color: #0088cc; }
+    .source-icon-instagram { color: #e1306c; }
+    .source-icon-youtube { color: #ff0000; }
+    .source-icon-people { color: #28a745; }
+    .source-icon-none { color: #6c757d; }
+
+    /* Search bar sizing */
+    .search-actions .input-group > .form-control,
+    .search-actions .input-group > .btn,
+    .search-actions > .btn {
+        height: 38px;
+    }
+    .search-actions .btn-clear {
+        min-width: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<div class="app-container">
+    <!-- App hero header starts -->
+    <div class="app-hero-header d-flex align-items-center">
+        <!-- Breadcrumb starts -->
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <i class="ri-home-8-line lh-1 pe-3 me-3 border-end"></i>
+                <a href="/">Asosiy</a>
+            </li>
+            <li class="breadcrumb-item text-primary" aria-current="page">
+                Mijozlar
+            </li>
+        </ol>
+        <!-- Breadcrumb ends -->
+    </div>
+    <!-- App Hero header ends -->
+
+    <!-- App body starts -->
+    <div class="app-body">
+        {% include 'messages.html' %}
+        
+        <!-- Stats cards row -->
+        <div class="row g-3 mb-3">
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="ri-user-3-line text-primary fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Jami mijozlar</h6>
+                            <h4 class="mb-0">{{ client.paginator.count|default:client|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="ri-user-follow-line text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Faol mijozlar</h6>
+                            <h4 class="mb-0">{{ active_clients|default:client|length }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="rounded-circle bg-info bg-opacity-10 p-3 me-3">
+                            <i class="ri-phone-line text-info fs-4"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1 text-muted">Bugun qo'shilgan</h6>
+                            <h4 class="mb-0">{{ today_clients|default:"0" }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content row -->
+        <div class="row gx-3">
+            <div class="col-sm-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white d-flex align-items-center justify-content-between py-3">
+                        <h5 class="card-title mb-0 d-flex align-items-center">
+                            <i class="ri-user-3-line me-2 text-primary"></i>
+                            Mijozlar ro'yxati
+                        </h5>
+
+                        <div class="d-flex gap-2">
+                            <!-- Search form -->
+                            <form method="GET" action="{% url 'client' %}" class="me-2 d-flex align-items-center gap-2 search-actions">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" name="search" value="{{search_value}}" id="searchInput" placeholder="Qidirish...">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="ri-search-line"></i>
+                                    </button>
+                                </div>
+                                {% if search_value %}
+                                <a href="{% url 'client' %}" class="btn btn-outline-secondary px-3 btn-clear">
+                                    <i class="ri-close-line me-1"></i> Tozalash
+                                </a>
+                                {% endif %}
+                            </form>
+                            
+                            <!-- Filter button -->
+                            <button class="btn btn-outline-primary d-flex align-items-center" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">
+                                <i class="ri-filter-3-line me-1"></i> Filter
+                            </button>
+                            
+                            <!-- SMS button -->
+                            <button type="button" class="btn btn-outline-primary d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <i class="ri-message-2-line me-1"></i> SMS
+                            </button>
+                            
+                            <!-- Export dropdown button -->
+                            <div class="btn-group">
+                              <button type="button" class="btn btn-outline-primary d-flex align-items-center dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="ri-download-2-line me-1"></i> Yuklab olish
+                              </button>
+                              <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/client/export/">PDF</a></li>
+                                <li><a class="dropdown-item" href="/client/export/excel/">Excel</a></li>
+                              </ul>
+                            </div>
+                            
+                            <!-- Add client button -->
+                            {% if request.user.username == "ceoadmin" %}
+                            <a href="{% url 'client-create' %}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-primary d-flex align-items-center">
+                                <i class="ri-user-add-line me-1"></i> Mijoz qo'shish
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <!-- Table view -->
+                        <div class="table-responsive table-container">
+                            <table id="clientsTable" class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">ID</th>
+                                        <th>To'liq ismi</th>
+                                        <th>Telefon raqam</th>
+                                        <th>Qayerda eshitgan</th>
+                                        <th>Qo'shilgan sana</th>
+                                        <th class="text-end pe-3">Harakat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for i in client %}
+                                    <tr class="client-item" data-id="{{i.pk}}">
+                                        <td class="ps-3">#00{{i.pk}}</td>
+                                        <td>
+                                            <span class="fw-medium">{{i.full_name}}</span>
+                                        </td>
+                                        <td>
+                                            <a href="tel:{{i.phone}}" class="text-decoration-none">
+                                                {{i.phone}}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            {% if i.heard == "Telegramda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-telegram-line source-icon-telegram me-1"></i> Telegram
+                                            </span>
+                                            {% elif i.heard == "Instagramda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-instagram-line source-icon-instagram me-1"></i> Instagram
+                                            </span>
+                                            {% elif i.heard == "YouTubeda" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-youtube-line source-icon-youtube me-1"></i> YouTube
+                                            </span>
+                                            {% elif i.heard == "Odamlar orasida" %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-group-line source-icon-people me-1"></i> Odamlar orasida
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-light text-dark source-badge">
+                                                <i class="ri-question-line source-icon-none me-1"></i> {{i.heard}}
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{i.created|date:"d.m.Y"}}</td>
+                                        <td class="text-end pe-3">
+                                            <div class="d-inline-flex gap-1">
+                                                <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tez SMS" onclick="quickSms('{{i.phone}}')">
+                                                    <i class="ri-message-line"></i>
+                                                </button>
+                                                {% if request.user.username == "ceoadmin" %}
+                                                <a href="/client/edit/{{i.pk}}{% if filter_params %}?next={{ request.get_full_path|urlencode }}{% endif %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-title="Tahrirlash">
+                                                    <i class="ri-edit-line"></i>
+                                                </a>
+                                                <button class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#delRow" data-id="{{ i.pk }}">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {% if client.has_other_pages %}
+                        <div class="d-flex justify-content-between align-items-center mt-4 p-3 flex-wrap gap-3 border-top">
+                            <div class="text-muted small">
+                                <i class="ri-file-list-3-line me-1"></i>
+                                Sahifa <strong>{{ client.number }}</strong> / <strong>{{ client.paginator.num_pages }}</strong> 
+                                (Jami <strong>{{ client.paginator.count }}</strong> ta mijoz)
+                            </div>
+                            <nav aria-label="Mijozlar paginatsiyasi">
+                                <ul class="pagination pagination-sm mb-0">
+                                    {% if client.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link pagination-link" href="#" data-page="1" aria-label="Birinchi" title="Birinchi sahifa">
+                                                <i class="ri-skip-back-line"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link pagination-link" href="#" data-page="{{ client.previous_page_number }}" aria-label="Oldingi" title="Oldingi sahifa">
+                                                <i class="ri-arrow-left-s-line"></i>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="ri-skip-back-line"></i></span>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="ri-arrow-left-s-line"></i></span>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in client.paginator.page_range %}
+                                        {% if client.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > client.number|add:'-3' and num < client.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="{{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% elif num == 1 or num == client.paginator.num_pages %}
+                                            <li class="page-item">
+                                                <a class="page-link pagination-link" href="#" data-page="{{ num }}">{{ num }}</a>
+                                            </li>
+                                        {% elif num == client.number|add:'-3' or num == client.number|add:'3' %}
+                                            <li class="page-item disabled">
+                                                <span class="page-link">...</span>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if client.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link pagination-link" href="#" data-page="{{ client.next_page_number }}" aria-label="Keyingi" title="Keyingi sahifa">
+                                                <i class="ri-arrow-right-s-line"></i>
+                                            </a>
+                                        </li>
+                                        <li class="page-item">
+                                            <a class="page-link pagination-link" href="#" data-page="{{ client.paginator.num_pages }}" aria-label="Oxirgi" title="Oxirgi sahifa">
+                                                <i class="ri-skip-forward-line"></i>
+                                            </a>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="ri-arrow-right-s-line"></i></span>
+                                        </li>
+                                        <li class="page-item disabled">
+                                            <span class="page-link"><i class="ri-skip-forward-line"></i></span>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Delete Row -->
+        <div class="modal fade" id="delRow" tabindex="-1" aria-labelledby="delRowLabel" aria-hidden="true">
+            <div class="modal-dialog modal-sm modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="delRowLabel">
+                            <i class="ri-error-warning-line text-danger me-2"></i> O'chirish
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-0">Mijozni o'chirishga ishonchingiz komilmi?</p>
+                    </div>
+                    <div class="modal-footer border-top-0">
+                        <button class="btn btn-outline-secondary" data-bs-dismiss="modal">Yo'q</button>
+                        <button class="btn btn-danger confirm-delete" data-bs-dismiss="modal">
+                            <i class="ri-delete-bin-line me-1"></i> Xa
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SMS Modal -->
+        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <form method="POST" action="{% url 'client' %}">
+                {% csrf_token %}
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">
+                                <i class="ri-message-2-line text-primary me-2"></i> Mijozlarga xabar yuborish
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="recipient-type" class="form-label fw-medium">Qabul qiluvchilar</label>
+                                <select class="form-select" id="recipient-type" name="recipient_type">
+                                    <option value="all" selected>Barcha mijozlar</option>
+                                    <option value="telegram">Telegramda eshitganlar</option>
+                                    <option value="instagram">Instagramda eshitganlar</option>
+                                    <option value="youtube">YouTubeda eshitganlar</option>
+                                    <option value="people">Odamlar orasida eshitganlar</option>
+                                    <option value="custom">Tanlangan mijozlar</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3" id="customRecipientsContainer" style="display: none;">
+                                <label for="custom-recipients" class="form-label fw-medium">Telefon raqamlar</label>
+                                <input type="text" class="form-control" id="custom-recipients" name="custom_recipients" placeholder="Telefon raqamlarni vergul bilan ajrating">
+                                <div class="form-text">Misol: 998901234567, 998912345678</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="message-text" class="form-label fw-medium">Xabar matni</label>
+                                <textarea class="form-control" name="sms-text" id="message-text" rows="4" placeholder="Xabar matnini kiriting..." required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <div class="form-text">Maksimal 160 ta belgi</div>
+                                    <div class="form-text"><span id="charCount">0</span>/160</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Tez xabarlar</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizning buyurtmangiz tasdiqlandi.">
+                                        Buyurtma tasdiqlandi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizning to'lovingiz qabul qilindi.">
+                                        To'lov qabul qilindi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message" data-message="Hurmatli mijoz, sizni ofisimizga taklif qilamiz.">
+                                        Ofisga taklif
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                            <button type="submit" class="btn btn-primary" name="action" value="sms">
+                                <i class="ri-send-plane-line me-1"></i> Yuborish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Quick SMS Modal -->
+        <div class="modal fade" id="quickSmsModal" tabindex="-1" aria-labelledby="quickSmsModalLabel" aria-hidden="true">
+            <form method="POST" action="{% url 'client' %}">
+                {% csrf_token %}
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="quickSmsModalLabel">
+                                <i class="ri-message-2-line text-primary me-2"></i> Tez SMS yuborish
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="quick-recipient" class="form-label fw-medium">Qabul qiluvchi</label>
+                                <input type="text" class="form-control" id="quick-recipient" name="custom_recipients" readonly>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="quick-message-text" class="form-label fw-medium">Xabar matni</label>
+                                <textarea class="form-control" name="sms-text" id="quick-message-text" rows="4" placeholder="Xabar matnini kiriting..." required></textarea>
+                                <div class="d-flex justify-content-between mt-1">
+                                    <div class="form-text">Maksimal 160 ta belgi</div>
+                                    <div class="form-text"><span id="quickCharCount">0</span>/160</div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-medium">Tez xabarlar</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizning buyurtmangiz tasdiqlandi.">
+                                        Buyurtma tasdiqlandi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizning to'lovingiz qabul qilindi.">
+                                        To'lov qabul qilindi
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary quick-message-single" data-message="Hurmatli mijoz, sizni ofisimizga taklif qilamiz.">
+                                        Ofisga taklif
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Bekor qilish</button>
+                            <button type="submit" class="btn btn-primary" name="action" value="sms-one">
+                                <i class="ri-send-plane-line me-1"></i> Yuborish
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Filter Offcanvas -->
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title" id="offcanvasRightLabel">
+                    <i class="ri-filter-3-line me-2"></i> Filterlash
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <form id="filterForm" method="GET">
+                <div class="offcanvas-body">
+                    <div class="mb-4">
+                        <label for="filter" class="form-label fw-medium">Qayerda eshitgan bo'yicha</label>
+                        <select class="form-select" id="filter" name="filter">
+                            <option value="" {% if not request.GET.filter %}selected{% endif %}>Hammasi</option>
+                            {% for heard in heard_choices %}
+                                <option value="{{ heard }}" {% if request.GET.filter == heard %}selected{% endif %}>{{ heard }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="dateFilter" class="form-label fw-medium">Qo'shilgan sana bo'yicha</label>
+                        <input type="date" class="form-control" id="dateFilter" name="date" value="{{ request.GET.date }}">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="phoneFilter" class="form-label fw-medium">Telefon raqami bo'yicha</label>
+                        <input type="text" class="form-control" id="phoneFilter" name="phone" placeholder="Telefon raqamini kiriting" value="{{ request.GET.phone }}">
+                    </div>
+                </div>
+                
+                <div class="offcanvas-footer border-top p-3">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'client' %}" class="btn btn-outline-secondary flex-grow-1">
+                            <i class="ri-refresh-line me-1"></i> Tozalash
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="ri-filter-3-line me-1"></i> Filterlash
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- App body ends -->
+</div>
+
+<style>
+    /* Avatar styles */
+    .avatar-circle {
+        width: 60px;
+        height: 60px;
+        background-color: #0d6efd;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .avatar-initials {
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Get all client items
+        const allClientItems = document.querySelectorAll('.client-item');
+
+        // Delete functionality
+        let clientId; // ID of the client to be deleted
+
+        // Listen to all delete buttons
+        document.querySelectorAll(".delete-btn").forEach(button => {
+            button.addEventListener("click", function () {
+                clientId = this.getAttribute("data-id");
+            });
+        });
+
+        // Handle confirmation in modal
+        document.querySelector(".confirm-delete").addEventListener("click", function () {
+            if (clientId) {
+                // AJAX request to delete
+                fetch(`/client/delete/${clientId}/`, {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    // Check if response is ok
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    // Try to parse JSON
+                    return response.json().catch(() => {
+                        // If JSON parsing fails, return default error
+                        return { ok: false, message: "Serverdan javob olishda xatolik yuz berdi" };
+                    });
+                })
+                .then(data => {
+                    if (data && data.ok) {
+                        // Remove the items with matching data-id
+                        document.querySelectorAll(`.client-item[data-id="${clientId}"]`).forEach(item => {
+                            item.remove();
+                        });
+                        
+                        // Show success message
+                        const alertHtml = `
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="ri-checkbox-circle-line me-2"></i> ${data.message || "Mijoz muvaffaqiyatli o'chirildi"}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                        
+                        // Reload page after 1 second to refresh pagination and update statistics
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        // Show error message
+                        const alertHtml = `
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <i class="ri-error-warning-line me-2"></i> ${data && data.message ? data.message : "O'chirishda xatolik yuz berdi"}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        `;
+                        document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                    }
+                })
+                .catch(error => {
+                    console.error("O'chirishda xatolik:", error);
+                    // Show error message
+                    const alertHtml = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="ri-error-warning-line me-2"></i> O'chirishda xatolik yuz berdi: ${error.message || "Noma'lum xatolik"}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `;
+                    document.querySelector('.app-body').insertAdjacentHTML('afterbegin', alertHtml);
+                });
+            }
+        });
+        
+        // SMS character counter
+        const messageText = document.getElementById('message-text');
+        const charCount = document.getElementById('charCount');
+        
+        if (messageText && charCount) {
+            messageText.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = count;
+                
+                if (count > 160) {
+                    charCount.classList.add('text-danger');
+                } else {
+                    charCount.classList.remove('text-danger');
+                }
+            });
+        }
+        
+        // Quick SMS character counter
+        const quickMessageText = document.getElementById('quick-message-text');
+        const quickCharCount = document.getElementById('quickCharCount');
+        
+        if (quickMessageText && quickCharCount) {
+            quickMessageText.addEventListener('input', function() {
+                const count = this.value.length;
+                quickCharCount.textContent = count;
+                
+                if (count > 160) {
+                    quickCharCount.classList.add('text-danger');
+                } else {
+                    quickCharCount.classList.remove('text-danger');
+                }
+            });
+        }
+        
+        // Quick message buttons
+        const quickMessageButtons = document.querySelectorAll('.quick-message');
+        
+        if (quickMessageButtons.length > 0 && messageText) {
+            quickMessageButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    messageText.value = message;
+                    messageText.dispatchEvent(new Event('input'));
+                });
+            });
+        }
+        
+        // Quick message buttons for single SMS
+        const quickMessageSingleButtons = document.querySelectorAll('.quick-message-single');
+        
+        if (quickMessageSingleButtons.length > 0 && quickMessageText) {
+            quickMessageSingleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const message = this.getAttribute('data-message');
+                    quickMessageText.value = message;
+                    quickMessageText.dispatchEvent(new Event('input'));
+                });
+            });
+        }
+        
+        // Recipient type change handler
+        const recipientType = document.getElementById('recipient-type');
+        const customRecipientsContainer = document.getElementById('customRecipientsContainer');
+        
+        if (recipientType && customRecipientsContainer) {
+            recipientType.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customRecipientsContainer.style.display = 'block';
+                } else {
+                    customRecipientsContainer.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+        
+        // Reset form button
+        const resetBtn = document.querySelector('button[type="reset"]');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function() {
+                setTimeout(() => {
+                    window.location.href = window.location.pathname;
+                }, 100);
+            });
+        }
+        
+    });
+    
+    // Quick SMS function
+    function quickSms(phone) {
+        const quickRecipient = document.getElementById('quick-recipient');
+        const quickSmsModal = new bootstrap.Modal(document.getElementById('quickSmsModal'));
+        
+        if (quickRecipient) {
+            quickRecipient.value = phone;
+            quickSmsModal.show();
+        }
+    }
+    
+    // Paginatsiya linklarini boshqarish
+    document.addEventListener('DOMContentLoaded', function() {
+        const paginationLinks = document.querySelectorAll('.pagination-link');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = this.getAttribute('data-page');
+                if (!page) return;
+                
+                // Joriy URL parametrlarini olish
+                const urlParams = new URLSearchParams(window.location.search);
+                urlParams.set('page', page);
+                
+                // Barcha mavjud parametrlarni saqlash (search, filter, date, phone)
+                // Bu parametrlar allaqachon URL'da bo'lsa, ular saqlanadi
+                
+                // Yangi URL'ga o'tish
+                window.location.href = '?' + urlParams.toString();
+            });
+        });
+    });
+</script>
+{% endblock item %}
